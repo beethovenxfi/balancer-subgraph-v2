@@ -24,251 +24,112 @@ import { StablePool } from '../types/templates/StablePool/StablePool';
 import { ConvergentCurvePool } from '../types/templates/ConvergentCurvePool/ConvergentCurvePool';
 import { LinearPool } from '../types/templates/LinearPool/LinearPool';
 import { ERC20 } from '../types/Vault/ERC20';
-
-function createWeightedLikePool(event: PoolCreated, poolType: string): string {
-  let poolAddress: Address = event.params.pool;
-  let poolContract = WeightedPool.bind(poolAddress);
-
-  let poolIdCall = poolContract.try_getPoolId();
-  let poolId = poolIdCall.value;
-
-  let swapFeeCall = poolContract.try_getSwapFeePercentage();
-  let swapFee = swapFeeCall.value;
-
-  let ownerCall = poolContract.try_getOwner();
-  let owner = ownerCall.value;
-
-  let pool = handleNewPool(event, poolId, swapFee);
-  pool.poolType = poolType;
-  pool.factory = event.address;
-  pool.owner = owner;
-
-  let vaultContract = Vault.bind(VAULT_ADDRESS);
-  let tokensCall = vaultContract.try_getPoolTokens(poolId);
-
-  if (!tokensCall.reverted) {
-    let tokens = tokensCall.value.value0;
-    pool.tokensList = changetype<Bytes[]>(tokens);
-
-    for (let i: i32 = 0; i < tokens.length; i++) {
-      createPoolTokenEntity(poolId.toHexString(), tokens[i]);
-    }
-  }
-  pool.save();
-
-  // Load pool with initial weights
-  updatePoolWeights(poolId.toHexString());
-
-  return poolId.toHexString();
-}
+import { createPool } from '../entities/pool';
+import { createWeightedPoolData } from '../entities/weighted-pool-data';
 
 export function handleNewWeightedPool(event: PoolCreated): void {
-  createWeightedLikePool(event, PoolType.Weighted);
+  let poolAddress: Address = event.params.pool;
+  const pool = createPool(poolAddress, event.block);
+  createWeightedPoolData(pool.id);
+  // Load pool with initial weights
+  updatePoolWeights(pool.id);
   WeightedPoolTemplate.create(event.params.pool);
 }
 
-export function handleNewLiquidityBootstrappingPool(event: PoolCreated): void {
-  createWeightedLikePool(event, PoolType.LiquidityBootstrapping);
-  LiquidityBootstrappingPoolTemplate.create(event.params.pool);
-}
-
-export function handleNewInvestmentPool(event: PoolCreated): void {
-  createWeightedLikePool(event, PoolType.Investment);
-  InvestmentPoolTemplate.create(event.params.pool);
-}
-
-function createStableLikePool(event: PoolCreated, poolType: string): string {
-  let poolAddress: Address = event.params.pool;
-  let poolContract = StablePool.bind(poolAddress);
-
-  let poolIdCall = poolContract.try_getPoolId();
-  let poolId = poolIdCall.value;
-
-  let swapFeeCall = poolContract.try_getSwapFeePercentage();
-  let swapFee = swapFeeCall.value;
-
-  let ownerCall = poolContract.try_getOwner();
-  let owner = ownerCall.value;
-
-  let pool = handleNewPool(event, poolId, swapFee);
-  pool.poolType = poolType;
-  pool.factory = event.address;
-  pool.owner = owner;
-
-  let vaultContract = Vault.bind(VAULT_ADDRESS);
-  let tokensCall = vaultContract.try_getPoolTokens(poolId);
-
-  if (!tokensCall.reverted) {
-    let tokens = tokensCall.value.value0;
-    pool.tokensList = changetype<Bytes[]>(tokens);
-
-    for (let i: i32 = 0; i < tokens.length; i++) {
-      createPoolTokenEntity(poolId.toHexString(), tokens[i]);
-    }
-  }
-
-  pool.save();
-
-  return poolId.toHexString();
-}
-
-export function handleNewStablePool(event: PoolCreated): void {
-  createStableLikePool(event, PoolType.Stable);
-  StablePoolTemplate.create(event.params.pool);
-}
-
-export function handleNewMetaStablePool(event: PoolCreated): void {
-  createStableLikePool(event, PoolType.MetaStable);
-  MetaStablePoolTemplate.create(event.params.pool);
-}
-
-export function handleNewStablePhantomPool(event: PoolCreated): void {
-  createStableLikePool(event, PoolType.StablePhantom);
-  StablePhantomPoolTemplate.create(event.params.pool);
-}
-
-export function handleNewCCPPool(event: PoolCreated): void {
-  let poolAddress: Address = event.params.pool;
-
-  let poolContract = ConvergentCurvePool.bind(poolAddress);
-
-  let poolIdCall = poolContract.try_getPoolId();
-  let poolId = poolIdCall.value;
-
-  let swapFeeCall = poolContract.try_percentFee();
-  let swapFee = swapFeeCall.value;
-
-  let principalTokenCall = poolContract.try_bond();
-  let principalToken = principalTokenCall.value;
-
-  let baseTokenCall = poolContract.try_underlying();
-  let baseToken = baseTokenCall.value;
-
-  let expiryTimeCall = poolContract.try_expiration();
-  let expiryTime = expiryTimeCall.value;
-
-  let unitSecondsCall = poolContract.try_unitSeconds();
-  let unitSeconds = unitSecondsCall.value;
-
-  // let ownerCall = poolContract.try_getOwner();
-  // let owner = ownerCall.value;
-
-  let pool = handleNewPool(event, poolId, swapFee);
-  pool.poolType = PoolType.Element;
-  pool.factory = event.address;
-  // pool.owner = owner;
-  pool.principalToken = principalToken;
-  pool.baseToken = baseToken;
-  pool.expiryTime = expiryTime;
-  pool.unitSeconds = unitSeconds;
-
-  let vaultContract = Vault.bind(VAULT_ADDRESS);
-  let tokensCall = vaultContract.try_getPoolTokens(poolId);
-
-  if (!tokensCall.reverted) {
-    let tokens = tokensCall.value.value0;
-    pool.tokensList = changetype<Bytes[]>(tokens);
-
-    for (let i: i32 = 0; i < tokens.length; i++) {
-      createPoolTokenEntity(poolId.toHexString(), tokens[i]);
-    }
-  }
-  pool.save();
-
-  CCPoolTemplate.create(poolAddress);
-}
-
-export function handleNewLinearPool(event: PoolCreated): void {
-  let poolAddress: Address = event.params.pool;
-
-  let poolContract = LinearPool.bind(poolAddress);
-
-  let poolIdCall = poolContract.try_getPoolId();
-  let poolId = poolIdCall.value;
-
-  let swapFeeCall = poolContract.try_getSwapFeePercentage();
-  let swapFee = swapFeeCall.value;
-
-  let pool = handleNewPool(event, poolId, swapFee);
-
-  pool.poolType = PoolType.Linear;
-  pool.factory = event.address;
-
-  let mainIndexCall = poolContract.try_getMainIndex();
-  pool.mainIndex = mainIndexCall.value.toI32();
-  let wrappedIndexCall = poolContract.try_getWrappedIndex();
-  pool.wrappedIndex = wrappedIndexCall.value.toI32();
-
-  let targetsCall = poolContract.try_getTargets();
-  pool.lowerTarget = tokenToDecimal(targetsCall.value.value0, 18);
-  pool.upperTarget = tokenToDecimal(targetsCall.value.value1, 18);
-
-  let vaultContract = Vault.bind(VAULT_ADDRESS);
-  let tokensCall = vaultContract.try_getPoolTokens(poolId);
-
-  if (!tokensCall.reverted) {
-    let tokens = tokensCall.value.value0;
-    pool.tokensList = changetype<Bytes[]>(tokens);
-
-    for (let i: i32 = 0; i < tokens.length; i++) {
-      createPoolTokenEntity(poolId.toHexString(), tokens[i]);
-    }
-  }
-  let maxTokenBalance = BigDecimal.fromString('5192296858534827.628530496329220095');
-  pool.totalShares = pool.totalShares.minus(maxTokenBalance);
-  pool.save();
-
-  LinearPoolTemplate.create(poolAddress);
-}
-
-function findOrInitializeVault(): Balancer {
-  let vault: Balancer | null = Balancer.load('2');
-  if (vault != null) return vault;
-
-  // if no vault yet, set up blank initial
-  vault = new Balancer('2');
-  vault.poolCount = 0;
-  vault.totalLiquidity = ZERO_BD;
-  vault.totalSwapVolume = ZERO_BD;
-  vault.totalSwapFee = ZERO_BD;
-  vault.totalSwapCount = ZERO;
-  return vault;
-}
-
-function handleNewPool(event: PoolCreated, poolId: Bytes, swapFee: BigInt): Pool {
-  let poolAddress: Address = event.params.pool;
-
-  let pool = Pool.load(poolId.toHexString());
-  if (pool == null) {
-    pool = newPoolEntity(poolId.toHexString());
-
-    pool.swapFee = scaleDown(swapFee, 18);
-    pool.createTime = event.block.timestamp.toI32();
-    pool.address = poolAddress;
-    pool.tx = event.transaction.hash;
-    pool.swapEnabled = true;
-
-    let bpt = ERC20.bind(poolAddress);
-
-    let nameCall = bpt.try_name();
-    if (!nameCall.reverted) {
-      pool.name = nameCall.value;
-    }
-
-    let symbolCall = bpt.try_symbol();
-    if (!symbolCall.reverted) {
-      pool.symbol = symbolCall.value;
-    }
-    pool.save();
-
-    let vault = findOrInitializeVault();
-    vault.poolCount += 1;
-    vault.save();
-
-    let vaultSnapshot = getBalancerSnapshot(vault.id, event.block.timestamp.toI32());
-    vaultSnapshot.poolCount += 1;
-    vaultSnapshot.save();
-  }
-
-  return pool;
-}
+// export function handleNewLiquidityBootstrappingPool(event: PoolCreated): void {
+//   let poolAddress: Address = event.params.pool;
+//   const pool = createPool(poolAddress, event.block);
+//   updatePoolWeights(pool.id);
+//   LiquidityBootstrappingPoolTemplate.create(event.params.pool);
+// }
+//
+// export function handleNewStablePool(event: PoolCreated): void {
+//   createStableLikePool(event, PoolType.Stable);
+//   StablePoolTemplate.create(event.params.pool);
+// }
+//
+// export function handleNewStablePhantomPool(event: PoolCreated): void {
+//   createStableLikePool(event, PoolType.StablePhantom);
+//   StablePhantomPoolTemplate.create(event.params.pool);
+// }
+//
+// export function handleNewLinearPool(event: PoolCreated): void {
+//   let poolAddress: Address = event.params.pool;
+//
+//   let poolContract = LinearPool.bind(poolAddress);
+//
+//   let poolIdCall = poolContract.try_getPoolId();
+//   let poolId = poolIdCall.value;
+//
+//   let swapFeeCall = poolContract.try_getSwapFeePercentage();
+//   let swapFee = swapFeeCall.value;
+//
+//   let pool = handleNewPool(event, poolId, swapFee);
+//
+//   pool.poolType = PoolType.Linear;
+//   pool.factory = event.address;
+//
+//   let mainIndexCall = poolContract.try_getMainIndex();
+//   pool.mainIndex = mainIndexCall.value.toI32();
+//   let wrappedIndexCall = poolContract.try_getWrappedIndex();
+//   pool.wrappedIndex = wrappedIndexCall.value.toI32();
+//
+//   let targetsCall = poolContract.try_getTargets();
+//   pool.lowerTarget = tokenToDecimal(targetsCall.value.value0, 18);
+//   pool.upperTarget = tokenToDecimal(targetsCall.value.value1, 18);
+//
+//   let vaultContract = Vault.bind(VAULT_ADDRESS);
+//   let tokensCall = vaultContract.try_getPoolTokens(poolId);
+//
+//   if (!tokensCall.reverted) {
+//     let tokens = tokensCall.value.value0;
+//     pool.tokensList = changetype<Bytes[]>(tokens);
+//
+//     for (let i: i32 = 0; i < tokens.length; i++) {
+//       createPoolTokenEntity(poolId.toHexString(), tokens[i]);
+//     }
+//   }
+//   let maxTokenBalance = BigDecimal.fromString('5192296858534827.628530496329220095');
+//   pool.totalShares = pool.totalShares.minus(maxTokenBalance);
+//   pool.save();
+//
+//   LinearPoolTemplate.create(poolAddress);
+// }
+//
+// function handleNewPool(event: PoolCreated, poolId: Bytes, swapFee: BigInt): Pool {
+//   let poolAddress: Address = event.params.pool;
+//
+//   let pool = Pool.load(poolId);
+//   if (pool === null) {
+//     pool = newPoolEntity(poolId.toHexString());
+//
+//     pool.swapFee = scaleDown(swapFee, 18);
+//     pool.createTime = event.block.timestamp.toI32();
+//     pool.address = poolAddress;
+//     pool.tx = event.transaction.hash;
+//     pool.swapEnabled = true;
+//
+//     let bpt = ERC20.bind(poolAddress);
+//
+//     let nameCall = bpt.try_name();
+//     if (!nameCall.reverted) {
+//       pool.name = nameCall.value;
+//     }
+//
+//     let symbolCall = bpt.try_symbol();
+//     if (!symbolCall.reverted) {
+//       pool.symbol = symbolCall.value;
+//     }
+//     pool.save();
+//
+//     let vault = findOrInitializeVault();
+//     vault.poolCount += 1;
+//     vault.save();
+//
+//     let vaultSnapshot = getBalancerSnapshot(vault.id, event.block.timestamp.toI32());
+//     vaultSnapshot.poolCount += 1;
+//     vaultSnapshot.save();
+//   }
+//
+//   return pool;
+// }

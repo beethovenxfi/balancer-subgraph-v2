@@ -24,7 +24,6 @@ import { isPricingAsset, swapValueInUSD, updatePoolLiquidity, valueInUSD } from 
 import { MIN_VIABLE_LIQUIDITY, TokenBalanceEvent, ZERO, ZERO_BD } from './helpers/constants';
 import { hasVirtualSupply, isStableLikePool, isVariableWeightPool } from './helpers/pools';
 import { updateAmpFactor } from './helpers/stable';
-import { loadBalancerPoolToken } from '../entities/balancer-pool-token';
 
 /************************************
  ******** INTERNAL BALANCES *********
@@ -156,7 +155,7 @@ function handlePoolJoined(event: PoolBalanceChanged): void {
 }
 
 function handlePoolExited(event: PoolBalanceChanged): void {
-  let poolId = event.params.poolId;
+  let poolId = event.params.poolId.toHex();
   let amounts = event.params.deltas;
   let blockTimestamp = event.block.timestamp.toI32();
   let logIndex = event.logIndex;
@@ -164,25 +163,37 @@ function handlePoolExited(event: PoolBalanceChanged): void {
 
   let pool = Pool.load(poolId);
   if (pool == null) {
-    log.warning('Pool not found in handlePoolExited: {} {}', [poolId.toHexString(), transactionHash.toHexString()]);
+    log.warning('Pool not found in handlePoolExited: {} {}', [poolId, transactionHash.toHexString()]);
     return;
   }
   let tokenAddresses = pool.tokensList;
 
+  pool.save();
+
+  let exitId = transactionHash.toHexString().concat(logIndex.toString());
+  let exit = new JoinExit(exitId);
+  exit.sender = event.params.liquidityProvider;
   let exitAmounts = new Array<BigDecimal>(tokenAddresses.length);
   for (let i: i32 = 0; i < exitAmounts.length; i++) {
     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
-    let poolToken = loadBalancerPoolToken(poolId, tokenAddress);
+    let poolToken = loadPoolToken(poolId, tokenAddress);
     if (poolToken == null) {
       throw new Error('poolToken not found');
     }
     let exitAmount = scaleDown(amounts[i].neg(), poolToken.decimals);
     exitAmounts[i] = exitAmount;
   }
+  exit.type = 'Exit';
+  exit.amounts = exitAmounts;
+  exit.pool = event.params.poolId.toHexString();
+  exit.user = event.params.liquidityProvider.toHexString();
+  exit.timestamp = blockTimestamp;
+  exit.tx = transactionHash;
+  exit.valueUSD = ZERO_BD;
 
   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
-    let poolToken = loadBalancerPoolToken(poolId, tokenAddress);
+    let poolToken = loadPoolToken(poolId, tokenAddress);
 
     // adding initial liquidity
     if (poolToken == null) {
@@ -196,6 +207,8 @@ function handlePoolExited(event: PoolBalanceChanged): void {
 
     poolToken.balance = newAmount;
     poolToken.save();
+
+    updateTokenBalances(tokenAddress, tokenAmountOut, TokenBalanceEvent.EXIT, event);
   }
 
   exit.save();

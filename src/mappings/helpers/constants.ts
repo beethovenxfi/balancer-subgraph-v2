@@ -22,6 +22,7 @@ export class AddressByNetwork {
   public polygon: string;
   public fantom: string;
   public arbitrum: string;
+  public optimism: string;
   public dev: string;
 }
 
@@ -36,6 +37,7 @@ let vaultAddressByNetwork: AddressByNetwork = {
   arbitrum: '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
   dev: '0xa0B05b20e511B1612E908dFCeE0E407E22B76028',
   fantom: '0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce',
+  optimism: '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
 };
 
 let wethAddressByNetwork: AddressByNetwork = {
@@ -47,6 +49,7 @@ let wethAddressByNetwork: AddressByNetwork = {
   arbitrum: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   dev: '0x4CDDb3505Cf09ee0Fa0877061eB654839959B9cd',
   fantom: '0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83', //WFTM
+  optimism: '0x4200000000000000000000000000000000000006',
 };
 
 let wbtcAddressByNetwork: AddressByNetwork = {
@@ -58,6 +61,7 @@ let wbtcAddressByNetwork: AddressByNetwork = {
   arbitrum: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
   dev: '0xcD80986f08d776CE41698c47f705CDc99dDBfB0A',
   fantom: '0x321162Cd933E2Be498Cd2267a90534A804051b11',
+  optimism: '0x68f180fcCe6836688e9084f035309E29Bf0A2095',
 };
 
 let usdAddressByNetwork: AddressByNetwork = {
@@ -69,6 +73,7 @@ let usdAddressByNetwork: AddressByNetwork = {
   arbitrum: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
   dev: '0x1528f3fcc26d13f7079325fb78d9442607781c8c',
   fantom: '0x04068da6c83afcfa0e13ba15a6696662335d5b75',
+  optimism: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
 };
 
 let usdcAddressByNetwork: AddressByNetwork = {
@@ -80,6 +85,7 @@ let usdcAddressByNetwork: AddressByNetwork = {
   arbitrum: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
   dev: '0x7c0c5AdA758cf764EcD6bAC05b63b2482f90bBB2',
   fantom: '0x04068da6c83afcfa0e13ba15a6696662335d5b75',
+  optimism: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
 };
 
 let usdtAddressByNetwork: AddressByNetwork = {
@@ -91,6 +97,7 @@ let usdtAddressByNetwork: AddressByNetwork = {
   arbitrum: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
   dev: '0x7c0c5AdA758cf764EcD6bAC05b63b2482f90bBB2',
   fantom: '0x049d68029688eAbF473097a2fC38ef61633A3C7A',
+  optimism: '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58',
 };
 
 let balAddressByNetwork: AddressByNetwork = {
@@ -102,6 +109,7 @@ let balAddressByNetwork: AddressByNetwork = {
   arbitrum: '0x040d1EdC9569d4Bab2D15287Dc5A4F10F56a56B8',
   dev: '0xf702269193081364E355f862f2CFbFCdC5DB738C',
   fantom: '0xf24bcf4d1e507740041c9cfd2dddb29585adce1e', //BEETS
+  optimism: '0x0000000000000000000000000000000000000000',
 };
 
 let daiAddressByNetwork: AddressByNetwork = {
@@ -113,6 +121,7 @@ let daiAddressByNetwork: AddressByNetwork = {
   arbitrum: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
   dev: '0x5C0E66606eAbEC1df45E2ADd26C5DF8C0895a397',
   fantom: '0x8d11ec38a3eb5e956b052f67da8bdc9bef8abf3e',
+  optimism: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
 };
 
 let altDaiAddressByNetwork: AddressByNetwork = {
@@ -124,6 +133,7 @@ let altDaiAddressByNetwork: AddressByNetwork = {
   arbitrum: '0x0000000000000000000000000000000000000000',
   dev: '0x0000000000000000000000000000000000000000',
   fantom: '0x0000000000000000000000000000000000000000',
+  optimism: '0x0000000000000000000000000000000000000000',
 };
 
 let altUsdcAddressByNetwork: AddressByNetwork = {
@@ -135,6 +145,7 @@ let altUsdcAddressByNetwork: AddressByNetwork = {
   arbitrum: '0x0000000000000000000000000000000000000000',
   dev: '0x0000000000000000000000000000000000000000',
   fantom: '0x0000000000000000000000000000000000000000',
+  optimism: '0x0000000000000000000000000000000000000000',
 };
 
 let altUsdtAddressByNetwork: AddressByNetwork = {
@@ -146,6 +157,7 @@ let altUsdtAddressByNetwork: AddressByNetwork = {
   arbitrum: '0x0000000000000000000000000000000000000000',
   dev: '0x0000000000000000000000000000000000000000',
   fantom: '0x0000000000000000000000000000000000000000',
+  optimism: '0x0000000000000000000000000000000000000000',
 };
 
 let linearDaiAddressByNetwork: AddressByNetwork = {
@@ -157,6 +169,7 @@ let linearDaiAddressByNetwork: AddressByNetwork = {
   arbitrum: '0x0000000000000000000000000000000000000000',
   dev: '0x0000000000000000000000000000000000000000',
   fantom: '0x2Ff1552Dd09f87d6774229Ee5eca60CF570AE291',
+  optimism: '0x0000000000000000000000000000000000000000',
 };
 
 let linearUsdcAddressByNetwork: AddressByNetwork = {
@@ -168,6 +181,7 @@ let linearUsdcAddressByNetwork: AddressByNetwork = {
   arbitrum: '0x0000000000000000000000000000000000000000',
   dev: '0x0000000000000000000000000000000000000000',
   fantom: '0x3B998BA87b11a1c5BC1770dE9793B17A0dA61561',
+  optimism: '0x0000000000000000000000000000000000000000',
 };
 
 let linearUsdtAddressByNetwork: AddressByNetwork = {
@@ -179,6 +193,7 @@ let linearUsdtAddressByNetwork: AddressByNetwork = {
   arbitrum: '0x0000000000000000000000000000000000000000',
   dev: '0x0000000000000000000000000000000000000000',
   fantom: '0x0000000000000000000000000000000000000000',
+  optimism: '0x0000000000000000000000000000000000000000',
 };
 
 function forNetwork(addressByNetwork: AddressByNetwork, network: string): Address {
@@ -196,6 +211,8 @@ function forNetwork(addressByNetwork: AddressByNetwork, network: string): Addres
     return Address.fromString(addressByNetwork.fantom);
   } else if (network == 'arbitrum-one') {
     return Address.fromString(addressByNetwork.arbitrum);
+  } else if (network == 'optimism') {
+    return Address.fromString(addressByNetwork.optimism);
   } else {
     return Address.fromString(addressByNetwork.dev);
   }

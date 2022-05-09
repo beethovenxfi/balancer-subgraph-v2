@@ -15,7 +15,7 @@ dataSources:
     source:
       address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
       abi: Vault
-      startBlock: 7000000
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -56,7 +56,7 @@ dataSources:
     source:
       address: "0xdAE7e32ADc5d490a43cCba1f0c736033F2b4eFca"
       abi: WeightedPoolFactory
-      startBlock: 7000000
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -83,7 +83,7 @@ dataSources:
     source:
       address: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e"
       abi: WeightedPoolFactory
-      startBlock: 7000000
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -110,7 +110,7 @@ dataSources:
     source:
       address: "0x41B953164995c11C81DA73D212ED8Af25741b7Ac"
       abi: StablePoolFactory
-      startBlock: 7000000
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -137,7 +137,7 @@ dataSources:
     source:
       address: "0xb08E16cFc07C684dAA2f93C70323BAdb2A6CBFd2"
       abi: MetaStablePoolFactory
-      startBlock: 7000000
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -166,7 +166,7 @@ dataSources:
     source:
       address: "0xf302f9F50958c5593770FDf4d4812309fF77414f"
       abi: LiquidityBootstrappingPoolFactory
-      startBlock: 7000000
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -284,3 +284,71 @@ templates:
           handler: handlePriceRateProviderSet
         - event: PriceRateCacheUpdated(indexed address,uint256)
           handler: handlePriceRateCacheUpdated
+  - kind: ethereum/contract
+    name: StablePhantomPool
+    network: optimism
+    source:
+      abi: StablePhantomPool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolController.ts
+      entities:
+        - Pool
+        - PoolShare
+        - Swap
+        - PoolToken
+        - GradualWeightUpdate
+      abis:
+        - name: WeightedPool
+          file: ./abis/WeightedPool.json
+        - name: StablePool
+          file: ./abis/StablePool.json
+        - name: MetaStablePool
+          file: ./abis/MetaStablePool.json
+        - name: StablePhantomPool
+          file: ./abis/StablePhantomPool.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: SwapFeePercentageChanged(uint256)
+          handler: handleSwapFeePercentageChange
+        - event: AmpUpdateStarted(uint256,uint256,uint256,uint256)
+          handler: handleAmpUpdateStarted
+        - event: AmpUpdateStopped(uint256)
+          handler: handleAmpUpdateStopped
+        - event: TokenRateProviderSet(indexed address,indexed address,uint256)
+          handler: handlePriceRateProviderSet
+        - event: TokenRateCacheUpdated(indexed address,uint256)
+          handler: handlePriceRateCacheUpdated
+  - kind: ethereum/contract
+    name: LinearPool
+    network: optimism
+    source:
+      abi: LinearPool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolController.ts
+      entities:
+        - Pool
+        - PoolShare
+        - Swap
+        - PoolToken
+        - GradualWeightUpdate
+      abis:
+        - name: WeightedPool
+          file: ./abis/WeightedPool.json
+        - name: MetaStablePool
+          file: ./abis/MetaStablePool.json
+        - name: LinearPool
+          file: ./abis/LinearPool.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: SwapFeePercentageChanged(uint256)
+          handler: handleSwapFeePercentageChange
+        - event: TargetsSet(indexed address,uint256,uint256)
+          handler: handleTargetsSet

@@ -13,7 +13,7 @@ dataSources:
     name: Vault
     network: mainnet
     source:
-      address: "0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce"
+      address: '0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce'
       abi: Vault
       startBlock: 17433594
     mapping:
@@ -54,7 +54,7 @@ dataSources:
     name: WeightedPoolFactory
     network: mainnet
     source:
-      address: "0x60467cb225092cE0c989361934311175f437Cf53"
+      address: '0x60467cb225092cE0c989361934311175f437Cf53'
       abi: WeightedPoolFactory
       startBlock: 16897200
     mapping:
@@ -81,7 +81,7 @@ dataSources:
     name: WeightedPool2TokenFactory
     network: mainnet
     source:
-      address: "0x92b377187bcCC6556FceD2f1e6DAd65850C20630"
+      address: '0x92b377187bcCC6556FceD2f1e6DAd65850C20630'
       abi: WeightedPoolFactory
       startBlock: 16897244
     mapping:
@@ -108,7 +108,7 @@ dataSources:
     name: StablePoolFactory
     network: mainnet
     source:
-      address: "0x55df810876354Fc3e249f701Dd78DeDE57991F8D"
+      address: '0x55df810876354Fc3e249f701Dd78DeDE57991F8D'
       abi: StablePoolFactory
       startBlock: 16897287
     mapping:
@@ -135,7 +135,7 @@ dataSources:
     name: MetaStablePoolFactory
     network: mainnet
     source:
-      address: "0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554"
+      address: '0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554'
       abi: MetaStablePoolFactory
       startBlock: 16898079
     mapping:
@@ -164,7 +164,7 @@ dataSources:
     name: LiquidityBootstrappingPoolFactory
     network: mainnet
     source:
-      address: "0x458368B3724B5a1c1057A00b28eB03FEb5b64968"
+      address: '0x458368B3724B5a1c1057A00b28eB03FEb5b64968'
       abi: LiquidityBootstrappingPoolFactory
       startBlock: 16897962
     mapping:
@@ -193,7 +193,7 @@ dataSources:
     name: NoProtocolFeeLiquidityBootstrappingPoolFactory
     network: mainnet
     source:
-      address: "0x2C774732c93CE393eC8125bDA49fb3737Ae6F473"
+      address: '0x2C774732c93CE393eC8125bDA49fb3737Ae6F473'
       abi: LiquidityBootstrappingPoolFactory
       startBlock: 24906900
     mapping:
@@ -222,7 +222,7 @@ dataSources:
     name: StablePhantomPoolFactory
     network: mainnet
     source:
-      address: "0x0E2AFa0b5F9174750d4E84Bf9798f89b79Bd5bF4"
+      address: '0x0E2AFa0b5F9174750d4E84Bf9798f89b79Bd5bF4'
       abi: StablePhantomPoolFactory
       startBlock: 28658437
     mapping:
@@ -251,7 +251,7 @@ dataSources:
     name: YearnLinearPoolFactory
     network: mainnet
     source:
-      address: "0x1F73AE6ED391A2b1e84Ff988A1Bb5394B78a4A71"
+      address: '0x1F73AE6ED391A2b1e84Ff988A1Bb5394B78a4A71'
       abi: LinearPoolFactory
       startBlock: 28657909
     mapping:
@@ -278,7 +278,7 @@ dataSources:
     name: BooLinearPoolFactory
     network: mainnet
     source:
-      address: "0xba306e3Cf84751d8Ef5e812C18cAa6C567c783E8"
+      address: '0xba306e3Cf84751d8Ef5e812C18cAa6C567c783E8'
       abi: LinearPoolFactory
       startBlock: 32452165
     mapping:
@@ -305,7 +305,7 @@ dataSources:
     name: ReaperLinearPoolFactory
     network: mainnet
     source:
-      address: "0x80434cF3661313D1a0632f567c1ba389ee2F7665"
+      address: '0x80434cF3661313D1a0632f567c1ba389ee2F7665'
       abi: LinearPoolFactory
       startBlock: 35348849
     mapping:
@@ -332,7 +332,7 @@ dataSources:
     name: TarotLinearPoolFactory
     network: mainnet
     source:
-      address: "0x681B59C9cbBb6AB43ee3360ac6C34E1Dd2f147e9"
+      address: '0x681B59C9cbBb6AB43ee3360ac6C34E1Dd2f147e9'
       abi: LinearPoolFactory
       startBlock: 36713100
     mapping:

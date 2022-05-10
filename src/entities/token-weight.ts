@@ -10,7 +10,9 @@ export function getTokenWeight(poolId: Bytes, tokenAddress: Address): TokenWeigh
     tokenWeight = new TokenWeight(id);
     tokenWeight.weight = BigDecimal.zero();
     tokenWeight.token = tokenAddress;
-    tokenWeight.poolData = poolId.toHexString();
+    tokenWeight.tokenAddress = tokenAddress;
+    tokenWeight.pool = poolId;
+    tokenWeight.poolId = poolId;
     tokenWeight.save();
   }
   return tokenWeight;

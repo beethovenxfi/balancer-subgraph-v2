@@ -1,7 +1,6 @@
 import { ZERO_BD, VAULT_ADDRESS, ZERO } from './helpers/constants';
 import { PoolType } from './helpers/pools';
 
-import { newPoolEntity, createPoolTokenEntity, scaleDown, getBalancerSnapshot, tokenToDecimal } from './helpers/misc';
 import { updatePoolWeights } from './helpers/weighted';
 
 import { BigInt, Address, Bytes, BigDecimal } from '@graphprotocol/graph-ts';
@@ -25,12 +24,11 @@ import { ConvergentCurvePool } from '../types/templates/ConvergentCurvePool/Conv
 import { LinearPool } from '../types/templates/LinearPool/LinearPool';
 import { ERC20 } from '../types/Vault/ERC20';
 import { createPool } from '../entities/pool';
-import { createWeightedPoolData } from '../entities/weighted-pool-data';
 
 export function handleNewWeightedPool(event: PoolCreated): void {
   let poolAddress: Address = event.params.pool;
-  const pool = createPool(poolAddress, event.block);
-  createWeightedPoolData(pool.id);
+  const pool = createPool(poolAddress, PoolType.Weighted, null, event.block);
+  // createWeightedPoolData(pool.id);
   // Load pool with initial weights
   updatePoolWeights(pool.id);
   WeightedPoolTemplate.create(event.params.pool);

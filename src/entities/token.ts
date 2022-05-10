@@ -2,16 +2,30 @@ import { Address } from '@graphprotocol/graph-ts/index';
 import { Token } from '../types/schema';
 import { ERC20 } from '../types/Vault/ERC20';
 
-export function getToken(address: Address): Token {
+export function getOrCreateToken(address: Address): Token {
   let token = Token.load(address);
 
   if (token == null) {
-    let tokenContract = ERC20.bind(address);
+    const erc20token = ERC20.bind(address);
     token = new Token(address);
     token.address = address;
-    token.name = tokenContract.name();
-    token.symbol = tokenContract.symbol();
-    token.decimals = tokenContract.decimals();
+
+    let name = '';
+    let symbol = '';
+    let decimals = 0;
+
+    // attempt to retrieve erc20 values
+    let maybeName = erc20token.try_name();
+    let maybeSymbol = erc20token.try_symbol();
+    let maybeDecimals = erc20token.try_decimals();
+
+    if (!maybeName.reverted) name = maybeName.value;
+    if (!maybeSymbol.reverted) symbol = maybeSymbol.value;
+    if (!maybeDecimals.reverted) decimals = maybeDecimals.value;
+
+    token.name = name;
+    token.symbol = symbol;
+    token.decimals = decimals;
     token.save();
   }
 

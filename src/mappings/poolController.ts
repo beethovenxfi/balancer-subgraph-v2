@@ -1,4 +1,4 @@
-import { BigInt, log } from '@graphprotocol/graph-ts';
+import { BigInt } from '@graphprotocol/graph-ts';
 import { Transfer } from '../types/templates/WeightedPool/BalancerPoolToken';
 import { SwapFeePercentageChanged, WeightedPool } from '../types/templates/WeightedPool/WeightedPool';
 import {
@@ -10,29 +10,23 @@ import { TargetsSet } from '../types/templates/LinearPool/LinearPool';
 import {
   AmpUpdateStarted,
   AmpUpdateStopped,
-  MetaStablePool,
-  PriceRateCacheUpdated,
   PriceRateProviderSet,
 } from '../types/templates/MetaStablePool/MetaStablePool';
-import { GradualWeightUpdate, Pool, PriceRateProvider } from '../types/schema';
+import { GradualWeightUpdate, PoolAddressToId, SwapConfig } from '../types/schema';
 
-import {
-  getPoolShare,
-  getPoolTokenId,
-  loadPoolToken,
-  loadPriceRateProvider,
-  scaleDown,
-  tokenToDecimal,
-} from './helpers/misc';
-import { ONE_BD, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
-import { getPoolConfig } from '../entities/pool-config';
+import { scaleDown, tokenToDecimal } from './helpers/misc';
+import { ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
+import { getPoolByAddress } from '../entities/pool';
+import { getOrCreatePoolShares } from '../entities/pool-shares';
+import { getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
 
 /************************************
  *********** SWAP ENABLED ***********
  ************************************/
 
 export function handleSwapEnabledSet(event: SwapEnabledSet): void {
-  const config = getPoolConfig(event.address);
+  const mapping = PoolAddressToId.load(event.address) as PoolAddressToId;
+  const config = SwapConfig.load(mapping.poolId) as SwapConfig;
   config.swapEnabled = event.params.swapEnabled;
   config.save();
 }
@@ -49,9 +43,10 @@ export function handleGradualWeightUpdateScheduled(event: GradualWeightUpdateSch
   let poolIdCall = poolContract.try_getPoolId();
   let poolId = poolIdCall.value;
 
-  let id = event.transaction.hash.toHexString().concat(event.transactionLogIndex.toString());
-  let weightUpdate = new GradualWeightUpdate(id);
-  weightUpdate.poolId = poolId.toHexString();
+  // let id = event.transaction.hash.toHexString().concat(event.transactionLogIndex.toString());
+  // todo: can we do this with pool id?
+  let weightUpdate = new GradualWeightUpdate(poolId);
+  weightUpdate.pool = poolId;
   weightUpdate.scheduledTimestamp = event.block.timestamp.toI32();
   weightUpdate.startTimestamp = event.params.startTime.toI32();
   weightUpdate.endTimestamp = event.params.endTime.toI32();
@@ -111,10 +106,10 @@ export function handleAmpUpdateStopped(event: AmpUpdateStopped): void {
  ************************************/
 
 export function handleSwapFeePercentageChange(event: SwapFeePercentageChanged): void {
-  const poolConfig = getPoolConfig(event.address);
-
-  poolConfig.swapFee = scaleDown(event.params.swapFeePercentage, 18);
-  poolConfig.save();
+  const mapping = PoolAddressToId.load(event.address) as PoolAddressToId;
+  const swapConfig = SwapConfig.load(mapping.poolId) as SwapConfig;
+  swapConfig.fee = scaleDown(event.params.swapFeePercentage, 18);
+  swapConfig.save();
 }
 
 /************************************
@@ -223,50 +218,50 @@ export function handlePriceRateProviderSet(event: PriceRateProviderSet): void {
  ************************************/
 
 export function handleTransfer(event: Transfer): void {
-  let poolAddress = event.address;
-
-  // TODO - refactor so pool -> poolId doesn't require call
-  let poolContract = WeightedPool.bind(poolAddress);
-
-  let poolIdCall = poolContract.try_getPoolId();
-  let poolId = poolIdCall.value;
+  const pool = getPoolByAddress(event.address);
 
   let isMint = event.params.from.toHex() == ZERO_ADDRESS;
   let isBurn = event.params.to.toHex() == ZERO_ADDRESS;
 
-  let poolShareFrom = getPoolShare(poolId.toHexString(), event.params.from);
-  let poolShareFromBalance = poolShareFrom == null ? ZERO_BD : poolShareFrom.balance;
-
-  let poolShareTo = getPoolShare(poolId.toHexString(), event.params.to);
-  let poolShareToBalance = poolShareTo == null ? ZERO_BD : poolShareTo.balance;
-
-  let pool = Pool.load(poolId.toHexString()) as Pool;
+  const globalPoolMetrics = getOrCreateGlobalPoolMetrics(pool.id, event.block);
 
   let BPT_DECIMALS = 18;
 
+  const poolSharesFrom = getOrCreatePoolShares(pool.id, event.params.from, event.address);
+  const sharesFromBeforeSwap = poolSharesFrom.balance;
+  const poolSharesTo = getOrCreatePoolShares(pool.id, event.params.to, event.address);
+  const sharesToBeforeSwap = poolSharesTo.balance;
   if (isMint) {
-    poolShareTo.balance = poolShareTo.balance.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
-    poolShareTo.save();
-    pool.totalShares = pool.totalShares.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+    poolSharesTo.balance = poolSharesTo.balance.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+    globalPoolMetrics.totalShares = globalPoolMetrics.totalShares.plus(
+      tokenToDecimal(event.params.value, BPT_DECIMALS)
+    );
+    poolSharesTo.save();
+    globalPoolMetrics.save();
   } else if (isBurn) {
-    poolShareFrom.balance = poolShareFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));
-    poolShareFrom.save();
-    pool.totalShares = pool.totalShares.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+    poolSharesFrom.balance = poolSharesFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+    poolSharesFrom.save();
+    globalPoolMetrics.totalShares = globalPoolMetrics.totalShares.minus(
+      tokenToDecimal(event.params.value, BPT_DECIMALS)
+    );
+    poolSharesFrom.save();
+    globalPoolMetrics.save();
   } else {
-    poolShareTo.balance = poolShareTo.balance.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
-    poolShareTo.save();
+    poolSharesTo.balance = poolSharesTo.balance.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+    poolSharesTo.save();
 
-    poolShareFrom.balance = poolShareFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));
-    poolShareFrom.save();
+    poolSharesFrom.balance = poolSharesFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+    poolSharesFrom.save();
+    globalPoolMetrics.save();
   }
 
-  if (poolShareTo !== null && poolShareTo.balance.notEqual(ZERO_BD) && poolShareToBalance.equals(ZERO_BD)) {
-    pool.holdersCount = pool.holdersCount.plus(BigInt.fromI32(1));
+  if (poolSharesTo.balance.notEqual(ZERO_BD) && sharesToBeforeSwap.equals(ZERO_BD)) {
+    globalPoolMetrics.holdersCount = globalPoolMetrics.holdersCount.plus(BigInt.fromI32(1));
+    globalPoolMetrics.save();
   }
 
-  if (poolShareFrom !== null && poolShareFrom.balance.equals(ZERO_BD) && poolShareFromBalance.notEqual(ZERO_BD)) {
-    pool.holdersCount = pool.holdersCount.minus(BigInt.fromI32(1));
+  if (poolSharesFrom.balance.equals(ZERO_BD) && sharesFromBeforeSwap.notEqual(ZERO_BD)) {
+    globalPoolMetrics.holdersCount = globalPoolMetrics.holdersCount.minus(BigInt.fromI32(1));
+    globalPoolMetrics.save();
   }
-
-  pool.save();
 }

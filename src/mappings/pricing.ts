@@ -1,8 +1,11 @@
-import { Address, Bytes, BigInt, BigDecimal } from '@graphprotocol/graph-ts';
-import { Pool, TokenPrice, Balancer, PoolHistoricalLiquidity, LatestPrice } from '../types/schema';
-import { ZERO_BD, PRICING_ASSETS, USD_STABLE_ASSETS, ONE_BD } from './helpers/constants';
+import { Address, BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
+import { Pool } from '../types/schema';
+import { ONE_BD, PRICING_ASSETS, USD_STABLE_ASSETS, ZERO_BD } from './helpers/constants';
 import { hasVirtualSupply, PoolType } from './helpers/pools';
-import { createPoolSnapshot, getBalancerSnapshot, getToken, getTokenPriceId, loadPoolToken } from './helpers/misc';
+import { getPoolToken } from '../entities/pool-token';
+import { createOrGetTokenPrice, getTokenPrice } from '../entities/token-price';
+import { getOrCreateGlobalVaultMetric } from '../entities/vault-metrics';
+import { getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
 
 export function isPricingAsset(asset: Address): boolean {
   for (let i: i32 = 0; i < PRICING_ASSETS.length; i++) {
@@ -11,22 +14,32 @@ export function isPricingAsset(asset: Address): boolean {
   return false;
 }
 
-export function updatePoolLiquidity(poolId: string, block: BigInt, pricingAsset: Address, timestamp: i32): boolean {
+/**
+ *
+ * @param poolId
+ * @param block
+ * @param pricingAsset
+ * @param timestamp
+ */
+export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block: ethereum.Block): boolean {
   let pool = Pool.load(poolId);
   if (pool == null) return false;
 
   let tokensList: Bytes[] = pool.tokensList;
   if (tokensList.length < 2) return false;
+  // in case the pool itself is a pricing asset, we don't want to update its liquidity todo: ??
   if (hasVirtualSupply(pool) && pool.address == pricingAsset) return false;
 
+  // we first get the total pool value in relation to the pricing asset
   let poolValue: BigDecimal = ZERO_BD;
 
+  // so we iterate over each pool token and add the balance in relation of the pricing asset
   for (let j: i32 = 0; j < tokensList.length; j++) {
     let tokenAddress: Address = Address.fromString(tokensList[j].toHexString());
 
-    let poolToken = loadPoolToken(poolId, tokenAddress);
-    if (poolToken == null) continue;
+    const poolToken = getPoolToken(poolId, tokenAddress);
 
+    // the pool token which is the pricing asset can just be added directly
     if (tokenAddress == pricingAsset) {
       poolValue = poolValue.plus(poolToken.balance);
       continue;
@@ -34,36 +47,13 @@ export function updatePoolLiquidity(poolId: string, block: BigInt, pricingAsset:
     let poolTokenQuantity: BigDecimal = poolToken.balance;
 
     // compare any new token price with the last price
-    let tokenPriceId = getTokenPriceId(poolId, tokenAddress, pricingAsset, block);
-    let tokenPrice = TokenPrice.load(tokenPriceId);
+    const tokenPrice = getTokenPrice(tokenAddress, pricingAsset);
     let price: BigDecimal = ZERO_BD;
-    let latestPriceId = getLatestPriceId(tokenAddress, pricingAsset);
-    let latestPrice = LatestPrice.load(latestPriceId);
 
-    if (tokenPrice == null && latestPrice != null) {
-      price = latestPrice.price;
-    }
     // note that we can only meaningfully report liquidity once assets are traded with
     // the pricing asset
     if (tokenPrice) {
-      // value in terms of priceableAsset
       price = tokenPrice.price;
-
-      // Possibly update latest price
-      if (latestPrice == null) {
-        latestPrice = new LatestPrice(latestPriceId);
-        latestPrice.asset = tokenAddress;
-        latestPrice.pricingAsset = pricingAsset;
-      }
-      latestPrice.price = price;
-      latestPrice.priceUSD = tokenPrice.priceUSD;
-      latestPrice.block = block;
-      latestPrice.poolId = poolId;
-      latestPrice.save();
-
-      let token = getToken(tokenAddress);
-      token.latestPrice = latestPrice.id;
-      token.save();
     } else if (pool.poolType == PoolType.StablePhantom) {
       // try to estimate token price in terms of pricing asset
       let pricingAssetInUSD = valueInUSD(ONE_BD, pricingAsset);
@@ -87,7 +77,9 @@ export function updatePoolLiquidity(poolId: string, block: BigInt, pricingAsset:
     }
   }
 
-  let oldPoolLiquidity: BigDecimal = pool.totalLiquidity;
+  const globalPoolMetric = getOrCreateGlobalPoolMetrics(poolId, block);
+
+  let oldPoolLiquidity: BigDecimal = globalPoolMetric.totalLiquidity;
   let newPoolLiquidity: BigDecimal = valueInUSD(poolValue, pricingAsset) || ZERO_BD;
   let liquidityChange: BigDecimal = newPoolLiquidity.minus(oldPoolLiquidity);
 
@@ -98,33 +90,34 @@ export function updatePoolLiquidity(poolId: string, block: BigInt, pricingAsset:
   }
 
   // Take snapshot of pool state
-  let phlId = getPoolHistoricalLiquidityId(poolId, pricingAsset, block);
-  let phl = new PoolHistoricalLiquidity(phlId);
-  phl.poolId = poolId;
-  phl.pricingAsset = pricingAsset;
-  phl.block = block;
-  phl.timestamp = timestamp;
-  phl.poolTotalShares = pool.totalShares;
-  phl.poolLiquidity = poolValue;
-  phl.poolLiquidityUSD = newPoolLiquidity;
-  phl.poolShareValue = pool.totalShares.gt(ZERO_BD) ? poolValue.div(pool.totalShares) : ZERO_BD;
-  phl.save();
+  // let phlId = getPoolHistoricalLiquidityId(poolId, pricingAsset, block);
+  // let phl = new PoolHistoricalLiquidity(phlId);
+  // phl.poolId = poolId;
+  // phl.pricingAsset = pricingAsset;
+  // phl.block = block;
+  // phl.timestamp = timestamp;
+  // phl.poolTotalShares = pool.totalShares;
+  // phl.poolLiquidity = poolValue;
+  // phl.poolLiquidityUSD = newPoolLiquidity;
+  // phl.poolShareValue = pool.totalShares.gt(ZERO_BD) ? poolValue.div(pool.totalShares) : ZERO_BD;
+  // phl.save();
 
   // Update pool stats
-  pool.totalLiquidity = newPoolLiquidity;
-  pool.save();
+  globalPoolMetric.totalLiquidity = newPoolLiquidity;
+  globalPoolMetric.save();
 
+  // todo: snapshots
   // Create or update pool daily snapshot
-  createPoolSnapshot(pool, timestamp);
+  // createPoolSnapshot(pool, timestamp);
 
   // Update global stats
-  let vault = Balancer.load('2') as Balancer;
-  vault.totalLiquidity = vault.totalLiquidity.plus(liquidityChange);
-  vault.save();
+  const globalVaultMetrics = getOrCreateGlobalVaultMetric(block);
+  globalVaultMetrics.totalLiquidity = globalVaultMetrics.totalLiquidity.plus(liquidityChange);
+  globalVaultMetrics.save();
 
-  let vaultSnapshot = getBalancerSnapshot(vault.id, timestamp);
-  vaultSnapshot.totalLiquidity = vault.totalLiquidity;
-  vaultSnapshot.save();
+  // let vaultSnapshot = getBalancerSnapshot(vault.id, timestamp);
+  // vaultSnapshot.totalLiquidity = vault.totalLiquidity;
+  // vaultSnapshot.save();
 
   return true;
 }
@@ -137,7 +130,7 @@ export function valueInUSD(value: BigDecimal, pricingAsset: Address): BigDecimal
   } else {
     // convert to USD
     for (let i: i32 = 0; i < USD_STABLE_ASSETS.length; i++) {
-      let pricingAssetInUSD = LatestPrice.load(getLatestPriceId(pricingAsset, USD_STABLE_ASSETS[i]));
+      let pricingAssetInUSD = getTokenPrice(pricingAsset, USD_STABLE_ASSETS[i]);
       if (pricingAssetInUSD != null) {
         usdValue = value.times(pricingAssetInUSD.price);
         break;

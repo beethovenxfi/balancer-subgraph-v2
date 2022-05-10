@@ -127,7 +127,7 @@ type GradualWeightUpdate @entity {
   endWeights: [BigInt!]!
 }
 
-type AmpUpdate @entity {
+type Amp @entity(immutable: true) {
   id: ID!
   poolId: Pool!
   scheduledTimestamp: Int!

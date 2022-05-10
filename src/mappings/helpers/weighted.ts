@@ -27,6 +27,4 @@ export function updatePoolWeights(poolId: Bytes): void {
       }
     }
   }
-
-  pool.save();
 }

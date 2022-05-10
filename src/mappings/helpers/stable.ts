@@ -2,17 +2,17 @@ import { Address, BigInt } from '@graphprotocol/graph-ts';
 import { Pool } from '../../types/schema';
 import { StablePool } from '../../types/templates/StablePool/StablePool';
 import { ZERO } from './constants';
+import { getAmp } from '../../entities/amp';
 
 export function updateAmpFactor(pool: Pool): void {
   let poolContract = StablePool.bind(changetype<Address>(pool.address));
-
-  pool.amp = getAmp(poolContract);
-
-  pool.save();
+  const amp = getAmp(pool.id);
+  amp.value = getOnChainAmp(poolContract);
+  amp.save();
 }
 
 // TODO: allow passing MetaStablePool once AS supports union types
-export function getAmp(poolContract: StablePool): BigInt {
+export function getOnChainAmp(poolContract: StablePool): BigInt {
   let ampCall = poolContract.try_getAmplificationParameter();
   let amp = ZERO;
   if (!ampCall.reverted) {

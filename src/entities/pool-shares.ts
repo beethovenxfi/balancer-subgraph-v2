@@ -1,6 +1,6 @@
 import { Address } from '@graphprotocol/graph-ts/index';
 import { BigDecimal, Bytes } from '@graphprotocol/graph-ts';
-import { getOrCreateToken } from './token';
+import { loadExistingToken } from './token';
 import { PoolShares } from '../types/schema';
 import { getOrCreateUser } from './user';
 
@@ -8,7 +8,7 @@ export function getOrCreatePoolShares(poolId: Bytes, userAddress: Address, token
   const id = poolId.concat(userAddress).concat(tokenAddress);
   let poolShares = PoolShares.load(id);
   if (poolShares == null) {
-    const token = getOrCreateToken(tokenAddress);
+    const token = loadExistingToken(tokenAddress);
     const user = getOrCreateUser(userAddress);
     poolShares = new PoolShares(id);
     poolShares.pool = poolId;

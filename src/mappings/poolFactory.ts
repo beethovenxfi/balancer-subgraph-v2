@@ -27,7 +27,7 @@ import { createPool } from '../entities/pool';
 
 export function handleNewWeightedPool(event: PoolCreated): void {
   let poolAddress: Address = event.params.pool;
-  const pool = createPool(poolAddress, PoolType.Weighted, null, event.block);
+  const pool = createPool(poolAddress, PoolType.Weighted, false, null, event.block);
   // createWeightedPoolData(pool.id);
   // Load pool with initial weights
   updatePoolWeights(pool.id);

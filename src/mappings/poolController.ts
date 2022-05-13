@@ -154,16 +154,18 @@ export function handleTargetsSet(event: TargetsSet): void {
  ************************************/
 
 export function handlePriceRateProviderSet(event: PriceRateProviderSet): void {
-  // let poolAddress = event.address;
+  let poolAddress = event.address;
   //
+  const poolMapping = PoolAddressToId.load(poolAddress) as PoolAddressToId;
   // // TODO - refactor so pool -> poolId doesn't require call
   // let poolContract = MetaStablePool.bind(poolAddress);
   // let poolIdCall = poolContract.try_getPoolId();
   // let poolId = poolIdCall.value;
   //
-  // let blockTimestamp = event.block.timestamp.toI32();
+  let blockTimestamp = event.block.timestamp.toI32();
   //
   // let provider = loadPriceRateProvider(poolId.toHexString(), event.params.token);
+
   // if (provider == null) {
   //   // Price rate providers and pooltokens share an ID
   //   let providerId = getPoolTokenId(poolId.toHexString(), event.params.token);

@@ -2,7 +2,7 @@ import { Address } from '@graphprotocol/graph-ts/index';
 import { TokenPrice } from '../types/schema';
 import { BigDecimal, ethereum } from '@graphprotocol/graph-ts';
 
-export function createOrGetTokenPrice(
+export function getOrCreateTokenPrice(
   tokenAddress: Address,
   stableTokenAddress: Address,
   block: ethereum.Block
@@ -14,11 +14,12 @@ export function createOrGetTokenPrice(
     tokenPrice.token = tokenAddress;
     tokenPrice.pricingAsset = stableTokenAddress;
     tokenPrice.price = BigDecimal.zero();
+    tokenPrice.amount = BigDecimal.zero();
     tokenPrice.priceUSD = BigDecimal.zero();
     tokenPrice.block = block.number;
     tokenPrice.timestamp = block.timestamp.toI32();
+    tokenPrice.save();
   }
-  tokenPrice.save();
 
   return tokenPrice;
 }

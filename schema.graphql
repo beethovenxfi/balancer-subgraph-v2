@@ -2,6 +2,7 @@ type Balancer @entity(immutable: true) {
     id: Bytes!
     pools: [Pool!] @derivedFrom(field: "vault")
     globalMetrics: GlobalVaultMetric!
+    tokens: [VaultToken!]! @derivedFrom(field: "vault")
 }
 
 type GlobalVaultMetric @entity {
@@ -22,16 +23,24 @@ type Pool @entity(immutable: true) {
     name: String!
     owner: Bytes
     poolType: String!
+    phantomPool: Boolean!
     createTime: BigInt!
+    shareToken: Token!
     swapConfig: SwapConfig!
     globalMetrics: GlobalPoolMetric!
     dailyMetrics: [DailyPoolMetric!] @derivedFrom(field: "pool")
-    tokensList: [Bytes!]!
+    tokenAddresses: [Bytes!]!
     tokens: [PoolToken!]! @derivedFrom(field: "pool") # underlying tokens
+
     tokenWeights: [TokenWeight!]! @derivedFrom(field: "pool")
     weightUpdates: [GradualWeightUpdate!]! @derivedFrom(field: "pool")
+
     userShares: [PoolShares!]! @derivedFrom(field: "pool")
     customPoolData: CustomPoolData
+
+    investments: [PoolInvestmentAction!]! @derivedFrom(field: "pool")
+    swaps: [Swap!]! @derivedFrom(field: "pool")
+    interactions: [PoolInteraction!]! @derivedFrom(field: "pool")
 }
 
 type PoolAddressToId @entity(immutable: true) {
@@ -162,7 +171,8 @@ type Token @entity(immutable: true) {
     name: String!
     decimals: Int!
     symbol: String!
-    tokenPrice: TokenPrice @derivedFrom(field: "token")
+    bpToken: Boolean!
+    tokenPrice: [TokenPrice!]! @derivedFrom(field: "token")
 }
 
 type PoolShares @entity {
@@ -177,6 +187,15 @@ type PoolShares @entity {
     pricePerShare: BigDecimal!
 }
 
+type VaultToken @entity {
+    id: Bytes!
+    vault: Balancer!
+    token: Token!
+    tokenAddress: Bytes!
+    balance: BigDecimal!
+    swapCount: BigInt!
+}
+
 type PoolToken @entity {
     id: Bytes!
     pool: Pool!
@@ -184,7 +203,6 @@ type PoolToken @entity {
     token: Token!
     tokenAddress: Bytes!
     balance: BigDecimal!
-    priceUsd: BigDecimal!
     swapCount: BigInt!
 }
 
@@ -216,7 +234,93 @@ type TokenPrice @entity {
     block: BigInt!
     timestamp: Int!
     priceUSD: BigDecimal!
+    priceRateProvider: PriceRateProvider
 }
+
+type PriceRateProvider @entity {
+    id: Bytes!
+    token: Token!
+    tokenAddress: Bytes!
+    address: Bytes!
+    rate: BigDecimal!
+    lastCached: Int!
+    cacheDuration: Int!
+    cacheExpiry: Int!
+}
+
+interface PoolInteraction {
+    id: ID!
+    pool: Pool!
+    poolId: Bytes!
+    timestamp: Int!
+    sender: Bytes!
+    user: User!
+    userAddress: Bytes!
+    valueUSD: BigDecimal!
+    tx: Bytes!
+}
+
+interface PoolInvestmentAction {
+    id: ID!
+    sender: Bytes!
+    pool: Pool!
+    poolId: Bytes!
+    tokenAddresses: [Bytes!]!
+    amounts: [BigDecimal!]!
+    user: User!
+    userAddress: Bytes!
+    timestamp: Int!
+    valueUSD: BigDecimal!
+    tx: Bytes!
+}
+
+type PoolJoin implements PoolInteraction & PoolInvestmentAction  @entity(immutable: true) {
+    id: ID!
+    sender: Bytes!
+    pool: Pool!
+    poolId: Bytes!
+    tokenAddresses: [Bytes!]!
+    amounts: [BigDecimal!]!
+    user: User!
+    userAddress: Bytes!
+    timestamp: Int!
+    valueUSD: BigDecimal!
+    tx: Bytes!
+}
+
+
+type PoolExit implements PoolInteraction & PoolInvestmentAction  @entity(immutable: true) {
+    id: ID!
+    sender: Bytes!
+    pool: Pool!
+    poolId: Bytes!
+    tokenAddresses: [Bytes!]!
+    amounts: [BigDecimal!]!
+    user: User!
+    userAddress: Bytes!
+    timestamp: Int!
+    valueUSD: BigDecimal!
+    tx: Bytes!
+}
+
+type Swap implements PoolInteraction  @entity(immutable: true) {
+    id: ID!
+    sender: Bytes!
+    pool: Pool!
+    poolId: Bytes!
+    tokenIn: Token!
+    tokenInAddress: Bytes!
+    tokenOut: Token!
+    tokenOutAddress: Bytes!
+    amountIn: BigDecimal!
+    amountOut: BigDecimal!
+    user: User!
+    userAddress: Bytes!
+    valueUSD: BigDecimal!
+    timestamp: Int!
+    tx: Bytes!
+}
+
 
 #type Swap @entity(immutable: true) {
 #    id: ID!

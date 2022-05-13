@@ -5,13 +5,15 @@ import { WeightedPool } from '../types/templates/WeightedPool/WeightedPool';
 import { ethereum } from '@graphprotocol/graph-ts';
 import { Vault } from '../types/Vault/Vault';
 import { VAULT_ADDRESS } from '../mappings/helpers/constants';
-import { getPoolToken } from './pool-token';
+import { createPoolToken } from './pool-token';
 import { scaleDown } from '../mappings/helpers/misc';
 import { getOrCreateGlobalPoolMetrics } from './pool-metrics';
+import { createTokenIfNotExist } from './token';
 
 export function createPool(
   poolAddress: Address,
   poolType: string,
+  phantomPool: boolean,
   customPoolDataId: Bytes | null,
   block: ethereum.Block
 ): Pool {
@@ -26,14 +28,16 @@ export function createPool(
   const vault = getOrCreateVault(block);
 
   const globalMetrics = getOrCreateGlobalPoolMetrics(poolId, block);
-
+  const shareToken = createTokenIfNotExist(Address.fromBytes(poolAddress), true);
   pool.address = poolAddress;
   pool.vault = vault.id;
   pool.name = poolContract.name();
   pool.owner = poolContract.getOwner();
   pool.poolType = poolType;
+  pool.phantomPool = phantomPool;
+  pool.shareToken = shareToken.id;
   pool.createTime = block.timestamp;
-  pool.tokensList = changetype<Bytes[]>(tokensCall.value0);
+  pool.tokenAddresses = changetype<Bytes[]>(tokensCall.value0);
   pool.globalMetrics = globalMetrics.id;
 
   let swapFee = poolContract.getSwapFeePercentage();
@@ -54,7 +58,7 @@ export function createPool(
 
   for (let i: i32 = 0; i < tokensCall.value0.length; i++) {
     // create all underlying token balances
-    getPoolToken(pool.id, tokensCall.value0[i]);
+    createPoolToken(pool.id, tokensCall.value0[i]);
   }
   return pool;
 }

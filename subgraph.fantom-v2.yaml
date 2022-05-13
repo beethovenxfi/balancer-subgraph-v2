@@ -15,7 +15,8 @@ dataSources:
     source:
       address: '0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce'
       abi: Vault
-      startBlock: 17433594
+      startBlock: 19500000
+#      startBlock: 16897287
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -23,6 +24,7 @@ dataSources:
       file: ./src/mappings/vault.ts
       entities:
         - Balancer
+        - VaultToken
         - GlobalVaultMetric
         - Pool
         - PoolToken
@@ -43,6 +45,10 @@ dataSources:
         - User
         - UserInternalBalance
         - TokenPrice
+        - PriceRateProider
+        - PoolJoin
+        - PoolExit
+        - Swap
       abis:
         - name: Vault
           file: ./abis/Vault.json
@@ -67,7 +73,8 @@ dataSources:
     source:
       address: '0x60467cb225092cE0c989361934311175f437Cf53'
       abi: WeightedPoolFactory
-      startBlock: 16897287
+      startBlock: 19500000
+#      startBlock: 16897287
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -95,6 +102,10 @@ dataSources:
         - User
         - UserInternalBalance
         - TokenPrice
+        - PriceRateProider
+        - PoolJoin
+        - PoolExit
+        - Swap
       abis:
         - name: Vault
           file: ./abis/Vault.json
@@ -418,6 +429,10 @@ templates:
         - User
         - UserInternalBalance
         - TokenPrice
+        - PriceRateProider
+        - PoolJoin
+        - PoolExit
+        - Swap
       abis:
         - name: WeightedPool
           file: ./abis/WeightedPool.json

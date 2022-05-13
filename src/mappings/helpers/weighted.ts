@@ -11,7 +11,7 @@ export function updatePoolWeights(poolId: Bytes): void {
 
   let poolContract = WeightedPool.bind(changetype<Address>(pool.address));
 
-  let tokensList = pool.tokensList;
+  let tokensList = pool.tokenAddresses;
   let weightsCall = poolContract.try_getNormalizedWeights();
   if (!weightsCall.reverted) {
     let weights = weightsCall.value;

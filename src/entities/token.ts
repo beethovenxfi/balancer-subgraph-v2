@@ -2,10 +2,9 @@ import { Address } from '@graphprotocol/graph-ts/index';
 import { Token } from '../types/schema';
 import { ERC20 } from '../types/Vault/ERC20';
 
-export function getOrCreateToken(address: Address): Token {
+export function createTokenIfNotExist(address: Address, bpToken: boolean): Token {
   let token = Token.load(address);
-
-  if (token == null) {
+  if (token === null) {
     const erc20token = ERC20.bind(address);
     token = new Token(address);
     token.address = address;
@@ -26,8 +25,12 @@ export function getOrCreateToken(address: Address): Token {
     token.name = name;
     token.symbol = symbol;
     token.decimals = decimals;
+    token.bpToken = bpToken;
     token.save();
   }
-
   return token;
+}
+
+export function loadExistingToken(address: Address): Token {
+  return Token.load(address) as Token;
 }

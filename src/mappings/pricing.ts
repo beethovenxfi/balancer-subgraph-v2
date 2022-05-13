@@ -2,8 +2,8 @@ import { Address, BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/gra
 import { Pool } from '../types/schema';
 import { ONE_BD, PRICING_ASSETS, USD_STABLE_ASSETS, ZERO_BD } from './helpers/constants';
 import { hasVirtualSupply, PoolType } from './helpers/pools';
-import { getPoolToken } from '../entities/pool-token';
-import { createOrGetTokenPrice, getTokenPrice } from '../entities/token-price';
+import { loadExistingPoolToken } from '../entities/pool-token';
+import { getOrCreateTokenPrice, getTokenPrice } from '../entities/token-price';
 import { getOrCreateGlobalVaultMetric } from '../entities/vault-metrics';
 import { getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
 
@@ -14,20 +14,13 @@ export function isPricingAsset(asset: Address): boolean {
   return false;
 }
 
-/**
- *
- * @param poolId
- * @param block
- * @param pricingAsset
- * @param timestamp
- */
 export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block: ethereum.Block): boolean {
   let pool = Pool.load(poolId);
   if (pool == null) return false;
 
-  let tokensList: Bytes[] = pool.tokensList;
+  let tokensList: Bytes[] = pool.tokenAddresses;
   if (tokensList.length < 2) return false;
-  // in case the pool itself is a pricing asset, we don't want to update its liquidity todo: ??
+  // in case the pool itself is a pricing asset, we don't want to update its liquidity
   if (hasVirtualSupply(pool) && pool.address == pricingAsset) return false;
 
   // we first get the total pool value in relation to the pricing asset
@@ -37,7 +30,7 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
   for (let j: i32 = 0; j < tokensList.length; j++) {
     let tokenAddress: Address = Address.fromString(tokensList[j].toHexString());
 
-    const poolToken = getPoolToken(poolId, tokenAddress);
+    const poolToken = loadExistingPoolToken(poolId, tokenAddress);
 
     // the pool token which is the pricing asset can just be added directly
     if (tokenAddress == pricingAsset) {
@@ -105,6 +98,15 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
   // Update pool stats
   globalPoolMetric.totalLiquidity = newPoolLiquidity;
   globalPoolMetric.save();
+
+  // update share token price
+  const sharesTokenPrice = getOrCreateTokenPrice(Address.fromBytes(pool.address), pricingAsset, block);
+  sharesTokenPrice.price = poolValue.div(globalPoolMetric.totalShares);
+  sharesTokenPrice.priceUSD = newPoolLiquidity.div(globalPoolMetric.totalShares);
+  sharesTokenPrice.pricingAsset = pricingAsset;
+  sharesTokenPrice.timestamp = block.timestamp.toI32();
+  sharesTokenPrice.block = block.number;
+  sharesTokenPrice.save();
 
   // todo: snapshots
   // Create or update pool daily snapshot

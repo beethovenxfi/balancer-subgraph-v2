@@ -208,6 +208,7 @@ export function updateLatestPrice(tokenPrice: TokenPrice): void {
   latestPrice.block = tokenPrice.block;
   latestPrice.poolId = tokenPrice.poolId;
   latestPrice.price = tokenPrice.price;
+  latestPrice.priceUSD = tokenPrice.priceUSD;
   latestPrice.save();
 
   let token = getToken(tokenAddress);

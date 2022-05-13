@@ -3,7 +3,7 @@ import { Address, Bytes } from '@graphprotocol/graph-ts';
 import { Pool } from '../../types/schema';
 import { WeightedPool } from '../../types/templates/WeightedPool/WeightedPool';
 import { scaleDown } from './misc';
-import { getTokenWeight } from '../../entities/token-weight';
+import { getOrCreateTokenWeight } from '../../entities/token-weight';
 
 export function updatePoolWeights(poolId: Bytes): void {
   let pool = Pool.load(poolId);
@@ -20,11 +20,9 @@ export function updatePoolWeights(poolId: Bytes): void {
       let tokenAddress = changetype<Address>(tokensList[i]);
       let weight = weights[i];
 
-      const tokenWeight = getTokenWeight(poolId, tokenAddress);
-      if (tokenWeight != null) {
-        tokenWeight.weight = scaleDown(weight, 18);
-        tokenWeight.save();
-      }
+      const tokenWeight = getOrCreateTokenWeight(poolId, tokenAddress);
+      tokenWeight.weight = scaleDown(weight, 18);
+      tokenWeight.save();
     }
   }
 }

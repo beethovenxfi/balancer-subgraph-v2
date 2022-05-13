@@ -1,4 +1,4 @@
-import { BigInt } from '@graphprotocol/graph-ts';
+import { BigInt, log } from '@graphprotocol/graph-ts';
 import { Transfer } from '../types/templates/WeightedPool/BalancerPoolToken';
 import { SwapFeePercentageChanged, WeightedPool } from '../types/templates/WeightedPool/WeightedPool';
 import {
@@ -38,15 +38,16 @@ export function handleSwapEnabledSet(event: SwapEnabledSet): void {
 export function handleGradualWeightUpdateScheduled(event: GradualWeightUpdateScheduled): void {
   let poolAddress = event.address;
 
-  // TODO - refactor so pool -> poolId doesn't require call
-  let poolContract = WeightedPool.bind(poolAddress);
-  let poolIdCall = poolContract.try_getPoolId();
-  let poolId = poolIdCall.value;
-
+  const poolMapping = PoolAddressToId.load(poolAddress);
+  if (poolMapping == null) {
+    log.warning('Pool not found -  handleGradualWeightUpdateScheduled. PoolAddress {}', [poolAddress.toHexString()]);
+    return;
+  }
   // let id = event.transaction.hash.toHexString().concat(event.transactionLogIndex.toString());
   // todo: can we do this with pool id?
-  let weightUpdate = new GradualWeightUpdate(poolId);
-  weightUpdate.pool = poolId;
+  let weightUpdate = new GradualWeightUpdate(poolMapping.poolId);
+  weightUpdate.pool = poolMapping.poolId;
+  weightUpdate.poolId = poolMapping.poolId;
   weightUpdate.scheduledTimestamp = event.block.timestamp.toI32();
   weightUpdate.startTimestamp = event.params.startTime.toI32();
   weightUpdate.endTimestamp = event.params.endTime.toI32();

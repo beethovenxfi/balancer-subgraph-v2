@@ -28,7 +28,11 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
 
   // so we iterate over each pool token and add the balance in relation of the pricing asset
   for (let j: i32 = 0; j < tokensList.length; j++) {
-    let tokenAddress: Address = Address.fromString(tokensList[j].toHexString());
+    let tokenAddress: Address = Address.fromBytes(tokensList[j]);
+    // Exclude virtual supply (phantom bpts) from pool value
+    if (hasVirtualSupply(pool) && pool.address == tokenAddress) {
+      continue;
+    }
 
     const poolToken = loadExistingPoolToken(poolId, tokenAddress);
 
@@ -59,12 +63,7 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
       price = currentTokenInUSD.div(pricingAssetInUSD);
     }
 
-    // Exclude virtual supply from pool value
-    if (hasVirtualSupply(pool) && pool.address == tokenAddress) {
-      continue;
-    }
-
-    if (price) {
+    if (price.gt(BigDecimal.zero())) {
       let poolTokenValue = price.times(poolTokenQuantity);
       poolValue = poolValue.plus(poolTokenValue);
     }

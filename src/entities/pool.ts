@@ -63,6 +63,10 @@ export function createPool(
   return pool;
 }
 
+export function loadExistingPool(poolId: Bytes): Pool {
+  return Pool.load(poolId) as Pool;
+}
+
 export function getPoolByAddress(address: Address): Pool {
   const mapping = PoolAddressToId.load(address);
 

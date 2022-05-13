@@ -313,6 +313,16 @@ export function handleBalanceManage(event: PoolBalanceManaged): void {
  ************** SWAPS ***************
  ************************************/
 export function handleSwapEvent(event: SwapEvent): void {
+  // its possible for 0 amounts given unsupported tokens, see TX: https://ftmscan.com/tx/0x74f1827d45054e794d08ff27fb6205e073fe0a8e600c4415fa03f98bf7deb2c2#eventlog
+  if (event.params.amountIn.equals(BigInt.zero()) || event.params.amountOut.equals(BigInt.zero())) {
+    log.warning('Token amount 0 in swap event: Pool: {}, amountIn {},  amountOut {}', [
+      event.params.poolId.toHexString(),
+      event.params.amountIn.toString(),
+      event.params.amountOut.toString(),
+    ]);
+    return;
+  }
+
   let blockTimestamp = event.block.timestamp.toI32();
   let poolId = event.params.poolId;
 

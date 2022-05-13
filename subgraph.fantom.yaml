@@ -11,12 +11,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Vault
-    network: fantom
+    network: mainnet
     source:
       address: '0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce'
       abi: Vault
-#      startBlock: 17433594
-      startBlock: 28657909
+      startBlock: 17433594
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -53,12 +52,11 @@ dataSources:
           handler: handleInternalBalanceChange
   - kind: ethereum/contract
     name: WeightedPoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x60467cb225092cE0c989361934311175f437Cf53'
       abi: WeightedPoolFactory
-#      startBlock: 16897200
-      startBlock: 28657909
+      startBlock: 16897200
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -81,12 +79,11 @@ dataSources:
           handler: handleNewWeightedPool
   - kind: ethereum/contract
     name: WeightedPool2TokenFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x92b377187bcCC6556FceD2f1e6DAd65850C20630'
       abi: WeightedPoolFactory
-#      startBlock: 16897244
-      startBlock: 28657909
+      startBlock: 16897244
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -109,12 +106,11 @@ dataSources:
           handler: handleNewWeightedPool
   - kind: ethereum/contract
     name: StablePoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x55df810876354Fc3e249f701Dd78DeDE57991F8D'
       abi: StablePoolFactory
-#      startBlock: 16897287
-      startBlock: 28657909
+      startBlock: 16897287
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -137,12 +133,11 @@ dataSources:
           handler: handleNewStablePool
   - kind: ethereum/contract
     name: MetaStablePoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554'
       abi: MetaStablePoolFactory
-#      startBlock: 16898079
-      startBlock: 28657909
+      startBlock: 16898079
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -167,12 +162,11 @@ dataSources:
           handler: handleNewMetaStablePool
   - kind: ethereum/contract
     name: LiquidityBootstrappingPoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x458368B3724B5a1c1057A00b28eB03FEb5b64968'
       abi: LiquidityBootstrappingPoolFactory
-#      startBlock: 16897962
-      startBlock: 28657909
+      startBlock: 16897962
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -197,12 +191,11 @@ dataSources:
           handler: handleNewLiquidityBootstrappingPool
   - kind: ethereum/contract
     name: NoProtocolFeeLiquidityBootstrappingPoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x2C774732c93CE393eC8125bDA49fb3737Ae6F473'
       abi: LiquidityBootstrappingPoolFactory
-#      startBlock: 24906900
-      startBlock: 28657909
+      startBlock: 24906900
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -227,12 +220,11 @@ dataSources:
           handler: handleNewLiquidityBootstrappingPool
   - kind: ethereum/contract
     name: StablePhantomPoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x0E2AFa0b5F9174750d4E84Bf9798f89b79Bd5bF4'
       abi: StablePhantomPoolFactory
-#      startBlock: 28658437
-      startBlock: 28657909
+      startBlock: 28658437
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -257,12 +249,11 @@ dataSources:
           handler: handleNewStablePhantomPool
   - kind: ethereum/contract
     name: YearnLinearPoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x1F73AE6ED391A2b1e84Ff988A1Bb5394B78a4A71'
       abi: LinearPoolFactory
       startBlock: 28657909
-#      startBlock: 28657909
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -285,12 +276,11 @@ dataSources:
           handler: handleNewLinearPool
   - kind: ethereum/contract
     name: BooLinearPoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0xba306e3Cf84751d8Ef5e812C18cAa6C567c783E8'
       abi: LinearPoolFactory
-#      startBlock: 32452165
-      startBlock: 28657909
+      startBlock: 32452165
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -313,12 +303,11 @@ dataSources:
           handler: handleNewLinearPool
   - kind: ethereum/contract
     name: ReaperLinearPoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x80434cF3661313D1a0632f567c1ba389ee2F7665'
       abi: LinearPoolFactory
-#      startBlock: 35348849
-      startBlock: 28657909
+      startBlock: 35348849
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -341,12 +330,11 @@ dataSources:
           handler: handleNewLinearPool
   - kind: ethereum/contract
     name: TarotLinearPoolFactory
-    network: fantom
+    network: mainnet
     source:
       address: '0x681B59C9cbBb6AB43ee3360ac6C34E1Dd2f147e9'
       abi: LinearPoolFactory
-#      startBlock: 36713100
-      startBlock: 28657909
+      startBlock: 36713100
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -370,7 +358,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: WeightedPool
-    network: fantom
+    network: mainnet
     source:
       abi: WeightedPool
     mapping:
@@ -395,7 +383,7 @@ templates:
           handler: handleSwapFeePercentageChange
   - kind: ethereum/contract
     name: StablePool
-    network: fantom
+    network: mainnet
     source:
       abi: StablePool
     mapping:
@@ -426,7 +414,7 @@ templates:
           handler: handleAmpUpdateStopped
   - kind: ethereum/contract
     name: MetaStablePool
-    network: fantom
+    network: mainnet
     source:
       abi: MetaStablePool
     mapping:
@@ -464,7 +452,7 @@ templates:
           handler: handlePriceRateCacheUpdated
   - kind: ethereum/contract
     name: LiquidityBootstrappingPool
-    network: fantom
+    network: mainnet
     source:
       abi: LiquidityBootstrappingPool
     mapping:
@@ -494,7 +482,7 @@ templates:
           handler: handleGradualWeightUpdateScheduled
   - kind: ethereum/contract
     name: StablePhantomPool
-    network: fantom
+    network: mainnet
     source:
       abi: StablePhantomPool
     mapping:
@@ -532,7 +520,7 @@ templates:
           handler: handlePriceRateCacheUpdated
   - kind: ethereum/contract
     name: LinearPool
-    network: fantom
+    network: mainnet
     source:
       abi: LinearPool
     mapping:

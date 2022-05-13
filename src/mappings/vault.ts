@@ -8,7 +8,13 @@ import {
 import { GradualWeightUpdate, Pool, PoolExit, PoolJoin, PoolShares, Swap, SwapConfig } from '../types/schema';
 import { scaleDown, tokenToDecimal } from './helpers/misc';
 import { updatePoolWeights } from './helpers/weighted';
-import { isPricingAsset, swapValueInUSD, updatePoolLiquidity, valueInUSD } from './pricing';
+import {
+  getPreferentialPricingAsset,
+  isPricingAsset,
+  swapValueInUSD,
+  updatePoolLiquidity,
+  valueInUSD,
+} from './pricing';
 import { MIN_VIABLE_LIQUIDITY, ONE_BD, ZERO, ZERO_BD } from './helpers/constants';
 import { isStableLikePool, isVariableWeightPool, PoolType } from './helpers/pools';
 import { updateAmpFactor } from './helpers/stable';
@@ -459,7 +465,6 @@ export function handleSwapEvent(event: SwapEvent): void {
     tokenPrice.timestamp = event.block.timestamp.toI32();
     tokenPrice.block = event.block.number;
     tokenPrice.save();
-    updatePoolLiquidity(poolId, tokenInAddress, event.block);
   }
   if (isPricingAsset(tokenOutAddress) && globalPoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
     const tokenPrice = getOrCreateTokenPrice(tokenInAddress, tokenOutAddress, event.block);
@@ -474,7 +479,7 @@ export function handleSwapEvent(event: SwapEvent): void {
       }
       // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
       // based on the pool's weights and updated balances after the swap.
-      tokenPrice.price = poolTokenOut.balance.div(tokenOutWeight).div(poolTokenIn.balance.div(tokenInWeight));
+      tokenPrice.price = tokenAmountOut.div(tokenOutWeight).div(tokenAmountIn.div(tokenInWeight));
       tokenPrice.save();
     } else {
       // Otherwise we can get a simple measure of the price from the ratio of amount out vs amount in
@@ -484,8 +489,10 @@ export function handleSwapEvent(event: SwapEvent): void {
     tokenPrice.timestamp = event.block.timestamp.toI32();
     tokenPrice.block = event.block.number;
     tokenPrice.save();
-
-    updatePoolLiquidity(poolId, tokenOutAddress, event.block);
+  }
+  const preferentialToken = getPreferentialPricingAsset([tokenInAddress, tokenOutAddress]);
+  if (preferentialToken != Address.zero()) {
+    updatePoolLiquidity(poolId, preferentialToken, event.block);
   }
 
   const swap = new Swap(event.transaction.hash.toHexString().concat(event.logIndex.toString()));

@@ -1,6 +1,6 @@
 import { Address, Bytes, BigInt, BigDecimal } from '@graphprotocol/graph-ts';
 import { Pool, TokenPrice, Balancer, PoolHistoricalLiquidity, LatestPrice } from '../types/schema';
-import { ZERO_BD, PRICING_ASSETS, USD_STABLE_ASSETS, ONE_BD } from './helpers/constants';
+import { ZERO_BD, PRICING_ASSETS, USD_STABLE_ASSETS, ONE_BD, ZERO_ADDRESS } from './helpers/constants';
 import { hasVirtualSupply, PoolType } from './helpers/pools';
 import { createPoolSnapshot, getBalancerSnapshot, getToken, getTokenPriceId, loadPoolToken } from './helpers/misc';
 
@@ -9,6 +9,14 @@ export function isPricingAsset(asset: Address): boolean {
     if (PRICING_ASSETS[i] == asset) return true;
   }
   return false;
+}
+
+export function getPreferentialPricingAsset(assets: Address[]): Address {
+  // Assumes PRICING_ASSETS are sorted by order of preference
+  for (let i: i32 = 0; i < PRICING_ASSETS.length; i++) {
+    if (assets.includes(PRICING_ASSETS[i])) return PRICING_ASSETS[i];
+  }
+  return Address.zero();
 }
 
 export function updatePoolLiquidity(poolId: string, block: BigInt, pricingAsset: Address, timestamp: i32): boolean {
@@ -34,36 +42,35 @@ export function updatePoolLiquidity(poolId: string, block: BigInt, pricingAsset:
     let poolTokenQuantity: BigDecimal = poolToken.balance;
 
     // compare any new token price with the last price
-    let tokenPriceId = getTokenPriceId(poolId, tokenAddress, pricingAsset, block);
-    let tokenPrice = TokenPrice.load(tokenPriceId);
+    // let tokenPriceId = getTokenPriceId(poolId, tokenAddress, pricingAsset, block);
+    // let tokenPrice = TokenPrice.load(tokenPriceId);
     let price: BigDecimal = ZERO_BD;
     let latestPriceId = getLatestPriceId(tokenAddress, pricingAsset);
     let latestPrice = LatestPrice.load(latestPriceId);
 
-    if (tokenPrice == null && latestPrice != null) {
-      price = latestPrice.price;
-    }
     // note that we can only meaningfully report liquidity once assets are traded with
     // the pricing asset
-    if (tokenPrice) {
-      // value in terms of priceableAsset
-      price = tokenPrice.price;
-
-      // Possibly update latest price
-      if (latestPrice == null) {
-        latestPrice = new LatestPrice(latestPriceId);
-        latestPrice.asset = tokenAddress;
-        latestPrice.pricingAsset = pricingAsset;
-      }
-      latestPrice.price = price;
-      latestPrice.priceUSD = tokenPrice.priceUSD;
-      latestPrice.block = block;
-      latestPrice.poolId = poolId;
-      latestPrice.save();
-
-      let token = getToken(tokenAddress);
-      token.latestPrice = latestPrice.id;
-      token.save();
+    // if (tokenPrice) {
+    //   // value in terms of priceableAsset
+    //   price = tokenPrice.price;
+    //
+    //   // Possibly update latest price
+    //   if (latestPrice == null) {
+    //     latestPrice = new LatestPrice(latestPriceId);
+    //     latestPrice.asset = tokenAddress;
+    //     latestPrice.pricingAsset = pricingAsset;
+    //   }
+    //   latestPrice.price = price;
+    //   latestPrice.priceUSD = tokenPrice.priceUSD;
+    //   latestPrice.block = block;
+    //   latestPrice.poolId = poolId;
+    //   latestPrice.save();
+    //
+    //   let token = getToken(tokenAddress);
+    //   token.latestPrice = latestPrice.id;
+    //   token.save();
+    if (latestPrice) {
+      price = latestPrice.price;
     } else if (pool.poolType == PoolType.StablePhantom) {
       // try to estimate token price in terms of pricing asset
       let pricingAssetInUSD = valueInUSD(ONE_BD, pricingAsset);
@@ -81,7 +88,7 @@ export function updatePoolLiquidity(poolId: string, block: BigInt, pricingAsset:
       continue;
     }
 
-    if (price) {
+    if (price.gt(ZERO_BD)) {
       let poolTokenValue = price.times(poolTokenQuantity);
       poolValue = poolValue.plus(poolTokenValue);
     }
@@ -184,4 +191,26 @@ export function isUSDStable(asset: Address): boolean {
     if (USD_STABLE_ASSETS[i] == asset) return true;
   }
   return false;
+}
+export function updateLatestPrice(tokenPrice: TokenPrice): void {
+  let tokenAddress = Address.fromString(tokenPrice.asset.toHexString());
+  let pricingAsset = Address.fromString(tokenPrice.pricingAsset.toHexString());
+
+  let latestPriceId = getLatestPriceId(tokenAddress, pricingAsset);
+  let latestPrice = LatestPrice.load(latestPriceId);
+
+  if (latestPrice == null) {
+    latestPrice = new LatestPrice(latestPriceId);
+    latestPrice.asset = tokenPrice.asset;
+    latestPrice.pricingAsset = tokenPrice.pricingAsset;
+  }
+
+  latestPrice.block = tokenPrice.block;
+  latestPrice.poolId = tokenPrice.poolId;
+  latestPrice.price = tokenPrice.price;
+  latestPrice.save();
+
+  let token = getToken(tokenAddress);
+  token.latestPrice = latestPrice.id;
+  token.save();
 }

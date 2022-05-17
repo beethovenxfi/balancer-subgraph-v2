@@ -2,7 +2,7 @@ import { Pool, PoolAddressToId, SwapConfig } from '../types/schema';
 import { Address, Bytes } from '@graphprotocol/graph-ts/index';
 import { getOrCreateVault } from './vault';
 import { WeightedPool } from '../types/templates/WeightedPool/WeightedPool';
-import { ethereum } from '@graphprotocol/graph-ts';
+import { BigDecimal, ethereum } from '@graphprotocol/graph-ts';
 import { Vault } from '../types/Vault/Vault';
 import { VAULT_ADDRESS } from '../mappings/helpers/constants';
 import { createPoolToken } from './pool-token';
@@ -10,13 +10,7 @@ import { scaleDown } from '../mappings/helpers/misc';
 import { getOrCreateGlobalPoolMetrics } from './pool-metrics';
 import { createTokenIfNotExist } from './token';
 
-export function createPool(
-  poolAddress: Address,
-  poolType: string,
-  phantomPool: boolean,
-  customPoolDataId: Bytes | null,
-  block: ethereum.Block
-): Pool {
+export function createPool(poolAddress: Address, poolType: string, phantomPool: boolean, block: ethereum.Block): Pool {
   const poolContract = WeightedPool.bind(poolAddress);
   const poolId = poolContract.getPoolId();
 
@@ -45,6 +39,7 @@ export function createPool(
   const swapConfig = new SwapConfig(pool.id);
   swapConfig.swapEnabled = true;
   swapConfig.fee = scaleDown(swapFee, 18);
+  swapConfig.managementFee = BigDecimal.zero();
   swapConfig.save();
 
   pool.swapConfig = swapConfig.id;

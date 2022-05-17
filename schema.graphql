@@ -11,8 +11,20 @@ type GlobalVaultMetric @entity {
     startTime: Int!
     totalSwapVolume: BigDecimal!
     totalSwapFee: BigDecimal!
-    totalSwapCount: BigInt!
+    swapCount: BigInt!
     totalLiquidity: BigDecimal!
+}
+
+type DailyVaultMetric @entity {
+    id: Bytes!
+    vault: Balancer!
+    startTime: Int!
+    totalSwapVolume: BigDecimal!
+    totalSwapFee: BigDecimal!
+    addedLiquidity: BigDecimal!
+    removedLiquidity: BigDecimal!
+    swapCount: BigInt!
+    totalTransactions: BigInt!
 }
 
 
@@ -50,7 +62,7 @@ type PoolAddressToId @entity(immutable: true) {
 
 
 interface CustomPoolData {
-    id: Bytes!
+    id: String!
     pool: Pool!
     poolId: Bytes!
 }
@@ -58,6 +70,7 @@ interface CustomPoolData {
 type SwapConfig @entity {
     id: Bytes!
     fee: BigDecimal!
+    managementFee: BigDecimal!
     gradualFeeUpdate: GradualSwapFeeUpdate
     swapEnabled: Boolean!
 }
@@ -78,24 +91,26 @@ type GradualSwapFeeUpdate @entity {
 #}
 
 type StablePoolData implements CustomPoolData @entity(immutable: true) {
-    id: Bytes!
+    id: String!
     pool: Pool!
     poolId: Bytes!
     amp: Amp!
 }
 
 type LinearPoolData implements CustomPoolData @entity(immutable: true) {
-    id: Bytes!
+    id: String!
     pool: Pool!
     poolId: Bytes!
-    lowerTarget: BigDecimal!
-    upperTarget: BigDecimal!
+    mainIndex: Int!
+    wrappedIndex: Int!
+    targets: LinearPoolTarget!
+    priceRateProviders: [PriceRateProvider!] @derivedFrom(field: "poolData")
 }
 
-type LiquidityBootstrappingPoolData implements CustomPoolData @entity(immutable: true) {
+type LinearPoolTarget @entity {
     id: Bytes!
-    pool: Pool!
-    poolId: Bytes!
+    lowerTarget: BigDecimal!
+    upperTarget: BigDecimal!
 }
 
 type TokenWeight @entity {
@@ -131,11 +146,8 @@ type DailyPoolMetric @entity {
     totalSwapFee: BigDecimal!
     addedLiquidity: BigDecimal!
     removedLiquidity: BigDecimal!
-    totalShares: BigDecimal!
     totalTransactions: BigInt!
-#    swaps: [Swap!] @derivedFrom(field: "poolMetric")
-    swapsCount: BigInt!
-#    holdersCount: BigInt!
+    swapCount: BigInt!
 }
 
 type Amp @entity {
@@ -234,13 +246,13 @@ type TokenPrice @entity {
     block: BigInt!
     timestamp: Int!
     priceUSD: BigDecimal!
-    priceRateProvider: PriceRateProvider
 }
 
 type PriceRateProvider @entity {
     id: Bytes!
     token: Token!
     tokenAddress: Bytes!
+    poolData: LinearPoolData!
     address: Bytes!
     rate: BigDecimal!
     lastCached: Int!

@@ -1,6 +1,6 @@
 import { BigInt, log } from '@graphprotocol/graph-ts';
 import { Transfer } from '../types/templates/WeightedPool/BalancerPoolToken';
-import { SwapFeePercentageChanged, WeightedPool } from '../types/templates/WeightedPool/WeightedPool';
+import { SwapFeePercentageChanged } from '../types/templates/WeightedPool/WeightedPool';
 import {
   GradualWeightUpdateScheduled,
   SwapEnabledSet,
@@ -12,13 +12,16 @@ import {
   AmpUpdateStopped,
   PriceRateProviderSet,
 } from '../types/templates/MetaStablePool/MetaStablePool';
-import { GradualWeightUpdate, PoolAddressToId, SwapConfig } from '../types/schema';
+import { GradualAmpUpdate, GradualWeightUpdate, LinearPoolTarget, PoolAddressToId, SwapConfig } from '../types/schema';
 
 import { scaleDown, tokenToDecimal } from './helpers/misc';
-import { ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
+import { ONE_BD, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
 import { getPoolByAddress } from '../entities/pool';
 import { getOrCreatePoolShares } from '../entities/pool-shares';
 import { getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
+import { updateAmpFactor } from './helpers/stable';
+import { getOrCreatePriceRateProvider } from '../entities/price-rate-provider';
+import { PriceRateCacheUpdated } from '../types/templates/LinearPool/MetaStablePool';
 
 /************************************
  *********** SWAP ENABLED ***********
@@ -36,15 +39,11 @@ export function handleSwapEnabledSet(event: SwapEnabledSet): void {
  ************************************/
 
 export function handleGradualWeightUpdateScheduled(event: GradualWeightUpdateScheduled): void {
-  let poolAddress = event.address;
-
-  const poolMapping = PoolAddressToId.load(poolAddress);
+  const poolMapping = PoolAddressToId.load(event.address);
   if (poolMapping == null) {
-    log.warning('Pool not found -  handleGradualWeightUpdateScheduled. PoolAddress {}', [poolAddress.toHexString()]);
+    log.warning('Pool not found -  handleGradualWeightUpdateScheduled. PoolAddress {}', [event.address.toHexString()]);
     return;
   }
-  // let id = event.transaction.hash.toHexString().concat(event.transactionLogIndex.toString());
-  // todo: can we do this with pool id?
   let weightUpdate = new GradualWeightUpdate(poolMapping.poolId);
   weightUpdate.pool = poolMapping.poolId;
   weightUpdate.poolId = poolMapping.poolId;
@@ -61,45 +60,34 @@ export function handleGradualWeightUpdateScheduled(event: GradualWeightUpdateSch
  ************************************/
 
 export function handleAmpUpdateStarted(event: AmpUpdateStarted): void {
-  // let poolAddress = event.address;
-  //
-  // // TODO - refactor so pool -> poolId doesn't require call
-  // let poolContract = WeightedPool.bind(poolAddress);
-  // let poolIdCall = poolContract.try_getPoolId();
-  // let poolId = poolIdCall.value;
-  //
-  // let id = event.transaction.hash.toHexString().concat(event.transactionLogIndex.toString());
-  // let ampUpdate = new AmpUpdate(id);
-  // ampUpdate.poolId = poolId.toHexString();
-  // ampUpdate.scheduledTimestamp = event.block.timestamp.toI32();
-  // ampUpdate.startTimestamp = event.params.startTime.toI32();
-  // ampUpdate.endTimestamp = event.params.endTime.toI32();
-  // ampUpdate.startAmp = event.params.startValue;
-  // ampUpdate.endAmp = event.params.endValue;
-  // ampUpdate.save();
+  const poolMapping = PoolAddressToId.load(event.address);
+  if (poolMapping == null) {
+    log.warning('Pool not found -  handleGradualWeightUpdateScheduled. PoolAddress {}', [event.address.toHexString()]);
+    return;
+  }
+
+  let ampUpdate = GradualAmpUpdate.load(poolMapping.poolId);
+  if (ampUpdate == null) {
+    ampUpdate = new GradualAmpUpdate(poolMapping.poolId);
+  }
+  ampUpdate.poolData = poolMapping.poolId.toHexString();
+  ampUpdate.scheduledTimestamp = event.block.timestamp.toI32();
+  ampUpdate.startTimestamp = event.params.startTime.toI32();
+  ampUpdate.endTimestamp = event.params.endTime.toI32();
+  ampUpdate.startAmp = event.params.startValue;
+  ampUpdate.endAmp = event.params.endValue;
+  ampUpdate.save();
 }
 
 export function handleAmpUpdateStopped(event: AmpUpdateStopped): void {
-  // let poolAddress = event.address;
-  //
-  // // TODO - refactor so pool -> poolId doesn't require call
-  // let poolContract = WeightedPool.bind(poolAddress);
-  // let poolIdCall = poolContract.try_getPoolId();
-  // let poolId = poolIdCall.value.toHexString();
-  //
-  // let id = event.transaction.hash.toHexString().concat(event.transactionLogIndex.toString());
-  // let ampUpdate = new AmpUpdate(id);
-  // ampUpdate.poolId = poolId;
-  // ampUpdate.scheduledTimestamp = event.block.timestamp.toI32();
-  // ampUpdate.startTimestamp = event.block.timestamp.toI32();
-  // ampUpdate.endTimestamp = event.block.timestamp.toI32();
-  // ampUpdate.startAmp = event.params.currentValue;
-  // ampUpdate.endAmp = event.params.currentValue;
-  // ampUpdate.save();
-  //
-  // let pool = Pool.load(poolId);
-  // if (pool == null) return;
-  // updateAmpFactor(pool);
+  const pool = getPoolByAddress(event.address);
+
+  let ampUpdate = GradualAmpUpdate.load(pool.id) as GradualAmpUpdate;
+  ampUpdate.endTimestamp = event.block.timestamp.toI32();
+  ampUpdate.startAmp = event.params.currentValue;
+  ampUpdate.endAmp = event.params.currentValue;
+  ampUpdate.save();
+  updateAmpFactor(pool);
 }
 
 /************************************
@@ -118,17 +106,10 @@ export function handleSwapFeePercentageChange(event: SwapFeePercentageChanged): 
  ************************************/
 
 export function handleManagementFeePercentageChanged(event: ManagementFeePercentageChanged): void {
-  // let poolAddress = event.address;
-  //
-  // // TODO - refactor so pool -> poolId doesn't require call
-  // let poolContract = WeightedPool.bind(poolAddress);
-  // let poolIdCall = poolContract.try_getPoolId();
-  // let poolId = poolIdCall.value;
-  //
-  // let pool = Pool.load(poolId.toHexString()) as Pool;
-  //
-  // pool.managementFee = scaleDown(event.params.managementFeePercentage, 18);
-  // pool.save();
+  const mapping = PoolAddressToId.load(event.address) as PoolAddressToId;
+  const swapConfig = SwapConfig.load(mapping.poolId) as SwapConfig;
+  swapConfig.managementFee = scaleDown(event.params.managementFeePercentage, 18);
+  swapConfig.save();
 }
 
 /************************************
@@ -136,18 +117,16 @@ export function handleManagementFeePercentageChanged(event: ManagementFeePercent
  ************************************/
 
 export function handleTargetsSet(event: TargetsSet): void {
-  // let poolAddress = event.address;
-  //
-  // // TODO - refactor so pool -> poolId doesn't require call
-  // let poolContract = WeightedPool.bind(poolAddress);
-  // let poolIdCall = poolContract.try_getPoolId();
-  // let poolId = poolIdCall.value;
-  //
-  // let pool = Pool.load(poolId.toHexString()) as Pool;
-  //
-  // pool.lowerTarget = tokenToDecimal(event.params.lowerTarget, 18);
-  // pool.upperTarget = tokenToDecimal(event.params.upperTarget, 18);
-  // pool.save();
+  const poolMapping = PoolAddressToId.load(event.address);
+  if (poolMapping == null) {
+    log.warning('Pool not found -  handleGradualWeightUpdateScheduled. PoolAddress {}', [event.address.toHexString()]);
+    return;
+  }
+
+  const target = LinearPoolTarget.load(poolMapping.poolId) as LinearPoolTarget;
+  target.lowerTarget = tokenToDecimal(event.params.lowerTarget, 18);
+  target.upperTarget = tokenToDecimal(event.params.upperTarget, 18);
+  target.save();
 }
 
 /************************************
@@ -156,65 +135,31 @@ export function handleTargetsSet(event: TargetsSet): void {
 
 export function handlePriceRateProviderSet(event: PriceRateProviderSet): void {
   let poolAddress = event.address;
-  //
   const poolMapping = PoolAddressToId.load(poolAddress) as PoolAddressToId;
-  // // TODO - refactor so pool -> poolId doesn't require call
-  // let poolContract = MetaStablePool.bind(poolAddress);
-  // let poolIdCall = poolContract.try_getPoolId();
-  // let poolId = poolIdCall.value;
-  //
   let blockTimestamp = event.block.timestamp.toI32();
-  //
-  // let provider = loadPriceRateProvider(poolId.toHexString(), event.params.token);
 
-  // if (provider == null) {
-  //   // Price rate providers and pooltokens share an ID
-  //   let providerId = getPoolTokenId(poolId.toHexString(), event.params.token);
-  //   provider = new PriceRateProvider(providerId);
-  //   provider.poolId = poolId.toHexString();
-  //   provider.token = providerId;
-  //
-  //   // Default to a rate of one, this should be updated in `handlePriceRateCacheUpdated` immediately
-  //   provider.rate = ONE_BD;
-  //   provider.lastCached = blockTimestamp;
-  //   provider.cacheExpiry = blockTimestamp + event.params.cacheDuration.toI32();
-  // }
-  //
-  // provider.address = event.params.provider;
-  // provider.cacheDuration = event.params.cacheDuration.toI32();
-  //
-  // provider.save();
+  const provider = getOrCreatePriceRateProvider(poolMapping.poolId, event.params.token);
+  provider.poolData = poolMapping.poolId.toHexString();
+  provider.token = event.params.token;
+  provider.tokenAddress = event.params.token;
+  provider.address = event.params.provider;
+  provider.rate = ONE_BD;
+  provider.lastCached = blockTimestamp;
+  provider.cacheExpiry = blockTimestamp + event.params.cacheDuration.toI32();
+  provider.cacheDuration = event.params.cacheDuration.toI32();
+  provider.save();
 }
 
-// export function handlePriceRateCacheUpdated(event: PriceRateCacheUpdated): void {
-//   let poolAddress = event.address;
-//
-//   // TODO - refactor so pool -> poolId doesn't require call
-//   let poolContract = MetaStablePool.bind(poolAddress);
-//   let poolIdCall = poolContract.try_getPoolId();
-//   let poolId = poolIdCall.value;
-//
-//   let provider = loadPriceRateProvider(poolId.toHexString(), event.params.token);
-//   if (provider == null) {
-//     log.warning('Provider not found in handlePriceRateCacheUpdated: {} {}', [
-//       poolId.toHexString(),
-//       event.params.token.toHexString(),
-//     ]);
-//     return;
-//   }
-//
-//   provider.rate = scaleDown(event.params.rate, 18);
-//   provider.lastCached = event.block.timestamp.toI32();
-//   provider.cacheExpiry = event.block.timestamp.toI32() + provider.cacheDuration;
-//
-//   provider.save();
-//
-//   // Attach the rate onto the PoolToken entity as well
-//   let poolToken = loadPoolToken(poolId.toHexString(), event.params.token);
-//   if (poolToken == null) return;
-//   poolToken.priceRate = provider.rate;
-//   poolToken.save();
-// }
+export function handlePriceRateCacheUpdated(event: PriceRateCacheUpdated): void {
+  const poolMapping = PoolAddressToId.load(event.address) as PoolAddressToId;
+  const provider = getOrCreatePriceRateProvider(poolMapping.poolId, event.params.token);
+
+  provider.rate = scaleDown(event.params.rate, 18);
+  provider.lastCached = event.block.timestamp.toI32();
+  provider.cacheExpiry = event.block.timestamp.toI32() + provider.cacheDuration;
+
+  provider.save();
+}
 
 /************************************
  *********** POOL SHARES ************

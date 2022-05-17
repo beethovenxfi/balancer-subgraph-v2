@@ -1,5 +1,5 @@
 import { BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
-import { GlobalPoolMetric } from '../types/schema';
+import { DailyPoolMetric, GlobalPoolMetric } from '../types/schema';
 
 export function getOrCreateGlobalPoolMetrics(poolId: Bytes, block: ethereum.Block): GlobalPoolMetric {
   let globalPoolMetrics = GlobalPoolMetric.load(poolId);
@@ -18,4 +18,26 @@ export function getOrCreateGlobalPoolMetrics(poolId: Bytes, block: ethereum.Bloc
     globalPoolMetrics.save();
   }
   return globalPoolMetrics;
+}
+
+export function getDailyPoolMetric(poolId: Bytes, block: ethereum.Block): DailyPoolMetric {
+  let timestamp = block.timestamp.toI32();
+  const dayId = timestamp / 86400;
+  const id = poolId.concatI32(dayId);
+  let dailyPoolMetric = DailyPoolMetric.load(id);
+
+  if (dailyPoolMetric === null) {
+    dailyPoolMetric = new DailyPoolMetric(id);
+    dailyPoolMetric.startTime = dayId;
+    dailyPoolMetric.pool = poolId;
+    dailyPoolMetric.poolId = poolId;
+    dailyPoolMetric.totalSwapVolume = BigDecimal.zero();
+    dailyPoolMetric.totalSwapFee = BigDecimal.zero();
+    dailyPoolMetric.addedLiquidity = BigDecimal.zero();
+    dailyPoolMetric.removedLiquidity = BigDecimal.zero();
+    dailyPoolMetric.totalTransactions = BigInt.zero();
+    dailyPoolMetric.swapsCount = BigInt.zero();
+    dailyPoolMetric.save();
+  }
+  return dailyPoolMetric;
 }

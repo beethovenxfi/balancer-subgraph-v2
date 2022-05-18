@@ -4,8 +4,8 @@ import { ONE_BD, PRICING_ASSETS, USD_STABLE_ASSETS, ZERO_BD } from './helpers/co
 import { hasVirtualSupply, PoolType } from './helpers/pools';
 import { loadExistingPoolToken } from '../entities/pool-token';
 import { getOrCreateTokenPrice, getTokenPrice } from '../entities/token-price';
-import { getOrCreateGlobalVaultMetric } from '../entities/vault-metrics';
-import { getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
+import { getOrCreateDailyVaultMetric, getOrCreateGlobalVaultMetric } from '../entities/vault-metrics';
+import { getOrCreateDailyPoolMetrics, getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
 
 export function isPricingAsset(asset: Address): boolean {
   for (let i: i32 = 0; i < PRICING_ASSETS.length; i++) {
@@ -106,23 +106,32 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
   globalPoolMetric.totalLiquidity = newPoolLiquidity;
   globalPoolMetric.save();
 
+  const dailyPoolMetric = getOrCreateDailyPoolMetrics(poolId, block);
+  dailyPoolMetric.liquidityChange24h = dailyPoolMetric.liquidityChange24h.plus(liquidityChange);
+  dailyPoolMetric.totalLiquidity = newPoolLiquidity;
+  dailyPoolMetric.save();
+
   // update share token price
   const sharesTokenPrice = getOrCreateTokenPrice(Address.fromBytes(pool.address), pricingAsset, block);
-  sharesTokenPrice.price = poolValue.div(globalPoolMetric.totalShares);
-  sharesTokenPrice.priceUSD = newPoolLiquidity.div(globalPoolMetric.totalShares);
+  sharesTokenPrice.price = globalPoolMetric.totalShares.gt(BigDecimal.zero())
+    ? poolValue.div(globalPoolMetric.totalShares)
+    : BigDecimal.zero();
+  sharesTokenPrice.priceUSD = globalPoolMetric.totalShares.gt(BigDecimal.zero())
+    ? newPoolLiquidity.div(globalPoolMetric.totalShares)
+    : BigDecimal.zero();
   sharesTokenPrice.pricingAsset = pricingAsset;
   sharesTokenPrice.timestamp = block.timestamp.toI32();
   sharesTokenPrice.block = block.number;
   sharesTokenPrice.save();
 
-  // todo: snapshots
-  // Create or update pool daily snapshot
-  // createPoolSnapshot(pool, timestamp);
-
-  // Update global stats
   const globalVaultMetrics = getOrCreateGlobalVaultMetric(block);
   globalVaultMetrics.totalLiquidity = globalVaultMetrics.totalLiquidity.plus(liquidityChange);
   globalVaultMetrics.save();
+
+  const dailyVaultMetrics = getOrCreateDailyVaultMetric(block);
+  dailyVaultMetrics.liquidityChange24h = dailyVaultMetrics.liquidityChange24h.plus(liquidityChange);
+  dailyVaultMetrics.totalLiquidity = globalVaultMetrics.totalLiquidity;
+  dailyVaultMetrics.save();
 
   // let vaultSnapshot = getBalancerSnapshot(vault.id, timestamp);
   // vaultSnapshot.totalLiquidity = vault.totalLiquidity;

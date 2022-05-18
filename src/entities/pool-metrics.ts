@@ -11,8 +11,7 @@ export function getOrCreateGlobalPoolMetrics(poolId: Bytes, block: ethereum.Bloc
     globalPoolMetrics.totalSwapVolume = BigDecimal.zero();
     globalPoolMetrics.totalLiquidity = BigDecimal.zero();
     globalPoolMetrics.totalShares = BigDecimal.zero();
-    globalPoolMetrics.totalTransactions = BigInt.zero();
-    globalPoolMetrics.swapsCount = BigInt.zero();
+    globalPoolMetrics.swapCount = BigInt.zero();
     globalPoolMetrics.totalSwapFee = BigDecimal.zero();
     globalPoolMetrics.holdersCount = BigInt.zero();
     globalPoolMetrics.save();
@@ -20,7 +19,7 @@ export function getOrCreateGlobalPoolMetrics(poolId: Bytes, block: ethereum.Bloc
   return globalPoolMetrics;
 }
 
-export function getDailyPoolMetric(poolId: Bytes, block: ethereum.Block): DailyPoolMetric {
+export function getOrCreateDailyPoolMetrics(poolId: Bytes, block: ethereum.Block): DailyPoolMetric {
   let timestamp = block.timestamp.toI32();
   const dayId = timestamp / 86400;
   const id = poolId.concatI32(dayId);
@@ -28,16 +27,26 @@ export function getDailyPoolMetric(poolId: Bytes, block: ethereum.Block): DailyP
 
   if (dailyPoolMetric === null) {
     dailyPoolMetric = new DailyPoolMetric(id);
-    dailyPoolMetric.startTime = dayId;
+    dailyPoolMetric.day = dayId;
+    dailyPoolMetric.startTime = dayId * 86400;
     dailyPoolMetric.pool = poolId;
     dailyPoolMetric.poolId = poolId;
+    dailyPoolMetric.swapVolume24h = BigDecimal.zero();
+    dailyPoolMetric.swapVolumeChange24h = BigDecimal.zero();
     dailyPoolMetric.totalSwapVolume = BigDecimal.zero();
+    dailyPoolMetric.swapFee24h = BigDecimal.zero();
+    dailyPoolMetric.swapFeeChange24h = BigDecimal.zero();
     dailyPoolMetric.totalSwapFee = BigDecimal.zero();
-    dailyPoolMetric.addedLiquidity = BigDecimal.zero();
-    dailyPoolMetric.removedLiquidity = BigDecimal.zero();
-    dailyPoolMetric.totalTransactions = BigInt.zero();
-    dailyPoolMetric.swapsCount = BigInt.zero();
+    dailyPoolMetric.totalLiquidity = BigDecimal.zero();
+    dailyPoolMetric.liquidityChange24h = BigDecimal.zero();
+    dailyPoolMetric.swapCount24h = BigInt.zero();
+    dailyPoolMetric.totalSwapCount = BigInt.zero();
+    dailyPoolMetric.swapCountChange24h = BigInt.zero();
     dailyPoolMetric.save();
   }
   return dailyPoolMetric;
+}
+
+export function getDailyPoolMetricAtDay(poolId: Bytes, day: i32): DailyPoolMetric | null {
+  return DailyPoolMetric.load(poolId.concatI32(day));
 }

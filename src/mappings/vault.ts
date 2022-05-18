@@ -20,11 +20,19 @@ import { isStableLikePool, isVariableWeightPool, PoolType } from './helpers/pool
 import { updateAmpFactor } from './helpers/stable';
 import { getOrCreateUser } from '../entities/user';
 import { loadExistingToken } from '../entities/token';
-import { getOrCreateGlobalVaultMetric } from '../entities/vault-metrics';
+import {
+  getDailyVaultMetricAtDay,
+  getOrCreateDailyVaultMetric,
+  getOrCreateGlobalVaultMetric,
+} from '../entities/vault-metrics';
 import { loadExistingPoolToken } from '../entities/pool-token';
 import { loadExistingTokenWeight } from '../entities/token-weight';
 import { getOrCreateTokenPrice } from '../entities/token-price';
-import { getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
+import {
+  getDailyPoolMetricAtDay,
+  getOrCreateDailyPoolMetrics,
+  getOrCreateGlobalPoolMetrics,
+} from '../entities/pool-metrics';
 import { getOrCreateVaultToken } from '../entities/vault-token';
 
 /************************************
@@ -396,26 +404,50 @@ export function handleSwapEvent(event: SwapEvent): void {
   // todo: store swaps
   // todo: if phantom pool => store join / exit
 
-  // update pool swapsCount
-  // let pool = Pool.load(poolId.toHex());
   const globalPoolMetric = getOrCreateGlobalPoolMetrics(poolId, event.block);
-  globalPoolMetric.swapsCount = globalPoolMetric.swapsCount.plus(BigInt.fromI32(1));
+  globalPoolMetric.swapCount = globalPoolMetric.swapCount.plus(BigInt.fromI32(1));
   globalPoolMetric.totalSwapVolume = globalPoolMetric.totalSwapVolume.plus(swapValueUSD);
   globalPoolMetric.totalSwapFee = globalPoolMetric.totalSwapFee.plus(swapFeesUSD);
   globalPoolMetric.save();
 
-  // update vault total swap volume
+  const dailyPoolMetric = getOrCreateDailyPoolMetrics(poolId, event.block);
+  const yesterdaysPoolMetric = getDailyPoolMetricAtDay(poolId, dailyPoolMetric.day - 1);
+  dailyPoolMetric.swapCount24h = dailyPoolMetric.swapCount24h.plus(BigInt.fromI32(1));
+  dailyPoolMetric.totalSwapCount = globalPoolMetric.swapCount;
+  dailyPoolMetric.swapVolume24h = dailyPoolMetric.swapVolume24h.plus(swapValueUSD);
+  dailyPoolMetric.totalSwapVolume = globalPoolMetric.totalSwapVolume;
+  dailyPoolMetric.swapFee24h = dailyPoolMetric.swapFee24h.plus(swapFeesUSD);
+  dailyPoolMetric.totalSwapFee = globalPoolMetric.totalSwapFee;
+
+  if (yesterdaysPoolMetric !== null) {
+    dailyPoolMetric.swapCountChange24h = dailyPoolMetric.swapCount24h.minus(yesterdaysPoolMetric.swapCount24h);
+    dailyPoolMetric.swapVolumeChange24h = dailyPoolMetric.swapVolume24h.minus(yesterdaysPoolMetric.swapVolume24h);
+    dailyPoolMetric.swapFeeChange24h = dailyPoolMetric.swapFee24h.minus(yesterdaysPoolMetric.swapFee24h);
+  }
+  dailyPoolMetric.save();
+
   let globalVaultMetric = getOrCreateGlobalVaultMetric(event.block);
   globalVaultMetric.totalSwapVolume = globalVaultMetric.totalSwapVolume.plus(swapValueUSD);
   globalVaultMetric.totalSwapFee = globalVaultMetric.totalSwapFee.plus(swapFeesUSD);
-  globalVaultMetric.totalSwapCount = globalVaultMetric.totalSwapCount.plus(BigInt.fromI32(1));
+  globalVaultMetric.swapCount = globalVaultMetric.swapCount.plus(BigInt.fromI32(1));
   globalVaultMetric.save();
 
-  // let vaultSnapshot = getBalancerSnapshot(globalVaultMetric.id, blockTimestamp);
-  // vaultSnapshot.totalSwapVolume = globalVaultMetric.totalSwapVolume;
-  // vaultSnapshot.totalSwapFee = globalVaultMetric.totalSwapFee;
-  // vaultSnapshot.totalSwapCount = globalVaultMetric.totalSwapCount;
-  // vaultSnapshot.save();
+  const dailyVaultMetric = getOrCreateDailyVaultMetric(event.block);
+  const yesterdaysVaultMetric = getDailyVaultMetricAtDay(dailyVaultMetric.day - 1);
+  dailyVaultMetric.totalSwapVolume = globalVaultMetric.totalSwapVolume;
+  dailyVaultMetric.swapVolume24h = dailyVaultMetric.swapVolume24h.plus(swapValueUSD);
+  dailyVaultMetric.totalSwapFee = globalVaultMetric.totalSwapFee;
+  dailyVaultMetric.swapFee24h = dailyVaultMetric.swapFee24h.plus(swapFeesUSD);
+  dailyVaultMetric.swapCount24h = dailyVaultMetric.swapCount24h.plus(BigInt.fromI32(1));
+  dailyVaultMetric.totalSwapCount = globalVaultMetric.swapCount;
+
+  if (yesterdaysVaultMetric !== null) {
+    dailyVaultMetric.swapVolumeChange24h = dailyVaultMetric.swapVolume24h.minus(yesterdaysVaultMetric.swapVolume24h);
+    dailyVaultMetric.swapFeeChange24h = dailyVaultMetric.swapFee24h.minus(yesterdaysVaultMetric.swapFee24h);
+    dailyVaultMetric.swapCountChange24h = dailyVaultMetric.swapCount24h.minus(yesterdaysVaultMetric.swapCount24h);
+  }
+
+  dailyVaultMetric.save();
 
   const poolTokenIn = loadExistingPoolToken(poolId, tokenInAddress);
   const poolTokenOut = loadExistingPoolToken(poolId, tokenOutAddress);

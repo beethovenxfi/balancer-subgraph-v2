@@ -2,6 +2,7 @@ type Balancer @entity(immutable: true) {
     id: Bytes!
     pools: [Pool!] @derivedFrom(field: "vault")
     globalMetrics: GlobalVaultMetric!
+    dailyMetrics: [DailyVaultMetric!]! @derivedFrom(field: "vault")
     tokens: [VaultToken!]! @derivedFrom(field: "vault")
 }
 
@@ -18,13 +19,19 @@ type GlobalVaultMetric @entity {
 type DailyVaultMetric @entity {
     id: Bytes!
     vault: Balancer!
+    day: Int!
     startTime: Int!
     totalSwapVolume: BigDecimal!
+    swapVolume24h: BigDecimal!
+    swapVolumeChange24h: BigDecimal!
     totalSwapFee: BigDecimal!
-    addedLiquidity: BigDecimal!
-    removedLiquidity: BigDecimal!
-    swapCount: BigInt!
-    totalTransactions: BigInt!
+    swapFee24h: BigDecimal!
+    swapFeeChange24h: BigDecimal!
+    totalLiquidity: BigDecimal!
+    liquidityChange24h: BigDecimal!
+    swapCount24h: BigInt!
+    totalSwapCount: BigInt!
+    swapCountChange24h: BigInt!
 }
 
 
@@ -132,8 +139,7 @@ type GlobalPoolMetric @entity {
     totalLiquidity: BigDecimal!
     totalShares: BigDecimal!
 #    swaps: [Swap!] @derivedFrom(field: "poolMetric")
-    totalTransactions: BigInt!
-    swapsCount: BigInt!
+    swapCount: BigInt!
     holdersCount: BigInt!
 }
 
@@ -141,13 +147,19 @@ type DailyPoolMetric @entity {
     id: Bytes!
     pool: Pool!
     poolId: Bytes!
+    day: Int!
     startTime: Int!
     totalSwapVolume: BigDecimal!
+    swapVolume24h: BigDecimal!
+    swapVolumeChange24h: BigDecimal!
     totalSwapFee: BigDecimal!
-    addedLiquidity: BigDecimal!
-    removedLiquidity: BigDecimal!
-    totalTransactions: BigInt!
-    swapCount: BigInt!
+    swapFee24h: BigDecimal!
+    swapFeeChange24h: BigDecimal!
+    totalLiquidity: BigDecimal!
+    liquidityChange24h: BigDecimal!
+    swapCount24h: BigInt!
+    totalSwapCount: BigInt!
+    swapCountChange24h: BigInt!
 }
 
 type Amp @entity {

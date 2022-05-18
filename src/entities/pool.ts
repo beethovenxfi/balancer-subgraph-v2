@@ -7,7 +7,7 @@ import { Vault } from '../types/Vault/Vault';
 import { VAULT_ADDRESS } from '../mappings/helpers/constants';
 import { createPoolToken } from './pool-token';
 import { scaleDown } from '../mappings/helpers/misc';
-import { getOrCreateGlobalPoolMetrics } from './pool-metrics';
+import { getOrCreateLifetimePoolMetrics } from './pool-metrics';
 import { createTokenIfNotExist } from './token';
 
 export function createPool(poolAddress: Address, poolType: string, phantomPool: boolean, block: ethereum.Block): Pool {
@@ -21,7 +21,7 @@ export function createPool(poolAddress: Address, poolType: string, phantomPool: 
 
   const vault = getOrCreateVault(block);
 
-  const globalMetrics = getOrCreateGlobalPoolMetrics(poolId, block);
+  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(poolId, block);
   const shareToken = createTokenIfNotExist(Address.fromBytes(poolAddress), true);
   pool.address = poolAddress;
   pool.vault = vault.id;
@@ -32,7 +32,7 @@ export function createPool(poolAddress: Address, poolType: string, phantomPool: 
   pool.shareToken = shareToken.id;
   pool.createTime = block.timestamp;
   pool.tokenAddresses = changetype<Bytes[]>(tokensCall.value0);
-  pool.globalMetrics = globalMetrics.id;
+  pool.lifetimeMetrics = lifetimePoolMetric.id;
 
   let swapFee = poolContract.getSwapFeePercentage();
 

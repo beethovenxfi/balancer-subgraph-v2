@@ -15,7 +15,7 @@ import { LinearPool } from '../types/templates/LinearPool/LinearPool';
 import { createPool } from '../entities/pool';
 import { updateAmpFactor } from './helpers/stable';
 import { tokenToDecimal } from './helpers/misc';
-import { getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
+import { getOrCreateLifetimePoolMetrics } from '../entities/pool-metrics';
 
 export function handleNewWeightedPool(event: PoolCreated): void {
   let poolAddress: Address = event.params.pool;
@@ -98,7 +98,7 @@ export function handleNewLinearPool(event: PoolCreated): void {
   linearPoolData.targets = linearPoolTarget.id;
   linearPoolData.save();
 
-  const globalMetrics = getOrCreateGlobalPoolMetrics(pool.id, event.block);
+  const globalMetrics = getOrCreateLifetimePoolMetrics(pool.id, event.block);
   // remove initial minted tokens
   let maxTokenBalance = BigDecimal.fromString('5192296858534827.628530496329220095');
   globalMetrics.totalShares = globalMetrics.totalShares.minus(maxTokenBalance);

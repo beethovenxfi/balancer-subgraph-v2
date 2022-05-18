@@ -1,13 +1,13 @@
-import { DailyVaultMetric, GlobalVaultMetric } from '../types/schema';
+import { DailyVaultMetric, DailyVaultToken, LifetimeVaultMetric } from '../types/schema';
 import { Bytes } from '@graphprotocol/graph-ts/index';
-import { BigDecimal, BigInt, ethereum } from '@graphprotocol/graph-ts';
+import { Address, BigDecimal, BigInt, ethereum } from '@graphprotocol/graph-ts';
 import { vaultId } from './vault';
 
-export function getOrCreateGlobalVaultMetric(block: ethereum.Block): GlobalVaultMetric {
+export function getOrCreateLifetimeVaultMetric(block: ethereum.Block): LifetimeVaultMetric {
   const id = Bytes.fromI32(2);
-  let globalVaultMetric = GlobalVaultMetric.load(id);
+  let globalVaultMetric = LifetimeVaultMetric.load(id);
   if (globalVaultMetric == null) {
-    globalVaultMetric = new GlobalVaultMetric(id);
+    globalVaultMetric = new LifetimeVaultMetric(id);
     globalVaultMetric.vault = Bytes.fromI32(2);
     globalVaultMetric.swapCount = BigInt.zero();
     globalVaultMetric.totalSwapVolume = BigDecimal.zero();
@@ -48,4 +48,24 @@ export function getOrCreateDailyVaultMetric(block: ethereum.Block): DailyVaultMe
 
 export function getDailyVaultMetricAtDay(day: i32): DailyVaultMetric | null {
   return DailyVaultMetric.load(vaultId.concatI32(day));
+}
+
+export function getOrCreateDailyVaultToken(tokenAddress: Address, block: ethereum.Block): DailyVaultToken {
+  let timestamp = block.timestamp.toI32();
+  const dayId = timestamp / 86400;
+  const id = vaultId.concat(tokenAddress).concatI32(dayId);
+  let dailyVaultToken = DailyVaultToken.load(id);
+
+  if (dailyVaultToken === null) {
+    dailyVaultToken = new DailyVaultToken(id);
+    dailyVaultToken.vault = vaultId;
+    dailyVaultToken.day = dayId;
+    dailyVaultToken.startTime = dayId * 86400;
+    dailyVaultToken.token = tokenAddress;
+    dailyVaultToken.tokenAddress = tokenAddress;
+    dailyVaultToken.totalBalance = BigDecimal.zero();
+    dailyVaultToken.balanceChange24h = BigDecimal.zero();
+    dailyVaultToken.save();
+  }
+  return dailyVaultToken;
 }

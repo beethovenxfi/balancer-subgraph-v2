@@ -181,6 +181,17 @@ let linearUsdtAddressByNetwork: AddressByNetwork = {
   fantom: '0x0000000000000000000000000000000000000000',
 };
 
+let linearNativeAddressByNetwork: AddressByNetwork = {
+  mainnet: '0x0000000000000000000000000000000000000000',
+  kovan: '0x0000000000000000000000000000000000000000',
+  goerli: '0x0000000000000000000000000000000000000000',
+  rinkeby: '0x0000000000000000000000000000000000000000',
+  polygon: '0x0000000000000000000000000000000000000000',
+  arbitrum: '0x0000000000000000000000000000000000000000',
+  dev: '0x0000000000000000000000000000000000000000',
+  fantom: '0xc3bf643799237588b7a6b407b3fc028dd4e037d2',
+};
+
 function forNetwork(addressByNetwork: AddressByNetwork, network: string): Address {
   if (network == 'mainnet') {
     return Address.fromString(addressByNetwork.mainnet);
@@ -216,6 +227,7 @@ let ALT_USDT = forNetwork(altUsdtAddressByNetwork, network);
 let LINEAR_DAI = forNetwork(linearDaiAddressByNetwork, network);
 let LINEAR_USDC = forNetwork(linearUsdcAddressByNetwork, network);
 let LINEAR_USDT = forNetwork(linearUsdtAddressByNetwork, network);
+let LINEAR_NATIVE = forNetwork(linearNativeAddressByNetwork, network);
 
 export let PRICING_ASSETS: Address[] = [
   WETH,
@@ -230,5 +242,9 @@ export let PRICING_ASSETS: Address[] = [
   LINEAR_DAI,
   LINEAR_USDC,
   LINEAR_USDT,
+  LINEAR_NATIVE,
 ];
+
+export const NESTED_LINEAR_PRICING_ASSETS: Address[] = [LINEAR_NATIVE];
+
 export let USD_STABLE_ASSETS: Address[] = [USDC, DAI, USDT, ALT_DAI, ALT_USDC, ALT_USDT];

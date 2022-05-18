@@ -25,7 +25,7 @@ dataSources:
       entities:
         - Balancer
         - VaultToken
-        - GlobalVaultMetric
+        - LifetimeVaultMetric
         - Pool
         - PoolToken
         - PoolAddressToId
@@ -36,7 +36,7 @@ dataSources:
         - LinearPoolTarget
         - LiquidityBootstrappingPoolData
         - TokenWeight
-        - GlobalPoolMetric
+        - LifetimePoolMetric
         - DailyPoolMetric
         - Amp
         - GradualAmpUpdate
@@ -50,6 +50,9 @@ dataSources:
         - PoolJoin
         - PoolExit
         - Swap
+        - DailyPoolToken
+        - DailyVaultToken
+        - HourlyTokenPrice
       abis:
         - name: Vault
           file: ./abis/Vault.json

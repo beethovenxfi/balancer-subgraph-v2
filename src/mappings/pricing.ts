@@ -1,11 +1,12 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
-import { Pool } from '../types/schema';
-import { ONE_BD, PRICING_ASSETS, USD_STABLE_ASSETS, ZERO_BD } from './helpers/constants';
+import { NESTED_LINEAR_PRICING_ASSETS, ONE_BD, PRICING_ASSETS, USD_STABLE_ASSETS, ZERO_BD } from './helpers/constants';
 import { hasVirtualSupply, PoolType } from './helpers/pools';
 import { loadExistingPoolToken } from '../entities/pool-token';
 import { getOrCreateTokenPrice, getTokenPrice } from '../entities/token-price';
-import { getOrCreateDailyVaultMetric, getOrCreateGlobalVaultMetric } from '../entities/vault-metrics';
-import { getOrCreateDailyPoolMetrics, getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
+import { getOrCreateDailyVaultMetric, getOrCreateLifetimeVaultMetric } from '../entities/vault-metrics';
+import { getOrCreateDailyPoolMetrics, getOrCreateLifetimePoolMetrics } from '../entities/pool-metrics';
+import { LinearPoolData, Pool } from '../types/schema';
+import { getPoolByAddress } from '../entities/pool';
 
 export function isPricingAsset(asset: Address): boolean {
   for (let i: i32 = 0; i < PRICING_ASSETS.length; i++) {
@@ -77,9 +78,9 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
     }
   }
 
-  const globalPoolMetric = getOrCreateGlobalPoolMetrics(poolId, block);
+  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(poolId, block);
 
-  let oldPoolLiquidity: BigDecimal = globalPoolMetric.totalLiquidity;
+  let oldPoolLiquidity: BigDecimal = lifetimePoolMetric.totalLiquidity;
   let newPoolLiquidity: BigDecimal = valueInUSD(poolValue, pricingAsset) || ZERO_BD;
   let liquidityChange: BigDecimal = newPoolLiquidity.minus(oldPoolLiquidity);
 
@@ -103,8 +104,8 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
   // phl.save();
 
   // Update pool stats
-  globalPoolMetric.totalLiquidity = newPoolLiquidity;
-  globalPoolMetric.save();
+  lifetimePoolMetric.totalLiquidity = newPoolLiquidity;
+  lifetimePoolMetric.save();
 
   const dailyPoolMetric = getOrCreateDailyPoolMetrics(poolId, block);
   dailyPoolMetric.liquidityChange24h = dailyPoolMetric.liquidityChange24h.plus(liquidityChange);
@@ -113,24 +114,24 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
 
   // update share token price
   const sharesTokenPrice = getOrCreateTokenPrice(Address.fromBytes(pool.address), pricingAsset, block);
-  sharesTokenPrice.price = globalPoolMetric.totalShares.gt(BigDecimal.zero())
-    ? poolValue.div(globalPoolMetric.totalShares)
+  sharesTokenPrice.price = lifetimePoolMetric.totalShares.gt(BigDecimal.zero())
+    ? poolValue.div(lifetimePoolMetric.totalShares)
     : BigDecimal.zero();
-  sharesTokenPrice.priceUSD = globalPoolMetric.totalShares.gt(BigDecimal.zero())
-    ? newPoolLiquidity.div(globalPoolMetric.totalShares)
+  sharesTokenPrice.priceUSD = lifetimePoolMetric.totalShares.gt(BigDecimal.zero())
+    ? newPoolLiquidity.div(lifetimePoolMetric.totalShares)
     : BigDecimal.zero();
   sharesTokenPrice.pricingAsset = pricingAsset;
   sharesTokenPrice.timestamp = block.timestamp.toI32();
   sharesTokenPrice.block = block.number;
   sharesTokenPrice.save();
 
-  const globalVaultMetrics = getOrCreateGlobalVaultMetric(block);
-  globalVaultMetrics.totalLiquidity = globalVaultMetrics.totalLiquidity.plus(liquidityChange);
-  globalVaultMetrics.save();
+  const lifetimeVaultMetrics = getOrCreateLifetimeVaultMetric(block);
+  lifetimeVaultMetrics.totalLiquidity = lifetimeVaultMetrics.totalLiquidity.plus(liquidityChange);
+  lifetimeVaultMetrics.save();
 
   const dailyVaultMetrics = getOrCreateDailyVaultMetric(block);
   dailyVaultMetrics.liquidityChange24h = dailyVaultMetrics.liquidityChange24h.plus(liquidityChange);
-  dailyVaultMetrics.totalLiquidity = globalVaultMetrics.totalLiquidity;
+  dailyVaultMetrics.totalLiquidity = lifetimeVaultMetrics.totalLiquidity;
   dailyVaultMetrics.save();
 
   // let vaultSnapshot = getBalancerSnapshot(vault.id, timestamp);
@@ -145,6 +146,15 @@ export function valueInUSD(value: BigDecimal, pricingAsset: Address): BigDecimal
 
   if (isUSDStable(pricingAsset)) {
     usdValue = value;
+  } else if (isNestedLinearPricingAsset(pricingAsset)) {
+    const pool = getPoolByAddress(pricingAsset);
+    const poolData = LinearPoolData.load(pool.id.toHexString()) as LinearPoolData;
+    const underlyingAsset = Address.fromBytes(pool.tokenAddresses[poolData.mainIndex]);
+    const tokenPrice = getTokenPrice(pricingAsset, underlyingAsset);
+    if (tokenPrice === null) {
+      return usdValue;
+    }
+    usdValue = valueInUSD(value.times(tokenPrice.price), underlyingAsset);
   } else {
     // convert to USD
     for (let i: i32 = 0; i < USD_STABLE_ASSETS.length; i++) {
@@ -193,6 +203,13 @@ function getPoolHistoricalLiquidityId(poolId: string, tokenAddress: Address, blo
 export function isUSDStable(asset: Address): boolean {
   for (let i: i32 = 0; i < USD_STABLE_ASSETS.length; i++) {
     if (USD_STABLE_ASSETS[i] == asset) return true;
+  }
+  return false;
+}
+
+function isNestedLinearPricingAsset(asset: Address): boolean {
+  for (let i: i32 = 0; i < NESTED_LINEAR_PRICING_ASSETS.length; i++) {
+    if (NESTED_LINEAR_PRICING_ASSETS[i] == asset) return true;
   }
   return false;
 }

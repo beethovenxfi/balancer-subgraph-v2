@@ -18,7 +18,7 @@ import { scaleDown, tokenToDecimal } from './helpers/misc';
 import { ONE_BD, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
 import { getPoolByAddress } from '../entities/pool';
 import { getOrCreatePoolShares } from '../entities/pool-shares';
-import { getOrCreateGlobalPoolMetrics } from '../entities/pool-metrics';
+import { getOrCreateLifetimePoolMetrics } from '../entities/pool-metrics';
 import { updateAmpFactor } from './helpers/stable';
 import { getOrCreatePriceRateProvider } from '../entities/price-rate-provider';
 import { PriceRateCacheUpdated } from '../types/templates/LinearPool/MetaStablePool';
@@ -171,7 +171,7 @@ export function handleTransfer(event: Transfer): void {
   let isMint = event.params.from.toHex() == ZERO_ADDRESS;
   let isBurn = event.params.to.toHex() == ZERO_ADDRESS;
 
-  const globalPoolMetrics = getOrCreateGlobalPoolMetrics(pool.id, event.block);
+  const globalPoolMetrics = getOrCreateLifetimePoolMetrics(pool.id, event.block);
 
   let BPT_DECIMALS = 18;
 

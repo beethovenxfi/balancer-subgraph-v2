@@ -23,15 +23,17 @@ import { loadExistingToken } from '../entities/token';
 import {
   getDailyVaultMetricAtDay,
   getOrCreateDailyVaultMetric,
-  getOrCreateGlobalVaultMetric,
+  getOrCreateDailyVaultToken,
+  getOrCreateLifetimeVaultMetric,
 } from '../entities/vault-metrics';
 import { loadExistingPoolToken } from '../entities/pool-token';
 import { loadExistingTokenWeight } from '../entities/token-weight';
-import { getOrCreateTokenPrice } from '../entities/token-price';
+import { getOrCreateHourlyTokenPrice, getOrCreateTokenPrice } from '../entities/token-price';
 import {
   getDailyPoolMetricAtDay,
   getOrCreateDailyPoolMetrics,
-  getOrCreateGlobalPoolMetrics,
+  getOrCreateDailyPoolToken,
+  getOrCreateLifetimePoolMetrics,
 } from '../entities/pool-metrics';
 import { getOrCreateVaultToken } from '../entities/vault-token';
 
@@ -404,20 +406,20 @@ export function handleSwapEvent(event: SwapEvent): void {
   // todo: store swaps
   // todo: if phantom pool => store join / exit
 
-  const globalPoolMetric = getOrCreateGlobalPoolMetrics(poolId, event.block);
-  globalPoolMetric.swapCount = globalPoolMetric.swapCount.plus(BigInt.fromI32(1));
-  globalPoolMetric.totalSwapVolume = globalPoolMetric.totalSwapVolume.plus(swapValueUSD);
-  globalPoolMetric.totalSwapFee = globalPoolMetric.totalSwapFee.plus(swapFeesUSD);
-  globalPoolMetric.save();
+  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(poolId, event.block);
+  lifetimePoolMetric.swapCount = lifetimePoolMetric.swapCount.plus(BigInt.fromI32(1));
+  lifetimePoolMetric.totalSwapVolume = lifetimePoolMetric.totalSwapVolume.plus(swapValueUSD);
+  lifetimePoolMetric.totalSwapFee = lifetimePoolMetric.totalSwapFee.plus(swapFeesUSD);
+  lifetimePoolMetric.save();
 
   const dailyPoolMetric = getOrCreateDailyPoolMetrics(poolId, event.block);
   const yesterdaysPoolMetric = getDailyPoolMetricAtDay(poolId, dailyPoolMetric.day - 1);
   dailyPoolMetric.swapCount24h = dailyPoolMetric.swapCount24h.plus(BigInt.fromI32(1));
-  dailyPoolMetric.totalSwapCount = globalPoolMetric.swapCount;
+  dailyPoolMetric.totalSwapCount = lifetimePoolMetric.swapCount;
   dailyPoolMetric.swapVolume24h = dailyPoolMetric.swapVolume24h.plus(swapValueUSD);
-  dailyPoolMetric.totalSwapVolume = globalPoolMetric.totalSwapVolume;
+  dailyPoolMetric.totalSwapVolume = lifetimePoolMetric.totalSwapVolume;
   dailyPoolMetric.swapFee24h = dailyPoolMetric.swapFee24h.plus(swapFeesUSD);
-  dailyPoolMetric.totalSwapFee = globalPoolMetric.totalSwapFee;
+  dailyPoolMetric.totalSwapFee = lifetimePoolMetric.totalSwapFee;
 
   if (yesterdaysPoolMetric !== null) {
     dailyPoolMetric.swapCountChange24h = dailyPoolMetric.swapCount24h.minus(yesterdaysPoolMetric.swapCount24h);
@@ -426,20 +428,20 @@ export function handleSwapEvent(event: SwapEvent): void {
   }
   dailyPoolMetric.save();
 
-  let globalVaultMetric = getOrCreateGlobalVaultMetric(event.block);
-  globalVaultMetric.totalSwapVolume = globalVaultMetric.totalSwapVolume.plus(swapValueUSD);
-  globalVaultMetric.totalSwapFee = globalVaultMetric.totalSwapFee.plus(swapFeesUSD);
-  globalVaultMetric.swapCount = globalVaultMetric.swapCount.plus(BigInt.fromI32(1));
-  globalVaultMetric.save();
+  let lifetimeVaultMetricVaultMetric = getOrCreateLifetimeVaultMetric(event.block);
+  lifetimeVaultMetricVaultMetric.totalSwapVolume = lifetimeVaultMetricVaultMetric.totalSwapVolume.plus(swapValueUSD);
+  lifetimeVaultMetricVaultMetric.totalSwapFee = lifetimeVaultMetricVaultMetric.totalSwapFee.plus(swapFeesUSD);
+  lifetimeVaultMetricVaultMetric.swapCount = lifetimeVaultMetricVaultMetric.swapCount.plus(BigInt.fromI32(1));
+  lifetimeVaultMetricVaultMetric.save();
 
   const dailyVaultMetric = getOrCreateDailyVaultMetric(event.block);
   const yesterdaysVaultMetric = getDailyVaultMetricAtDay(dailyVaultMetric.day - 1);
-  dailyVaultMetric.totalSwapVolume = globalVaultMetric.totalSwapVolume;
+  dailyVaultMetric.totalSwapVolume = lifetimeVaultMetricVaultMetric.totalSwapVolume;
   dailyVaultMetric.swapVolume24h = dailyVaultMetric.swapVolume24h.plus(swapValueUSD);
-  dailyVaultMetric.totalSwapFee = globalVaultMetric.totalSwapFee;
+  dailyVaultMetric.totalSwapFee = lifetimeVaultMetricVaultMetric.totalSwapFee;
   dailyVaultMetric.swapFee24h = dailyVaultMetric.swapFee24h.plus(swapFeesUSD);
   dailyVaultMetric.swapCount24h = dailyVaultMetric.swapCount24h.plus(BigInt.fromI32(1));
-  dailyVaultMetric.totalSwapCount = globalVaultMetric.swapCount;
+  dailyVaultMetric.totalSwapCount = lifetimeVaultMetricVaultMetric.swapCount;
 
   if (yesterdaysVaultMetric !== null) {
     dailyVaultMetric.swapVolumeChange24h = dailyVaultMetric.swapVolume24h.minus(yesterdaysVaultMetric.swapVolume24h);
@@ -478,8 +480,28 @@ export function handleSwapEvent(event: SwapEvent): void {
   vaultTokenIn.swapCount = vaultTokenOut.swapCount.plus(BigInt.fromI32(1));
   vaultTokenOut.save();
 
+  const dailyVaultTokenIn = getOrCreateDailyVaultToken(tokenInAddress, event.block);
+  dailyVaultTokenIn.totalBalance = vaultTokenIn.balance;
+  dailyVaultTokenIn.balanceChange24h = dailyVaultTokenIn.balanceChange24h.plus(tokenAmountIn);
+  dailyVaultTokenIn.save();
+
+  const dailyVaultTokenOut = getOrCreateDailyVaultToken(tokenOutAddress, event.block);
+  dailyVaultTokenOut.totalBalance = vaultTokenOut.balance;
+  dailyVaultTokenOut.balanceChange24h = dailyVaultTokenOut.balanceChange24h.minus(tokenAmountOut);
+  dailyVaultTokenOut.save();
+
+  const dailyPoolTokenIn = getOrCreateDailyPoolToken(poolId, tokenInAddress, event.block);
+  dailyPoolTokenIn.totalBalance = poolTokenIn.balance;
+  dailyPoolTokenIn.balanceChange24h = dailyPoolTokenIn.balanceChange24h.plus(tokenAmountIn);
+  dailyPoolTokenIn.save();
+
+  const dailyPoolTokenOut = getOrCreateDailyPoolToken(poolId, tokenOutAddress, event.block);
+  dailyPoolTokenOut.totalBalance = poolTokenOut.balance;
+  dailyPoolTokenOut.balanceChange24h = dailyPoolTokenOut.balanceChange24h.minus(tokenAmountOut);
+  dailyPoolTokenOut.save();
+
   // Capture price
-  if (isPricingAsset(tokenInAddress) && globalPoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
+  if (isPricingAsset(tokenInAddress) && lifetimePoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
     // todo: do we need TokenPrice or can we just use latest price?
     const tokenPrice = getOrCreateTokenPrice(tokenOutAddress, tokenInAddress, event.block);
     tokenPrice.amount = tokenAmountIn;
@@ -507,8 +529,19 @@ export function handleSwapEvent(event: SwapEvent): void {
     tokenPrice.timestamp = event.block.timestamp.toI32();
     tokenPrice.block = event.block.number;
     tokenPrice.save();
+
+    const hourlyTokenOutPrice = getOrCreateHourlyTokenPrice(tokenOutAddress, event.block);
+    hourlyTokenOutPrice.endPriceUSD = tokenPrice.priceUSD;
+    hourlyTokenOutPrice.avgPriceUSD = hourlyTokenOutPrice.avgPriceUSD
+      .times(hourlyTokenOutPrice.dataPoints)
+      .plus(tokenPrice.priceUSD)
+      .div(hourlyTokenOutPrice.dataPoints.plus(ONE_BD));
+    hourlyTokenOutPrice.dataPoints = hourlyTokenOutPrice.dataPoints.plus(ONE_BD);
+    hourlyTokenOutPrice.dailyPoolToken = dailyPoolTokenOut.id;
+    hourlyTokenOutPrice.dailyVaultToken = dailyVaultTokenOut.id;
+    hourlyTokenOutPrice.save();
   }
-  if (isPricingAsset(tokenOutAddress) && globalPoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
+  if (isPricingAsset(tokenOutAddress) && lifetimePoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
     const tokenPrice = getOrCreateTokenPrice(tokenInAddress, tokenOutAddress, event.block);
     //tokenPrice.poolTokenId = getPoolTokenId(poolId, tokenInAddress);
     tokenPrice.amount = tokenAmountOut;
@@ -531,6 +564,17 @@ export function handleSwapEvent(event: SwapEvent): void {
     tokenPrice.timestamp = event.block.timestamp.toI32();
     tokenPrice.block = event.block.number;
     tokenPrice.save();
+
+    const hourlyTokenInPrice = getOrCreateHourlyTokenPrice(tokenInAddress, event.block);
+    hourlyTokenInPrice.endPriceUSD = tokenPrice.priceUSD;
+    hourlyTokenInPrice.avgPriceUSD = hourlyTokenInPrice.avgPriceUSD
+      .times(hourlyTokenInPrice.dataPoints)
+      .plus(tokenPrice.priceUSD)
+      .div(hourlyTokenInPrice.dataPoints.plus(ONE_BD));
+    hourlyTokenInPrice.dataPoints = hourlyTokenInPrice.dataPoints.plus(ONE_BD);
+    hourlyTokenInPrice.dailyPoolToken = dailyPoolTokenIn.id;
+    hourlyTokenInPrice.dailyVaultToken = dailyVaultTokenIn.id;
+    hourlyTokenInPrice.save();
   }
   const preferentialToken = getPreferentialPricingAsset([tokenInAddress, tokenOutAddress]);
   if (preferentialToken != Address.zero()) {

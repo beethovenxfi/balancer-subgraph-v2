@@ -1,10 +1,10 @@
-import { BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
-import { DailyPoolMetric, GlobalPoolMetric } from '../types/schema';
+import { Address, BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
+import { DailyPoolMetric, DailyPoolToken, LifetimePoolMetric } from '../types/schema';
 
-export function getOrCreateGlobalPoolMetrics(poolId: Bytes, block: ethereum.Block): GlobalPoolMetric {
-  let globalPoolMetrics = GlobalPoolMetric.load(poolId);
+export function getOrCreateLifetimePoolMetrics(poolId: Bytes, block: ethereum.Block): LifetimePoolMetric {
+  let globalPoolMetrics = LifetimePoolMetric.load(poolId);
   if (globalPoolMetrics == null) {
-    globalPoolMetrics = new GlobalPoolMetric(poolId);
+    globalPoolMetrics = new LifetimePoolMetric(poolId);
     globalPoolMetrics.pool = poolId;
     globalPoolMetrics.poolId = poolId;
     globalPoolMetrics.startTime = block.timestamp.toI32();
@@ -49,4 +49,24 @@ export function getOrCreateDailyPoolMetrics(poolId: Bytes, block: ethereum.Block
 
 export function getDailyPoolMetricAtDay(poolId: Bytes, day: i32): DailyPoolMetric | null {
   return DailyPoolMetric.load(poolId.concatI32(day));
+}
+
+export function getOrCreateDailyPoolToken(poolId: Bytes, tokenAddress: Address, block: ethereum.Block): DailyPoolToken {
+  let timestamp = block.timestamp.toI32();
+  const dayId = timestamp / 86400;
+  const id = poolId.concat(tokenAddress).concatI32(dayId);
+  let dailyPoolToken = DailyPoolToken.load(id);
+  if (dailyPoolToken === null) {
+    dailyPoolToken = new DailyPoolToken(id);
+    dailyPoolToken.pool = poolId;
+    dailyPoolToken.poolId = poolId;
+    dailyPoolToken.day = dayId;
+    dailyPoolToken.startTime = dayId * 86400;
+    dailyPoolToken.token = tokenAddress;
+    dailyPoolToken.tokenAddress = tokenAddress;
+    dailyPoolToken.totalBalance = BigDecimal.zero();
+    dailyPoolToken.balanceChange24h = BigDecimal.zero();
+    dailyPoolToken.save();
+  }
+  return dailyPoolToken;
 }

@@ -1,18 +1,14 @@
 import { Address } from '@graphprotocol/graph-ts/index';
-import { TokenPrice } from '../types/schema';
+import { HourlyTokenPrice, TokenPrice } from '../types/schema';
 import { BigDecimal, ethereum } from '@graphprotocol/graph-ts';
 
-export function getOrCreateTokenPrice(
-  tokenAddress: Address,
-  stableTokenAddress: Address,
-  block: ethereum.Block
-): TokenPrice {
-  let tokenPrice = TokenPrice.load(tokenAddress.concat(stableTokenAddress));
+export function getOrCreateTokenPrice(tokenAddress: Address, pricingAsset: Address, block: ethereum.Block): TokenPrice {
+  let tokenPrice = TokenPrice.load(tokenAddress.concat(pricingAsset));
   if (tokenPrice == null) {
-    tokenPrice = new TokenPrice(tokenAddress.concat(stableTokenAddress));
+    tokenPrice = new TokenPrice(tokenAddress.concat(pricingAsset));
     tokenPrice.tokenAddress = tokenAddress;
     tokenPrice.token = tokenAddress;
-    tokenPrice.pricingAsset = stableTokenAddress;
+    tokenPrice.pricingAsset = pricingAsset;
     tokenPrice.price = BigDecimal.zero();
     tokenPrice.amount = BigDecimal.zero();
     tokenPrice.priceUSD = BigDecimal.zero();
@@ -24,6 +20,25 @@ export function getOrCreateTokenPrice(
   return tokenPrice;
 }
 
-export function getTokenPrice(tokenAddress: Address, stableTokenAddress: Address): TokenPrice | null {
-  return TokenPrice.load(tokenAddress.concat(stableTokenAddress));
+export function getTokenPrice(tokenAddress: Address, pricingAsset: Address): TokenPrice | null {
+  return TokenPrice.load(tokenAddress.concat(pricingAsset));
+}
+
+export function getOrCreateHourlyTokenPrice(tokenAddress: Address, block: ethereum.Block): HourlyTokenPrice {
+  let timestamp = block.timestamp.toI32();
+  const hourId = timestamp / 3600;
+  const id = tokenAddress.concatI32(hourId);
+  let hourlyTokenPrice = HourlyTokenPrice.load(id);
+  if (hourlyTokenPrice == null) {
+    hourlyTokenPrice = new HourlyTokenPrice(id);
+    hourlyTokenPrice.tokenAddress = tokenAddress;
+    hourlyTokenPrice.token = tokenAddress;
+    hourlyTokenPrice.hour = hourId;
+    hourlyTokenPrice.startTime = hourId * 3600;
+    hourlyTokenPrice.avgPriceUSD = BigDecimal.zero();
+    hourlyTokenPrice.endPriceUSD = BigDecimal.zero();
+    hourlyTokenPrice.dataPoints = BigDecimal.zero();
+    hourlyTokenPrice.save();
+  }
+  return hourlyTokenPrice;
 }

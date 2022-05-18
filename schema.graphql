@@ -1,12 +1,13 @@
 type Balancer @entity(immutable: true) {
     id: Bytes!
     pools: [Pool!] @derivedFrom(field: "vault")
-    globalMetrics: GlobalVaultMetric!
+    lifetimeMetrics: LifetimeVaultMetric!
     dailyMetrics: [DailyVaultMetric!]! @derivedFrom(field: "vault")
     tokens: [VaultToken!]! @derivedFrom(field: "vault")
+    dailyTokens: [DailyVaultToken!]! @derivedFrom(field: "vault")
 }
 
-type GlobalVaultMetric @entity {
+type LifetimeVaultMetric @entity {
     id: Bytes!
     vault: Balancer!
     startTime: Int!
@@ -34,6 +35,31 @@ type DailyVaultMetric @entity {
     swapCountChange24h: BigInt!
 }
 
+type DailyVaultToken @entity {
+    id: Bytes!
+    vault: Balancer!
+    day: Int!
+    startTime: Int!
+    token: Token!
+    tokenAddress: Bytes!
+    totalBalance: BigDecimal!
+    balanceChange24h: BigDecimal!
+    tokenPrices: [HourlyTokenPrice!]! @derivedFrom(field: "dailyVaultToken")
+}
+
+type HourlyTokenPrice @entity {
+    id: Bytes!
+    token: Token!
+    tokenAddress: Bytes!
+    dailyVaultToken: DailyVaultToken
+    dailyPoolToken: DailyPoolToken
+    hour: Int!
+    startTime: Int!
+    avgPriceUSD: BigDecimal!
+    endPriceUSD: BigDecimal!
+    dataPoints: BigDecimal!
+}
+
 
 type Pool @entity(immutable: true) {
     id: Bytes!
@@ -46,10 +72,11 @@ type Pool @entity(immutable: true) {
     createTime: BigInt!
     shareToken: Token!
     swapConfig: SwapConfig!
-    globalMetrics: GlobalPoolMetric!
+    lifetimeMetrics: LifetimePoolMetric!
     dailyMetrics: [DailyPoolMetric!] @derivedFrom(field: "pool")
     tokenAddresses: [Bytes!]!
     tokens: [PoolToken!]! @derivedFrom(field: "pool") # underlying tokens
+    dailyTokens: [DailyPoolToken!] @derivedFrom(field: "pool")
 
     tokenWeights: [TokenWeight!]! @derivedFrom(field: "pool")
     weightUpdates: [GradualWeightUpdate!]! @derivedFrom(field: "pool")
@@ -129,7 +156,7 @@ type TokenWeight @entity {
     weight: BigDecimal!
 }
 
-type GlobalPoolMetric @entity {
+type LifetimePoolMetric @entity {
     id: Bytes!
     pool: Pool!
     poolId: Bytes!
@@ -160,6 +187,19 @@ type DailyPoolMetric @entity {
     swapCount24h: BigInt!
     totalSwapCount: BigInt!
     swapCountChange24h: BigInt!
+}
+
+type DailyPoolToken @entity {
+    id: Bytes!
+    pool: Pool!
+    poolId: Bytes!
+    day: Int!
+    startTime: Int!
+    token: Token!
+    tokenAddress: Bytes!
+    totalBalance: BigDecimal!
+    balanceChange24h: BigDecimal!
+    tokenPrices: [HourlyTokenPrice!]! @derivedFrom(field: "dailyPoolToken")
 }
 
 type Amp @entity {

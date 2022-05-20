@@ -15,6 +15,7 @@ export function getOrCreatePriceRateProvider(poolId: Bytes, tokenAddress: Addres
     priceRateProvider.lastCached = 0;
     priceRateProvider.cacheDuration = 0;
     priceRateProvider.cacheExpiry = 0;
+    priceRateProvider.poolData = poolId.toHexString();
     priceRateProvider.save();
   }
   return priceRateProvider;

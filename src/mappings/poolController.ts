@@ -12,7 +12,14 @@ import {
   AmpUpdateStopped,
   PriceRateProviderSet,
 } from '../types/templates/MetaStablePool/MetaStablePool';
-import { GradualAmpUpdate, GradualWeightUpdate, LinearPoolTarget, PoolAddressToId, SwapConfig } from '../types/schema';
+import {
+  GradualAmpUpdate,
+  GradualWeightUpdate,
+  LinearPoolTarget,
+  Pool,
+  PoolAddressToId,
+  SwapConfig,
+} from '../types/schema';
 
 import { scaleDown, tokenToDecimal } from './helpers/misc';
 import { ONE_BD, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
@@ -28,7 +35,11 @@ import { PriceRateCacheUpdated } from '../types/templates/LinearPool/MetaStableP
  ************************************/
 
 export function handleSwapEnabledSet(event: SwapEnabledSet): void {
-  const mapping = PoolAddressToId.load(event.address) as PoolAddressToId;
+  const mapping = PoolAddressToId.load(event.address);
+  if (mapping == null) {
+    log.warning('Pool not found - handleSwapEnabledSet. PoolAddress {}', [event.address.toHexString()]);
+    return;
+  }
   const config = SwapConfig.load(mapping.poolId) as SwapConfig;
   config.swapEnabled = event.params.swapEnabled;
   config.save();
@@ -80,14 +91,22 @@ export function handleAmpUpdateStarted(event: AmpUpdateStarted): void {
 }
 
 export function handleAmpUpdateStopped(event: AmpUpdateStopped): void {
-  const pool = getPoolByAddress(event.address);
+  const poolMapping = PoolAddressToId.load(event.address);
+  if (poolMapping == null) {
+    log.warning('Pool not found -  handleGradualWeightUpdateScheduled. PoolAddress {}', [event.address.toHexString()]);
+    return;
+  }
 
-  let ampUpdate = GradualAmpUpdate.load(pool.id) as GradualAmpUpdate;
+  let ampUpdate = GradualAmpUpdate.load(poolMapping.poolId);
+  if (ampUpdate === null) {
+    log.warning('Amp update not found - handleAmpUPdateStopped. PoolAddress {}', [event.address.toHexString()]);
+    return;
+  }
   ampUpdate.endTimestamp = event.block.timestamp.toI32();
   ampUpdate.startAmp = event.params.currentValue;
   ampUpdate.endAmp = event.params.currentValue;
   ampUpdate.save();
-  updateAmpFactor(pool);
+  updateAmpFactor(Pool.load(poolMapping.poolId) as Pool);
 }
 
 /************************************
@@ -95,7 +114,11 @@ export function handleAmpUpdateStopped(event: AmpUpdateStopped): void {
  ************************************/
 
 export function handleSwapFeePercentageChange(event: SwapFeePercentageChanged): void {
-  const mapping = PoolAddressToId.load(event.address) as PoolAddressToId;
+  const mapping = PoolAddressToId.load(event.address);
+  if (mapping == null) {
+    log.warning('Pool not found - handleSwapFeePercentageChange. PoolAddress {}', [event.address.toHexString()]);
+    return;
+  }
   const swapConfig = SwapConfig.load(mapping.poolId) as SwapConfig;
   swapConfig.fee = scaleDown(event.params.swapFeePercentage, 18);
   swapConfig.save();
@@ -106,7 +129,11 @@ export function handleSwapFeePercentageChange(event: SwapFeePercentageChanged): 
  ************************************/
 
 export function handleManagementFeePercentageChanged(event: ManagementFeePercentageChanged): void {
-  const mapping = PoolAddressToId.load(event.address) as PoolAddressToId;
+  const mapping = PoolAddressToId.load(event.address);
+  if (mapping == null) {
+    log.warning('Pool not found - handleManagementFeePercentageChange. PoolAddress {}', [event.address.toHexString()]);
+    return;
+  }
   const swapConfig = SwapConfig.load(mapping.poolId) as SwapConfig;
   swapConfig.managementFee = scaleDown(event.params.managementFeePercentage, 18);
   swapConfig.save();
@@ -119,7 +146,7 @@ export function handleManagementFeePercentageChanged(event: ManagementFeePercent
 export function handleTargetsSet(event: TargetsSet): void {
   const poolMapping = PoolAddressToId.load(event.address);
   if (poolMapping == null) {
-    log.warning('Pool not found -  handleGradualWeightUpdateScheduled. PoolAddress {}', [event.address.toHexString()]);
+    log.warning('Pool not found - handleTargetsSet. PoolAddress {}', [event.address.toHexString()]);
     return;
   }
 
@@ -134,8 +161,11 @@ export function handleTargetsSet(event: TargetsSet): void {
  ************************************/
 
 export function handlePriceRateProviderSet(event: PriceRateProviderSet): void {
-  let poolAddress = event.address;
-  const poolMapping = PoolAddressToId.load(poolAddress) as PoolAddressToId;
+  const poolMapping = PoolAddressToId.load(event.address);
+  if (poolMapping == null) {
+    log.warning('Pool not found - handlePriceRateProviderSet. PoolAddress {}', [event.address.toHexString()]);
+    return;
+  }
   let blockTimestamp = event.block.timestamp.toI32();
 
   const provider = getOrCreatePriceRateProvider(poolMapping.poolId, event.params.token);
@@ -151,7 +181,11 @@ export function handlePriceRateProviderSet(event: PriceRateProviderSet): void {
 }
 
 export function handlePriceRateCacheUpdated(event: PriceRateCacheUpdated): void {
-  const poolMapping = PoolAddressToId.load(event.address) as PoolAddressToId;
+  const poolMapping = PoolAddressToId.load(event.address);
+  if (poolMapping == null) {
+    log.warning('Pool not found - handlePriceRateCacheUpdate. PoolAddress {}', [event.address.toHexString()]);
+    return;
+  }
   const provider = getOrCreatePriceRateProvider(poolMapping.poolId, event.params.token);
 
   provider.rate = scaleDown(event.params.rate, 18);

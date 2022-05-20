@@ -1,11 +1,11 @@
 import { Address } from '@graphprotocol/graph-ts/index';
 import { BigDecimal, BigInt, Bytes } from '@graphprotocol/graph-ts';
-import { createTokenIfNotExist } from './token';
+import { getOrCreateToken } from './token';
 import { PoolToken } from '../types/schema';
 
 export function createPoolToken(poolId: Bytes, tokenAddress: Address): PoolToken {
   const id = poolId.concat(tokenAddress);
-  const token = createTokenIfNotExist(tokenAddress, false);
+  const token = getOrCreateToken(tokenAddress, false);
   const poolToken = new PoolToken(id);
   poolToken.pool = poolId;
   poolToken.poolId = poolId;

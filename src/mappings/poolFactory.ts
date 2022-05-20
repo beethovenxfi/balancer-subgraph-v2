@@ -98,11 +98,11 @@ export function handleNewLinearPool(event: PoolCreated): void {
   linearPoolData.targets = linearPoolTarget.id;
   linearPoolData.save();
 
-  const globalMetrics = getOrCreateLifetimePoolMetrics(pool.id, event.block);
+  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(pool.id, event.block);
   // remove initial minted tokens
   let maxTokenBalance = BigDecimal.fromString('5192296858534827.628530496329220095');
-  globalMetrics.totalShares = globalMetrics.totalShares.minus(maxTokenBalance);
-  globalMetrics.save();
+  lifetimePoolMetric.totalShares = lifetimePoolMetric.totalShares.minus(maxTokenBalance);
+  lifetimePoolMetric.save();
 
   LinearPoolTemplate.create(event.params.pool);
 }

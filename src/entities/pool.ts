@@ -8,7 +8,7 @@ import { VAULT_ADDRESS } from '../mappings/helpers/constants';
 import { createPoolToken } from './pool-token';
 import { scaleDown } from '../mappings/helpers/misc';
 import { getOrCreateLifetimePoolMetrics } from './pool-metrics';
-import { createTokenIfNotExist } from './token';
+import { getOrCreateToken } from './token';
 
 export function createPool(poolAddress: Address, poolType: string, phantomPool: boolean, block: ethereum.Block): Pool {
   const poolContract = WeightedPool.bind(poolAddress);
@@ -22,7 +22,7 @@ export function createPool(poolAddress: Address, poolType: string, phantomPool: 
   const vault = getOrCreateVault(block);
 
   const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(poolId, block);
-  const shareToken = createTokenIfNotExist(Address.fromBytes(poolAddress), true);
+  const shareToken = getOrCreateToken(Address.fromBytes(poolAddress), true);
   pool.address = poolAddress;
   pool.vault = vault.id;
   pool.name = poolContract.name();

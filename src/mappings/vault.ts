@@ -14,6 +14,7 @@ import {
   Swap,
   SwapConfig,
   TokenPrice,
+  UserInternalBalance,
 } from '../types/schema';
 import { scaleDown, tokenToDecimal } from './helpers/misc';
 import { updatePoolWeights } from './helpers/weighted';
@@ -51,25 +52,23 @@ import { getOrCreateVaultToken } from '../entities/vault-token';
  ************************************/
 
 export function handleInternalBalanceChange(event: InternalBalanceChanged): void {
-  // const user = getOrCreateUser(event.params.user);
-  // const token = loadExistingToken(event.params.token);
-  // let balanceId = user.address.concat(token.id);
-  // //
-  // let userBalance = UserInternalBalance.load(balanceId);
-  // if (userBalance == null) {
-  //   userBalance = new UserInternalBalance(balanceId);
-  //
-  //   userBalance.user = user.id;
-  //   userBalance.userAddress = user.address;
-  //   userBalance.token = token.id;
-  //   userBalance.tokenAddress = token.address;
-  //   userBalance.balance = ZERO_BD;
-  // }
-  //
-  // let transferAmount = tokenToDecimal(event.params.delta, token.decimals);
-  // userBalance.balance = userBalance.balance.plus(transferAmount);
-  //
-  // userBalance.save();
+  const user = getOrCreateUser(event.params.user);
+  const token = getExistingToken(event.params.token);
+  let balanceId = user.address.concat(token.id);
+  let userBalance = UserInternalBalance.load(balanceId);
+  if (userBalance == null) {
+    userBalance = new UserInternalBalance(balanceId);
+    userBalance.user = user.id;
+    userBalance.userAddress = user.address;
+    userBalance.token = token.id;
+    userBalance.tokenAddress = token.address;
+    userBalance.balance = ZERO_BD;
+  }
+
+  let transferAmount = tokenToDecimal(event.params.delta, token.decimals);
+  userBalance.balance = userBalance.balance.plus(transferAmount);
+
+  userBalance.save();
 }
 
 /************************************
@@ -221,11 +220,7 @@ function handlePoolExited(event: ethereum.Event, poolId: Bytes, amounts: BigInt[
     dailyPoolToken.balanceChange24h = dailyPoolToken.balanceChange24h.plus(tokenAmountOut);
     dailyPoolToken.save();
   }
-  // log.warning('Pool exited: {} {} {}', [
-  //   poolId.toHexString(),
-  //   event.params.liquidityProvider.toHexString(),
-  //   exitAmounts.toString(),
-  // ]);
+
   const exit = new PoolExit(event.transaction.hash.toHexString().concat(event.logIndex.toString()));
   exit.pool = pool.id;
   exit.poolId = pool.id;
@@ -518,8 +513,6 @@ export function handleSwapEvent(event: SwapEvent): void {
       .plus(tokenOutPrice.priceUSD)
       .div(hourlyTokenOutPrice.dataPoints.plus(ONE_BD));
     hourlyTokenOutPrice.dataPoints = hourlyTokenOutPrice.dataPoints.plus(ONE_BD);
-    hourlyTokenOutPrice.dailyPoolToken = dailyPoolTokenOut.id;
-    hourlyTokenOutPrice.dailyVaultToken = dailyVaultTokenOut.id;
     hourlyTokenOutPrice.save();
   }
 
@@ -531,8 +524,6 @@ export function handleSwapEvent(event: SwapEvent): void {
       .plus(tokenInPrice.priceUSD)
       .div(hourlyTokenInPrice.dataPoints.plus(ONE_BD));
     hourlyTokenInPrice.dataPoints = hourlyTokenInPrice.dataPoints.plus(ONE_BD);
-    hourlyTokenInPrice.dailyPoolToken = dailyPoolTokenIn.id;
-    hourlyTokenInPrice.dailyVaultToken = dailyVaultTokenIn.id;
     hourlyTokenInPrice.save();
   }
 

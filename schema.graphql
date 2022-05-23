@@ -5,6 +5,7 @@ type Balancer @entity(immutable: true) {
     dailyMetrics: [DailyVaultMetric!]! @derivedFrom(field: "vault")
     tokens: [VaultToken!]! @derivedFrom(field: "vault")
     dailyTokens: [DailyVaultToken!]! @derivedFrom(field: "vault")
+    tokenPrices: [HourlyTokenPrice!]! @derivedFrom(field: "vault")
 }
 
 type LifetimeVaultMetric @entity {
@@ -44,15 +45,13 @@ type DailyVaultToken @entity {
     tokenAddress: Bytes!
     totalBalance: BigDecimal!
     balanceChange24h: BigDecimal!
-    tokenPrices: [HourlyTokenPrice!]! @derivedFrom(field: "dailyVaultToken")
 }
 
 type HourlyTokenPrice @entity {
     id: Bytes!
+    vault: Balancer!
     token: Token!
     tokenAddress: Bytes!
-    dailyVaultToken: DailyVaultToken
-    dailyPoolToken: DailyPoolToken
     hour: Int!
     startTime: Int!
     avgPriceUSD: BigDecimal!
@@ -164,6 +163,7 @@ type LifetimePoolMetric @entity {
     totalSwapVolume: BigDecimal!
     totalSwapFee: BigDecimal!
     totalLiquidity: BigDecimal!
+    dilutedLiquidity: BigDecimal!
     totalShares: BigDecimal!
 #    swaps: [Swap!] @derivedFrom(field: "poolMetric")
     swapCount: BigInt!
@@ -183,6 +183,7 @@ type DailyPoolMetric @entity {
     swapFee24h: BigDecimal!
     swapFeeChange24h: BigDecimal!
     totalLiquidity: BigDecimal!
+    dilutedLiquidity: BigDecimal!
     liquidityChange24h: BigDecimal!
     swapCount24h: BigInt!
     totalSwapCount: BigInt!
@@ -199,7 +200,6 @@ type DailyPoolToken @entity {
     tokenAddress: Bytes!
     totalBalance: BigDecimal!
     balanceChange24h: BigDecimal!
-    tokenPrices: [HourlyTokenPrice!]! @derivedFrom(field: "dailyPoolToken")
 }
 
 type Amp @entity {

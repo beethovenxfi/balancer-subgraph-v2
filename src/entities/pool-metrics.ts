@@ -2,21 +2,22 @@ import { Address, BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/gra
 import { DailyPoolMetric, DailyPoolToken, LifetimePoolMetric } from '../types/schema';
 
 export function getOrCreateLifetimePoolMetrics(poolId: Bytes, block: ethereum.Block): LifetimePoolMetric {
-  let globalPoolMetrics = LifetimePoolMetric.load(poolId);
-  if (globalPoolMetrics == null) {
-    globalPoolMetrics = new LifetimePoolMetric(poolId);
-    globalPoolMetrics.pool = poolId;
-    globalPoolMetrics.poolId = poolId;
-    globalPoolMetrics.startTime = block.timestamp.toI32();
-    globalPoolMetrics.totalSwapVolume = BigDecimal.zero();
-    globalPoolMetrics.totalLiquidity = BigDecimal.zero();
-    globalPoolMetrics.totalShares = BigDecimal.zero();
-    globalPoolMetrics.swapCount = BigInt.zero();
-    globalPoolMetrics.totalSwapFee = BigDecimal.zero();
-    globalPoolMetrics.holdersCount = BigInt.zero();
-    globalPoolMetrics.save();
+  let lifetimePoolMetric = LifetimePoolMetric.load(poolId);
+  if (lifetimePoolMetric == null) {
+    lifetimePoolMetric = new LifetimePoolMetric(poolId);
+    lifetimePoolMetric.pool = poolId;
+    lifetimePoolMetric.poolId = poolId;
+    lifetimePoolMetric.startTime = block.timestamp.toI32();
+    lifetimePoolMetric.totalSwapVolume = BigDecimal.zero();
+    lifetimePoolMetric.totalLiquidity = BigDecimal.zero();
+    lifetimePoolMetric.dilutedLiquidity = BigDecimal.zero();
+    lifetimePoolMetric.totalShares = BigDecimal.zero();
+    lifetimePoolMetric.swapCount = BigInt.zero();
+    lifetimePoolMetric.totalSwapFee = BigDecimal.zero();
+    lifetimePoolMetric.holdersCount = BigInt.zero();
+    lifetimePoolMetric.save();
   }
-  return globalPoolMetrics;
+  return lifetimePoolMetric;
 }
 
 export function getOrCreateDailyPoolMetrics(poolId: Bytes, block: ethereum.Block): DailyPoolMetric {
@@ -38,6 +39,7 @@ export function getOrCreateDailyPoolMetrics(poolId: Bytes, block: ethereum.Block
     dailyPoolMetric.swapFeeChange24h = BigDecimal.zero();
     dailyPoolMetric.totalSwapFee = BigDecimal.zero();
     dailyPoolMetric.totalLiquidity = BigDecimal.zero();
+    dailyPoolMetric.dilutedLiquidity = BigDecimal.zero();
     dailyPoolMetric.liquidityChange24h = BigDecimal.zero();
     dailyPoolMetric.swapCount24h = BigInt.zero();
     dailyPoolMetric.totalSwapCount = BigInt.zero();

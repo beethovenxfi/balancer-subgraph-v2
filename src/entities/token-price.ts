@@ -1,6 +1,7 @@
 import { Address } from '@graphprotocol/graph-ts/index';
 import { HourlyTokenPrice, TokenPrice } from '../types/schema';
 import { BigDecimal, ethereum } from '@graphprotocol/graph-ts';
+import { vaultId } from './vault';
 
 export function getOrCreateTokenPrice(tokenAddress: Address, pricingAsset: Address, block: ethereum.Block): TokenPrice {
   const id = tokenAddress.concat(pricingAsset);
@@ -32,6 +33,7 @@ export function getOrCreateHourlyTokenPrice(tokenAddress: Address, block: ethere
   let hourlyTokenPrice = HourlyTokenPrice.load(id);
   if (hourlyTokenPrice == null) {
     hourlyTokenPrice = new HourlyTokenPrice(id);
+    hourlyTokenPrice.vault = vaultId;
     hourlyTokenPrice.tokenAddress = tokenAddress;
     hourlyTokenPrice.token = tokenAddress;
     hourlyTokenPrice.hour = hourId;

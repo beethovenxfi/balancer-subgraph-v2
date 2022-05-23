@@ -6,7 +6,7 @@ import { getOrCreateTokenPrice, getTokenPrice } from '../entities/token-price';
 import { getOrCreateDailyVaultMetric, getOrCreateLifetimeVaultMetric } from '../entities/vault-metrics';
 import { getOrCreateDailyPoolMetrics, getOrCreateLifetimePoolMetrics } from '../entities/pool-metrics';
 import { LinearPoolData, Pool } from '../types/schema';
-import { getPoolByAddress } from '../entities/pool';
+import { getPoolByAddress, isPoolAddress } from '../entities/pool';
 
 export function isPricingAsset(asset: Address): boolean {
   for (let i: i32 = 0; i < PRICING_ASSETS.length; i++) {
@@ -34,6 +34,7 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
 
   // we first get the total pool value in relation to the pricing asset
   let poolValue: BigDecimal = ZERO_BD;
+  let dilutedPoolValue: BigDecimal = ZERO_BD;
 
   // so we iterate over each pool token and add the balance in relation of the pricing asset
   for (let j: i32 = 0; j < tokensList.length; j++) {
@@ -48,6 +49,9 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
     // the pool token which is the pricing asset can just be added directly
     if (tokenAddress.equals(pricingAsset)) {
       poolValue = poolValue.plus(poolToken.balance);
+      if (!isPoolAddress(tokenAddress)) {
+        dilutedPoolValue = dilutedPoolValue.plus(poolToken.balance);
+      }
       continue;
     }
     let poolTokenQuantity: BigDecimal = poolToken.balance;
@@ -75,6 +79,9 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
     if (price.gt(BigDecimal.zero())) {
       let poolTokenValue = price.times(poolTokenQuantity);
       poolValue = poolValue.plus(poolTokenValue);
+      if (!isPoolAddress(tokenAddress)) {
+        dilutedPoolValue = dilutedPoolValue.plus(poolTokenValue);
+      }
     }
   }
 
@@ -83,6 +90,10 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
   let oldPoolLiquidity: BigDecimal = lifetimePoolMetric.totalLiquidity;
   let newPoolLiquidity: BigDecimal = valueInUSD(poolValue, pricingAsset) || ZERO_BD;
   let liquidityChange: BigDecimal = newPoolLiquidity.minus(oldPoolLiquidity);
+
+  const oldDilutedPoolLiquidity: BigDecimal = lifetimePoolMetric.dilutedLiquidity;
+  const newDilutedLiquidity: BigDecimal = valueInUSD(dilutedPoolValue, pricingAsset) || ZERO_BD;
+  const dilutedLiquidityChange: BigDecimal = newDilutedLiquidity.minus(oldDilutedPoolLiquidity);
 
   // If the pool isn't empty but we have a zero USD value then it's likely that we have a bad pricing asset
   // Don't commit any changes and just report the failure.
@@ -105,11 +116,13 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
 
   // Update pool stats
   lifetimePoolMetric.totalLiquidity = newPoolLiquidity;
+  lifetimePoolMetric.dilutedLiquidity = newDilutedLiquidity;
   lifetimePoolMetric.save();
 
   const dailyPoolMetric = getOrCreateDailyPoolMetrics(poolId, block);
   dailyPoolMetric.liquidityChange24h = dailyPoolMetric.liquidityChange24h.plus(liquidityChange);
   dailyPoolMetric.totalLiquidity = newPoolLiquidity;
+  dailyPoolMetric.dilutedLiquidity = newDilutedLiquidity;
   dailyPoolMetric.save();
 
   // update share token price
@@ -126,11 +139,11 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
   sharesTokenPrice.save();
 
   const lifetimeVaultMetrics = getOrCreateLifetimeVaultMetric(block);
-  lifetimeVaultMetrics.totalLiquidity = lifetimeVaultMetrics.totalLiquidity.plus(liquidityChange);
+  lifetimeVaultMetrics.totalLiquidity = lifetimeVaultMetrics.totalLiquidity.plus(dilutedLiquidityChange);
   lifetimeVaultMetrics.save();
 
   const dailyVaultMetrics = getOrCreateDailyVaultMetric(block);
-  dailyVaultMetrics.liquidityChange24h = dailyVaultMetrics.liquidityChange24h.plus(liquidityChange);
+  dailyVaultMetrics.liquidityChange24h = dailyVaultMetrics.liquidityChange24h.plus(dilutedLiquidityChange);
   dailyVaultMetrics.totalLiquidity = lifetimeVaultMetrics.totalLiquidity;
   dailyVaultMetrics.save();
 

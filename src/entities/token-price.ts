@@ -3,9 +3,10 @@ import { HourlyTokenPrice, TokenPrice } from '../types/schema';
 import { BigDecimal, ethereum } from '@graphprotocol/graph-ts';
 
 export function getOrCreateTokenPrice(tokenAddress: Address, pricingAsset: Address, block: ethereum.Block): TokenPrice {
-  let tokenPrice = TokenPrice.load(tokenAddress.concat(pricingAsset));
-  if (tokenPrice == null) {
-    tokenPrice = new TokenPrice(tokenAddress.concat(pricingAsset));
+  const id = tokenAddress.concat(pricingAsset);
+  let tokenPrice = TokenPrice.load(id);
+  if (tokenPrice === null) {
+    tokenPrice = new TokenPrice(id);
     tokenPrice.tokenAddress = tokenAddress;
     tokenPrice.token = tokenAddress;
     tokenPrice.pricingAsset = pricingAsset;

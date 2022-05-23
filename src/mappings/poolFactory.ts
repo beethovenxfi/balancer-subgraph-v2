@@ -16,6 +16,8 @@ import { createPool } from '../entities/pool';
 import { updateAmpFactor } from './helpers/stable';
 import { tokenToDecimal } from './helpers/misc';
 import { getOrCreateLifetimePoolMetrics } from '../entities/pool-metrics';
+import { getOrCreateVaultToken } from '../entities/vault-token';
+import { loadExistingPoolToken } from '../entities/pool-token';
 
 export function handleNewWeightedPool(event: PoolCreated): void {
   let poolAddress: Address = event.params.pool;

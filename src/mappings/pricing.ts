@@ -30,7 +30,7 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
   let tokensList: Bytes[] = pool.tokenAddresses;
   if (tokensList.length < 2) return false;
   // in case the pool itself is a pricing asset, we don't want to update its liquidity
-  if (hasVirtualSupply(pool) && pool.address == pricingAsset) return false;
+  if (hasVirtualSupply(pool) && pool.address.equals(pricingAsset)) return false;
 
   // we first get the total pool value in relation to the pricing asset
   let poolValue: BigDecimal = ZERO_BD;
@@ -46,7 +46,7 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
     const poolToken = loadExistingPoolToken(poolId, tokenAddress);
 
     // the pool token which is the pricing asset can just be added directly
-    if (tokenAddress == pricingAsset) {
+    if (tokenAddress.equals(pricingAsset)) {
       poolValue = poolValue.plus(poolToken.balance);
       continue;
     }
@@ -58,7 +58,7 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
 
     // note that we can only meaningfully report liquidity once assets are traded with
     // the pricing asset
-    if (tokenPrice) {
+    if (tokenPrice !== null) {
       price = tokenPrice.price;
     } else if (pool.poolType == PoolType.StablePhantom) {
       // try to estimate token price in terms of pricing asset
@@ -202,14 +202,14 @@ function getPoolHistoricalLiquidityId(poolId: string, tokenAddress: Address, blo
 
 export function isUSDStable(asset: Address): boolean {
   for (let i: i32 = 0; i < USD_STABLE_ASSETS.length; i++) {
-    if (USD_STABLE_ASSETS[i] == asset) return true;
+    if (USD_STABLE_ASSETS[i].equals(asset)) return true;
   }
   return false;
 }
 
 function isNestedLinearPricingAsset(asset: Address): boolean {
   for (let i: i32 = 0; i < NESTED_LINEAR_PRICING_ASSETS.length; i++) {
-    if (NESTED_LINEAR_PRICING_ASSETS[i] == asset) return true;
+    if (NESTED_LINEAR_PRICING_ASSETS[i].equals(asset)) return true;
   }
   return false;
 }

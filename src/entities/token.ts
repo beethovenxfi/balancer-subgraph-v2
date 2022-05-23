@@ -31,6 +31,6 @@ export function getOrCreateToken(address: Address, bpToken: boolean): Token {
   return token;
 }
 
-export function loadExistingToken(address: Address): Token {
+export function getExistingToken(address: Address): Token {
   return Token.load(address) as Token;
 }

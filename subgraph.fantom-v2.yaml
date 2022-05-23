@@ -300,7 +300,7 @@ dataSources:
     source:
       address: '0x0E2AFa0b5F9174750d4E84Bf9798f89b79Bd5bF4'
       abi: StablePhantomPoolFactory
-      startBlock: 28658437
+      startBlock: 28893627
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -339,7 +339,7 @@ dataSources:
     source:
       address: '0x1F73AE6ED391A2b1e84Ff988A1Bb5394B78a4A71'
       abi: LinearPoolFactory
-      startBlock: 28657909
+      startBlock: 28893627
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6

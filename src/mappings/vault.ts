@@ -6,14 +6,14 @@ import {
   Swap as SwapEvent,
 } from '../types/Vault/Vault';
 import {
+  GradualAmpUpdate,
   GradualWeightUpdate,
   Pool,
   PoolExit,
   PoolJoin,
-  PoolShares,
   Swap,
   SwapConfig,
-  UserInternalBalance,
+  TokenPrice,
 } from '../types/schema';
 import { scaleDown, tokenToDecimal } from './helpers/misc';
 import { updatePoolWeights } from './helpers/weighted';
@@ -28,7 +28,7 @@ import { MIN_VIABLE_LIQUIDITY, ONE_BD, ZERO, ZERO_BD } from './helpers/constants
 import { isStableLikePool, isVariableWeightPool, PoolType } from './helpers/pools';
 import { updateAmpFactor } from './helpers/stable';
 import { getOrCreateUser } from '../entities/user';
-import { loadExistingToken } from '../entities/token';
+import { getExistingToken } from '../entities/token';
 import {
   getDailyVaultMetricAtDay,
   getOrCreateDailyVaultMetric,
@@ -37,7 +37,7 @@ import {
 } from '../entities/vault-metrics';
 import { loadExistingPoolToken } from '../entities/pool-token';
 import { loadExistingTokenWeight } from '../entities/token-weight';
-import { getOrCreateHourlyTokenPrice, getOrCreateTokenPrice } from '../entities/token-price';
+import { getOrCreateTokenPrice, getOrCreateHourlyTokenPrice, getTokenPrice } from '../entities/token-price';
 import {
   getDailyPoolMetricAtDay,
   getOrCreateDailyPoolMetrics,
@@ -86,31 +86,19 @@ export function handleBalanceChange(event: PoolBalanceChanged): void {
   if (total.gt(ZERO)) {
     const pool = Pool.load(event.params.poolId);
     if (pool == null) {
-      log.warning('Pool not found in handlePoolJoined: {} {}', [
+      log.warning('Pool not found in handleBalanceChange: {} {}', [
         event.params.poolId.toHexString(),
         event.transaction.hash.toHexString(),
       ]);
       return;
     }
-    handlePoolJoined(
-      event,
-      event.params.poolId,
-      event.params.deltas,
-      event.params.liquidityProvider,
-      pool.poolType === PoolType.StablePhantom
-    );
+    handlePoolJoined(event, event.params.poolId, event.params.deltas, event.params.liquidityProvider);
   } else {
     handlePoolExited(event, event.params.poolId, event.params.deltas, event.params.liquidityProvider);
   }
 }
 
-function handlePoolJoined(
-  event: ethereum.Event,
-  poolId: Bytes,
-  amounts: BigInt[],
-  liquidityProvider: Address,
-  initialStablePhantomJoin: boolean = false
-): void {
+function handlePoolJoined(event: ethereum.Event, poolId: Bytes, amounts: BigInt[], liquidityProvider: Address): void {
   const pool = Pool.load(poolId);
   if (pool == null) {
     log.warning('Pool not found in handlePoolJoined: {} {}', [
@@ -128,7 +116,7 @@ function handlePoolJoined(
     const tokenAddress: Address = Address.fromBytes(tokenAddresses[i]);
     const poolToken = loadExistingPoolToken(pool.id, tokenAddress);
     const vaultToken = getOrCreateVaultToken(tokenAddress);
-    const token = loadExistingToken(tokenAddress);
+    const token = getExistingToken(tokenAddress);
 
     let tokenAmountIn = tokenToDecimal(amounts[i], token.decimals);
     joinAmounts[i] = tokenAmountIn;
@@ -168,18 +156,20 @@ function handlePoolJoined(
   }
 
   // Update virtual supply
-  if (pool.poolType == 'StablePhantom' && initialStablePhantomJoin) {
+  if (pool.poolType == 'StablePhantom') {
     let maxTokenBalance = BigDecimal.fromString('5192296858534827.628530496329220095');
-    const poolShares = PoolShares.load(pool.id) as PoolShares;
-    if (poolShares.balance.equals(maxTokenBalance)) {
+    const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(pool.id, event.block);
+    if (lifetimePoolMetric.totalShares.equals(maxTokenBalance)) {
       let initialBpt = ZERO_BD;
       for (let i: i32 = 0; i < tokenAddresses.length; i++) {
-        if (tokenAddresses[i] == pool.address) {
+        const tokenAddress = Address.fromBytes(tokenAddresses[i]);
+        if (tokenAddress.equals(pool.address)) {
           initialBpt = scaleDown(amounts[i], 18);
+          break;
         }
       }
-      poolShares.balance = maxTokenBalance.minus(initialBpt);
-      poolShares.save();
+      lifetimePoolMetric.totalShares = maxTokenBalance.minus(initialBpt);
+      lifetimePoolMetric.save();
     }
   }
 }
@@ -207,7 +197,7 @@ function handlePoolExited(event: ethereum.Event, poolId: Bytes, amounts: BigInt[
     const vaultToken = getOrCreateVaultToken(tokenAddress);
     const dailyVaultToken = getOrCreateDailyVaultToken(tokenAddress, event.block);
     const dailyPoolToken = getOrCreateDailyPoolToken(poolId, tokenAddress, event.block);
-    const token = loadExistingToken(tokenAddress);
+    const token = getExistingToken(tokenAddress);
 
     // adding initial liquidity
     let tokenAmountOut = tokenToDecimal(amounts[i].neg(), token.decimals);
@@ -321,10 +311,20 @@ export function handleSwapEvent(event: SwapEvent): void {
     log.warning('Pool not found in handleSwapEvent: {}', [poolId.toHexString()]);
     return;
   }
+  // lets check if its a join or exit of a phantom pool
 
-  let poolAddress = pool.address;
   let tokenInAddress: Address = event.params.tokenIn;
   let tokenOutAddress: Address = event.params.tokenOut;
+
+  let isJoin = false;
+  let isExit = false;
+  if (pool.phantomPool) {
+    if (tokenInAddress.equals(pool.address)) {
+      isExit = true;
+    } else if (tokenOutAddress.equals(pool.address)) {
+      isJoin = true;
+    }
+  }
 
   const user = getOrCreateUser(event.transaction.from);
 
@@ -337,114 +337,27 @@ export function handleSwapEvent(event: SwapEvent): void {
       updatePoolWeights(poolId);
     }
   } else if (isStableLikePool(pool)) {
-    const update = GradualWeightUpdate.load(poolId);
+    const update = GradualAmpUpdate.load(poolId);
     // we give one week grace period in case nobody swaps for a week after the am update ended
     if (update !== null && update.startTimestamp <= blockTimestamp && update.endTimestamp + 604800 >= blockTimestamp) {
       updateAmpFactor(pool);
     }
   }
 
-  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(poolId, event.block);
-  const dailyVaultTokenIn = getOrCreateDailyVaultToken(tokenInAddress, event.block);
-  const dailyVaultTokenOut = getOrCreateDailyVaultToken(tokenOutAddress, event.block);
-  const dailyPoolTokenIn = getOrCreateDailyPoolToken(poolId, tokenInAddress, event.block);
-  const dailyPoolTokenOut = getOrCreateDailyPoolToken(poolId, tokenOutAddress, event.block);
-
-  const inToken = loadExistingToken(tokenInAddress);
-  const outToken = loadExistingToken(tokenOutAddress);
+  const inToken = getExistingToken(tokenInAddress);
+  const outToken = getExistingToken(tokenOutAddress);
   let tokenAmountIn: BigDecimal = scaleDown(event.params.amountIn, inToken.decimals);
   let tokenAmountOut: BigDecimal = scaleDown(event.params.amountOut, outToken.decimals);
-  // Capture price
-  const tokenOutPrice = getOrCreateTokenPrice(tokenOutAddress, tokenInAddress, event.block);
-  const tokenInPrice = getOrCreateTokenPrice(tokenInAddress, tokenOutAddress, event.block);
-  if (isPricingAsset(tokenInAddress) && lifetimePoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
-    // todo: do we need TokenPrice or can we just use latest price?
-    tokenOutPrice.amount = tokenAmountIn;
 
-    if (pool.poolType === PoolType.Weighted) {
-      // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
-      // based on the pool's weights and updated balances after the swap.
-      let tokenInWeight = loadExistingTokenWeight(poolId, tokenInAddress).weight;
-      let tokenOutWeight = loadExistingTokenWeight(poolId, tokenOutAddress).weight;
-      if (tokenInWeight.equals(BigDecimal.zero()) || tokenOutWeight.equals(BigDecimal.zero())) {
-        log.warning('TokenInWeight is zero, {} {} {}', [
-          poolId.toHexString(),
-          tokenInWeight.toString(),
-          tokenOutWeight.toString(),
-        ]);
-        tokenInWeight = ONE_BD;
-        tokenOutWeight = ONE_BD;
-      }
-      tokenOutPrice.price = tokenAmountIn.div(tokenInWeight).div(tokenAmountOut.div(tokenOutWeight));
-    } else {
-      // Otherwise we can get a simple measure of the price from the ratio of amount in vs amount out
-      tokenOutPrice.price = tokenAmountIn.div(tokenAmountOut);
-    }
-    tokenOutPrice.priceUSD = valueInUSD(tokenOutPrice.price, tokenInAddress);
-    tokenOutPrice.timestamp = event.block.timestamp.toI32();
-    tokenOutPrice.block = event.block.number;
-    tokenOutPrice.save();
-  }
-  if (isPricingAsset(tokenOutAddress) && lifetimePoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
-    //tokenPrice.poolTokenId = getPoolTokenId(poolId, tokenInAddress);
-    tokenInPrice.amount = tokenAmountOut;
-    if (pool.poolType === PoolType.Weighted) {
-      let tokenInWeight = loadExistingTokenWeight(poolId, tokenInAddress).weight;
-      let tokenOutWeight = loadExistingTokenWeight(poolId, tokenOutAddress).weight;
-      if (tokenInWeight.equals(BigDecimal.zero()) || tokenOutWeight.equals(BigDecimal.zero())) {
-        tokenInWeight = ONE_BD;
-        tokenOutWeight = ONE_BD;
-      }
-      // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
-      // based on the pool's weights and updated balances after the swap.
-      tokenInPrice.price = tokenAmountOut.div(tokenOutWeight).div(tokenAmountIn.div(tokenInWeight));
-      tokenInPrice.save();
-    } else {
-      // Otherwise we can get a simple measure of the price from the ratio of amount out vs amount in
-      tokenInPrice.price = tokenAmountOut.div(tokenAmountIn);
-    }
-    tokenInPrice.priceUSD = valueInUSD(tokenInPrice.price, tokenOutAddress);
-    tokenInPrice.timestamp = event.block.timestamp.toI32();
-    tokenInPrice.block = event.block.number;
-    tokenInPrice.save();
+  let swapValueUSD = BigDecimal.zero();
+  let swapFeesUSD = BigDecimal.zero();
+  if (!isJoin && !isExit) {
+    const swapConfig = SwapConfig.load(poolId) as SwapConfig;
+    swapValueUSD = swapValueInUSD(tokenInAddress, tokenAmountIn, tokenOutAddress, tokenAmountOut);
+    swapFeesUSD = swapValueUSD.times(swapConfig.fee);
   }
 
-  const hourlyTokenOutPrice = getOrCreateHourlyTokenPrice(tokenOutAddress, event.block);
-  hourlyTokenOutPrice.endPriceUSD = tokenOutPrice.priceUSD;
-  hourlyTokenOutPrice.avgPriceUSD = hourlyTokenOutPrice.avgPriceUSD
-    .times(hourlyTokenOutPrice.dataPoints)
-    .plus(tokenOutPrice.priceUSD)
-    .div(hourlyTokenOutPrice.dataPoints.plus(ONE_BD));
-  hourlyTokenOutPrice.dataPoints = hourlyTokenOutPrice.dataPoints.plus(ONE_BD);
-  hourlyTokenOutPrice.dailyPoolToken = dailyPoolTokenOut.id;
-  hourlyTokenOutPrice.dailyVaultToken = dailyVaultTokenOut.id;
-  hourlyTokenOutPrice.save();
-
-  const hourlyTokenInPrice = getOrCreateHourlyTokenPrice(tokenInAddress, event.block);
-  hourlyTokenInPrice.endPriceUSD = tokenInPrice.priceUSD;
-  hourlyTokenInPrice.avgPriceUSD = hourlyTokenInPrice.avgPriceUSD
-    .times(hourlyTokenInPrice.dataPoints)
-    .plus(tokenInPrice.priceUSD)
-    .div(hourlyTokenInPrice.dataPoints.plus(ONE_BD));
-  hourlyTokenInPrice.dataPoints = hourlyTokenInPrice.dataPoints.plus(ONE_BD);
-  hourlyTokenInPrice.dailyPoolToken = dailyPoolTokenIn.id;
-  hourlyTokenInPrice.dailyVaultToken = dailyVaultTokenIn.id;
-  hourlyTokenInPrice.save();
-
-  // check if its a swap or a join / exit on a phantom pool
-  if (tokenInAddress === pool.address) {
-    handlePoolExited(event, pool.id, [event.params.amountIn], event.transaction.from);
-    return;
-  }
-  if (tokenOutAddress === pool.address) {
-    handlePoolJoined(event, pool.id, [event.params.amountOut], event.transaction.from);
-    return;
-  }
-
-  const swapConfig = SwapConfig.load(poolId) as SwapConfig;
-  const swapValueUSD = swapValueInUSD(tokenInAddress, tokenAmountIn, tokenOutAddress, tokenAmountOut);
-  const swapFeesUSD = swapValueUSD.times(swapConfig.fee);
-
+  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(poolId, event.block);
   lifetimePoolMetric.swapCount = lifetimePoolMetric.swapCount.plus(BigInt.fromI32(1));
   lifetimePoolMetric.totalSwapVolume = lifetimePoolMetric.totalSwapVolume.plus(swapValueUSD);
   lifetimePoolMetric.totalSwapFee = lifetimePoolMetric.totalSwapFee.plus(swapFeesUSD);
@@ -466,20 +379,20 @@ export function handleSwapEvent(event: SwapEvent): void {
   }
   dailyPoolMetric.save();
 
-  let lifetimeVaultMetricVaultMetric = getOrCreateLifetimeVaultMetric(event.block);
-  lifetimeVaultMetricVaultMetric.totalSwapVolume = lifetimeVaultMetricVaultMetric.totalSwapVolume.plus(swapValueUSD);
-  lifetimeVaultMetricVaultMetric.totalSwapFee = lifetimeVaultMetricVaultMetric.totalSwapFee.plus(swapFeesUSD);
-  lifetimeVaultMetricVaultMetric.swapCount = lifetimeVaultMetricVaultMetric.swapCount.plus(BigInt.fromI32(1));
-  lifetimeVaultMetricVaultMetric.save();
+  let lifetimeVaultMetric = getOrCreateLifetimeVaultMetric(event.block);
+  lifetimeVaultMetric.totalSwapVolume = lifetimeVaultMetric.totalSwapVolume.plus(swapValueUSD);
+  lifetimeVaultMetric.totalSwapFee = lifetimeVaultMetric.totalSwapFee.plus(swapFeesUSD);
+  lifetimeVaultMetric.swapCount = lifetimeVaultMetric.swapCount.plus(BigInt.fromI32(1));
+  lifetimeVaultMetric.save();
 
   const dailyVaultMetric = getOrCreateDailyVaultMetric(event.block);
   const yesterdaysVaultMetric = getDailyVaultMetricAtDay(dailyVaultMetric.day - 1);
-  dailyVaultMetric.totalSwapVolume = lifetimeVaultMetricVaultMetric.totalSwapVolume;
+  dailyVaultMetric.totalSwapVolume = lifetimeVaultMetric.totalSwapVolume;
   dailyVaultMetric.swapVolume24h = dailyVaultMetric.swapVolume24h.plus(swapValueUSD);
-  dailyVaultMetric.totalSwapFee = lifetimeVaultMetricVaultMetric.totalSwapFee;
+  dailyVaultMetric.totalSwapFee = lifetimeVaultMetric.totalSwapFee;
   dailyVaultMetric.swapFee24h = dailyVaultMetric.swapFee24h.plus(swapFeesUSD);
   dailyVaultMetric.swapCount24h = dailyVaultMetric.swapCount24h.plus(BigInt.fromI32(1));
-  dailyVaultMetric.totalSwapCount = lifetimeVaultMetricVaultMetric.swapCount;
+  dailyVaultMetric.totalSwapCount = lifetimeVaultMetric.swapCount;
 
   if (yesterdaysVaultMetric !== null) {
     dailyVaultMetric.swapVolumeChange24h = dailyVaultMetric.swapVolume24h.minus(yesterdaysVaultMetric.swapVolume24h);
@@ -518,43 +431,182 @@ export function handleSwapEvent(event: SwapEvent): void {
   vaultTokenIn.swapCount = vaultTokenOut.swapCount.plus(BigInt.fromI32(1));
   vaultTokenOut.save();
 
+  const dailyVaultTokenIn = getOrCreateDailyVaultToken(tokenInAddress, event.block);
   dailyVaultTokenIn.totalBalance = vaultTokenIn.balance;
   dailyVaultTokenIn.balanceChange24h = dailyVaultTokenIn.balanceChange24h.plus(tokenAmountIn);
   dailyVaultTokenIn.save();
 
+  const dailyVaultTokenOut = getOrCreateDailyVaultToken(tokenOutAddress, event.block);
   dailyVaultTokenOut.totalBalance = vaultTokenOut.balance;
   dailyVaultTokenOut.balanceChange24h = dailyVaultTokenOut.balanceChange24h.minus(tokenAmountOut);
   dailyVaultTokenOut.save();
 
+  const dailyPoolTokenIn = getOrCreateDailyPoolToken(poolId, tokenInAddress, event.block);
   dailyPoolTokenIn.totalBalance = poolTokenIn.balance;
   dailyPoolTokenIn.balanceChange24h = dailyPoolTokenIn.balanceChange24h.plus(tokenAmountIn);
   dailyPoolTokenIn.save();
 
+  const dailyPoolTokenOut = getOrCreateDailyPoolToken(poolId, tokenOutAddress, event.block);
   dailyPoolTokenOut.totalBalance = poolTokenOut.balance;
   dailyPoolTokenOut.balanceChange24h = dailyPoolTokenOut.balanceChange24h.minus(tokenAmountOut);
   dailyPoolTokenOut.save();
 
-  const preferentialToken = getPreferentialPricingAsset([tokenInAddress, tokenOutAddress]);
-  if (preferentialToken != Address.zero()) {
-    updatePoolLiquidity(poolId, preferentialToken, event.block);
+  let tokenOutPrice: TokenPrice | null = getTokenPrice(tokenOutAddress, tokenInAddress);
+  let tokenInPrice: TokenPrice | null = getTokenPrice(tokenInAddress, tokenOutAddress);
+  if (isPricingAsset(tokenInAddress) && lifetimePoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
+    if (tokenOutPrice === null) {
+      tokenOutPrice = getOrCreateTokenPrice(tokenOutAddress, tokenInAddress, event.block);
+    }
+    tokenOutPrice.amount = tokenAmountIn;
+
+    if (pool.poolType === PoolType.Weighted) {
+      // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
+      // based on the pool's weights and updated balances after the swap.
+      let tokenInWeight = loadExistingTokenWeight(poolId, tokenInAddress).weight;
+      let tokenOutWeight = loadExistingTokenWeight(poolId, tokenOutAddress).weight;
+      if (tokenInWeight.equals(BigDecimal.zero()) || tokenOutWeight.equals(BigDecimal.zero())) {
+        log.warning('TokenInWeight is zero, {} {} {}', [
+          poolId.toHexString(),
+          tokenInWeight.toString(),
+          tokenOutWeight.toString(),
+        ]);
+        tokenInWeight = ONE_BD;
+        tokenOutWeight = ONE_BD;
+      }
+      tokenOutPrice.price = tokenAmountIn.div(tokenInWeight).div(tokenAmountOut.div(tokenOutWeight));
+    } else {
+      // Otherwise we can get a simple measure of the price from the ratio of amount in vs amount out
+      tokenOutPrice.price = tokenAmountIn.div(tokenAmountOut);
+    }
+    tokenOutPrice.priceUSD = valueInUSD(tokenOutPrice.price, tokenInAddress);
+    tokenOutPrice.timestamp = event.block.timestamp.toI32();
+    tokenOutPrice.block = event.block.number;
+    tokenOutPrice.save();
   }
 
-  const swap = new Swap(event.transaction.hash.toHexString().concat(event.logIndex.toString()));
-  swap.poolId = poolId;
-  swap.pool = poolId;
-  swap.tokenIn = tokenInAddress;
-  swap.tokenInAddress = tokenInAddress;
-  swap.tokenOut = tokenOutAddress;
-  swap.tokenOutAddress = tokenOutAddress;
-  swap.amountIn = tokenAmountIn;
-  swap.amountOut = tokenAmountOut;
-  swap.valueUSD = swapValueUSD;
+  if (isPricingAsset(tokenOutAddress) && lifetimePoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
+    if (tokenInPrice === null) {
+      tokenInPrice = getOrCreateTokenPrice(tokenInAddress, tokenOutAddress, event.block);
+    }
+    tokenInPrice.amount = tokenAmountOut;
+    if (pool.poolType === PoolType.Weighted) {
+      let tokenInWeight = loadExistingTokenWeight(poolId, tokenInAddress).weight;
+      let tokenOutWeight = loadExistingTokenWeight(poolId, tokenOutAddress).weight;
+      if (tokenInWeight.equals(BigDecimal.zero()) || tokenOutWeight.equals(BigDecimal.zero())) {
+        tokenInWeight = ONE_BD;
+        tokenOutWeight = ONE_BD;
+      }
+      // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
+      // based on the pool's weights and updated balances after the swap.
+      tokenInPrice.price = tokenAmountOut.div(tokenOutWeight).div(tokenAmountIn.div(tokenInWeight));
+      tokenInPrice.save();
+    } else {
+      // Otherwise we can get a simple measure of the price from the ratio of amount out vs amount in
+      tokenInPrice.price = tokenAmountOut.div(tokenAmountIn);
+    }
+    tokenInPrice.priceUSD = valueInUSD(tokenInPrice.price, tokenOutAddress);
+    tokenInPrice.timestamp = event.block.timestamp.toI32();
+    tokenInPrice.block = event.block.number;
+    tokenInPrice.save();
+  }
 
-  swap.sender = event.transaction.from;
-  swap.userAddress = user.address;
-  swap.user = user.id;
+  if (tokenOutPrice !== null) {
+    const hourlyTokenOutPrice = getOrCreateHourlyTokenPrice(tokenOutAddress, event.block);
+    hourlyTokenOutPrice.endPriceUSD = tokenOutPrice.priceUSD;
+    hourlyTokenOutPrice.avgPriceUSD = hourlyTokenOutPrice.avgPriceUSD
+      .times(hourlyTokenOutPrice.dataPoints)
+      .plus(tokenOutPrice.priceUSD)
+      .div(hourlyTokenOutPrice.dataPoints.plus(ONE_BD));
+    hourlyTokenOutPrice.dataPoints = hourlyTokenOutPrice.dataPoints.plus(ONE_BD);
+    hourlyTokenOutPrice.dailyPoolToken = dailyPoolTokenOut.id;
+    hourlyTokenOutPrice.dailyVaultToken = dailyVaultTokenOut.id;
+    hourlyTokenOutPrice.save();
+  }
 
-  swap.timestamp = blockTimestamp;
-  swap.tx = event.transaction.hash;
-  swap.save();
+  if (tokenInPrice !== null) {
+    const hourlyTokenInPrice = getOrCreateHourlyTokenPrice(tokenInAddress, event.block);
+    hourlyTokenInPrice.endPriceUSD = tokenInPrice.priceUSD;
+    hourlyTokenInPrice.avgPriceUSD = hourlyTokenInPrice.avgPriceUSD
+      .times(hourlyTokenInPrice.dataPoints)
+      .plus(tokenInPrice.priceUSD)
+      .div(hourlyTokenInPrice.dataPoints.plus(ONE_BD));
+    hourlyTokenInPrice.dataPoints = hourlyTokenInPrice.dataPoints.plus(ONE_BD);
+    hourlyTokenInPrice.dailyPoolToken = dailyPoolTokenIn.id;
+    hourlyTokenInPrice.dailyVaultToken = dailyVaultTokenIn.id;
+    hourlyTokenInPrice.save();
+  }
+
+  if (isExit) {
+    lifetimePoolMetric.totalShares = lifetimePoolMetric.totalShares.minus(tokenToDecimal(event.params.amountIn, 18));
+    lifetimePoolMetric.save();
+
+    const exit = new PoolExit(event.transaction.hash.toHexString().concat(event.logIndex.toString()));
+    exit.pool = pool.id;
+    exit.poolId = pool.id;
+    exit.tokenAddresses = pool.tokenAddresses;
+    const exitAmounts = new Array<BigDecimal>(pool.tokenAddresses.length);
+    for (let i = 0; i < pool.tokenAddresses.length; i++) {
+      if (pool.tokenAddresses[i].equals(tokenOutAddress)) {
+        exitAmounts[i] = tokenAmountOut;
+      } else {
+        exitAmounts[i] = BigDecimal.zero();
+      }
+    }
+    exit.amounts = exitAmounts;
+    exit.user = user.id;
+    exit.userAddress = user.address;
+    exit.timestamp = event.block.timestamp.toI32();
+    exit.valueUSD = valueInUSD(tokenAmountOut, tokenOutAddress);
+    exit.sender = event.transaction.from;
+    exit.tx = event.transaction.hash;
+    exit.save();
+  } else if (isJoin) {
+    lifetimePoolMetric.totalShares = lifetimePoolMetric.totalShares.plus(tokenToDecimal(event.params.amountOut, 18));
+    lifetimePoolMetric.save();
+
+    const join = new PoolJoin(event.transaction.hash.toHexString().concat(event.logIndex.toString()));
+    join.sender = event.transaction.from;
+    join.pool = pool.id;
+    join.poolId = pool.id;
+    join.tokenAddresses = pool.tokenAddresses;
+    const joinAmounts = new Array<BigDecimal>(pool.tokenAddresses.length);
+    for (let i = 0; i < pool.tokenAddresses.length; i++) {
+      if (pool.tokenAddresses[i].equals(tokenInAddress)) {
+        joinAmounts[i] = tokenAmountIn;
+      } else {
+        joinAmounts[i] = BigDecimal.zero();
+      }
+    }
+    join.amounts = joinAmounts;
+    join.user = user.id;
+    join.userAddress = user.address;
+    join.timestamp = event.block.timestamp.toI32();
+    join.valueUSD = valueInUSD(tokenAmountIn, tokenInAddress);
+    join.tx = event.transaction.hash;
+    join.save();
+  } else {
+    const swap = new Swap(event.transaction.hash.toHexString().concat(event.logIndex.toString()));
+    swap.poolId = poolId;
+    swap.pool = poolId;
+    swap.tokenIn = tokenInAddress;
+    swap.tokenInAddress = tokenInAddress;
+    swap.tokenOut = tokenOutAddress;
+    swap.tokenOutAddress = tokenOutAddress;
+    swap.amountIn = tokenAmountIn;
+    swap.amountOut = tokenAmountOut;
+    swap.valueUSD = swapValueUSD;
+
+    swap.sender = event.transaction.from;
+    swap.userAddress = user.address;
+    swap.user = user.id;
+
+    swap.timestamp = blockTimestamp;
+    swap.tx = event.transaction.hash;
+    swap.save();
+  }
+
+  const preferentialToken = getPreferentialPricingAsset([tokenInAddress, tokenOutAddress]);
+  if (preferentialToken.notEqual(Address.zero())) {
+    updatePoolLiquidity(poolId, preferentialToken, event.block);
+  }
 }

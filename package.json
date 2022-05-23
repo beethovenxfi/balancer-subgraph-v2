@@ -4,6 +4,7 @@
   "scripts": {
     "create": "graph create balancer-labs/balancer-v2 --node https://api.thegraph.com/deploy/",
     "create:local": "graph create balancer-labs/balancer-v2 --node http://localhost:8020",
+    "create:local-v3": "graph create balancer-v3 --node http://localhost:8020",
     "codegen": "yarn graph codegen --output-dir src/types/",
     "build": "graph build",
     "lint": "eslint --max-warnings 0 . --ext .ts",
@@ -11,6 +12,7 @@
     "deploy": "graph deploy balancer-labs/balancer-v2 --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
     "deploy:kovan": "graph deploy balancer-labs/balancer-kovan-v2 subgraph.kovan.yaml --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
     "deploy:local": "graph deploy balancer-labs/balancer-v2 subgraph.dockerParity.yaml --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
+    "deploy:local-v3": "graph deploy balancer-v3 subgraph.fantom-v2.yaml --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
     "deploy:fantom-eu": "graph deploy beethovenx subgraph.fantom.yaml --ipfs  http://eu-node.beets-ftm-node.com:5001 --node  http://eu-node.beets-ftm-node.com:8020/",
     "deploy:fantom-canada": "graph deploy beethovenx subgraph.fantom.yaml --ipfs  http://ca-node.beets-ftm-node.com:5001 --node  http://ca-node.beets-ftm-node.com:8020/",
     "deploy:rinkeby": "graph deploy beethovenx-rinkeby subgraph.rinkeby.yaml",

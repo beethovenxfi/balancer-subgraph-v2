@@ -5,7 +5,6 @@ repository: https://github.com/beethovenxfi/balancer-subgraph-v2
 #  - grafting
 schema:
   file: ./schema.graphql
-
 #graft:
 #  base: QmYLUByT8L994z5g9eQvECdzggR1Stw2EWZUFXtaM9muzd
 #  block: 28893627
@@ -16,11 +15,7 @@ dataSources:
     source:
       address: '0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce'
       abi: Vault
-#      startBlock: 19500000
-#      startBlock: 16897287
-#      startBlock: 32782818
-#      28893627
-      startBlock: 28893627
+      startBlock: 17433594
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -81,8 +76,7 @@ dataSources:
     source:
       address: '0x60467cb225092cE0c989361934311175f437Cf53'
       abi: WeightedPoolFactory
-#      startBlock: 19500000
-      startBlock: 28893627
+      startBlock: 16897200
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -116,7 +110,7 @@ dataSources:
     source:
       address: '0x92b377187bcCC6556FceD2f1e6DAd65850C20630'
       abi: WeightedPoolFactory
-      startBlock: 28893627
+      startBlock: 16897244
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -150,7 +144,7 @@ dataSources:
     source:
       address: '0x55df810876354Fc3e249f701Dd78DeDE57991F8D'
       abi: StablePoolFactory
-      startBlock: 28893627
+      startBlock: 16897287
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -187,7 +181,7 @@ dataSources:
     source:
       address: '0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554'
       abi: MetaStablePoolFactory
-      startBlock: 28893627
+      startBlock: 16898079
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -226,7 +220,7 @@ dataSources:
     source:
       address: '0x458368B3724B5a1c1057A00b28eB03FEb5b64968'
       abi: LiquidityBootstrappingPoolFactory
-      startBlock: 28893627
+      startBlock: 16897962
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -263,7 +257,7 @@ dataSources:
     source:
       address: '0x2C774732c93CE393eC8125bDA49fb3737Ae6F473'
       abi: LiquidityBootstrappingPoolFactory
-      startBlock: 28893627
+      startBlock: 24906900
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -300,7 +294,7 @@ dataSources:
     source:
       address: '0x0E2AFa0b5F9174750d4E84Bf9798f89b79Bd5bF4'
       abi: StablePhantomPoolFactory
-      startBlock: 28893627
+      startBlock: 28658437
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -339,7 +333,7 @@ dataSources:
     source:
       address: '0x1F73AE6ED391A2b1e84Ff988A1Bb5394B78a4A71'
       abi: LinearPoolFactory
-      startBlock: 28893627
+      startBlock: 28657909
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6

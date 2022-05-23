@@ -248,7 +248,6 @@ type PoolShares @entity {
     token: Token!
     tokenAddress: Bytes!
     balance: BigDecimal!
-    pricePerShare: BigDecimal!
 }
 
 type VaultToken @entity {

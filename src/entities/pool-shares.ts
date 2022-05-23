@@ -18,7 +18,6 @@ export function getOrCreatePoolShares(poolId: Bytes, userAddress: Address, token
     poolShares.user = user.id;
     poolShares.userAddress = userAddress;
     poolShares.balance = BigDecimal.zero();
-    poolShares.pricePerShare = BigDecimal.zero();
     poolShares.save();
   }
 

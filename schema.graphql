@@ -398,6 +398,7 @@ type LifetimeUserMetric @entity {
     user: User!
     userAddress: Bytes!
     swapVolume: BigDecimal!
+    swapFees: BigDecimal!
     invested: BigDecimal!
     withdrawn: BigDecimal!
     claimedEmissions: BigDecimal!
@@ -410,6 +411,7 @@ type DailyUserMetric @entity {
     day: Int!
     startTime: Int!
     swapVolume: BigDecimal!
+    swapFees: BigDecimal!
     invested: BigDecimal!
     withdrawn: BigDecimal!
     claimedEmissions: BigDecimal!
@@ -425,6 +427,7 @@ type DailyUserPoolMetric @entity {
     day: Int!
     totalShares: BigDecimal!
     swapVolume: BigDecimal!
+    swapFees: BigDecimal!
     invested: BigDecimal!
     withdrawn: BigDecimal!
     claimedEmissions: [ClaimedEmission!]! @derivedFrom(field: "dailyUserPoolMetric")

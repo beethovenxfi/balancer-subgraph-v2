@@ -18,6 +18,7 @@ export function getOrCreateLifetimeUserMetric(address: Address): LifetimeUserMet
     lifetimeUserMetric = new LifetimeUserMetric(address);
     lifetimeUserMetric.userAddress = address;
     lifetimeUserMetric.swapVolume = BigDecimal.zero();
+    lifetimeUserMetric.swapFees = BigDecimal.zero();
     lifetimeUserMetric.invested = BigDecimal.zero();
     lifetimeUserMetric.withdrawn = BigDecimal.zero();
     lifetimeUserMetric.claimedEmissions = BigDecimal.zero();
@@ -38,6 +39,7 @@ export function getOrCreateDailyUserMetric(address: Address, block: ethereum.Blo
     dailyUserMetric.day = dayId;
     dailyUserMetric.startTime = dayId * 86400;
     dailyUserMetric.swapVolume = BigDecimal.zero();
+    dailyUserMetric.swapFees = BigDecimal.zero();
     dailyUserMetric.invested = BigDecimal.zero();
     dailyUserMetric.withdrawn = BigDecimal.zero();
     dailyUserMetric.claimedEmissions = BigDecimal.zero();
@@ -65,6 +67,7 @@ export function getOrCreateDailyUserPoolMetric(
     dailyUserPoolMetric.startTime = dayId * 86400;
     dailyUserPoolMetric.totalShares = BigDecimal.zero();
     dailyUserPoolMetric.swapVolume = BigDecimal.zero();
+    dailyUserPoolMetric.swapFees = BigDecimal.zero();
     dailyUserPoolMetric.invested = BigDecimal.zero();
     dailyUserPoolMetric.withdrawn = BigDecimal.zero();
     dailyUserPoolMetric.save();

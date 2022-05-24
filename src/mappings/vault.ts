@@ -28,7 +28,12 @@ import {
 import { MIN_VIABLE_LIQUIDITY, ONE_BD, ZERO, ZERO_BD } from './helpers/constants';
 import { isStableLikePool, isVariableWeightPool, PoolType } from './helpers/pools';
 import { updateAmpFactor } from './helpers/stable';
-import { getOrCreateDailyUserMetric, getOrCreateDailyUserPoolMetric, getOrCreateUser } from '../entities/user';
+import {
+  getOrCreateDailyUserMetric,
+  getOrCreateDailyUserPoolMetric,
+  getOrCreateLifetimeUserMetric,
+  getOrCreateUser,
+} from '../entities/user';
 import { getExistingToken } from '../entities/token';
 import {
   getDailyVaultMetricAtDay,
@@ -139,6 +144,9 @@ function handlePoolJoined(event: ethereum.Event, poolId: Bytes, amounts: BigInt[
   const dailyUserPoolMetric = getOrCreateDailyUserPoolMetric(user.address, poolId, event.block);
   dailyUserPoolMetric.invested = dailyUserPoolMetric.invested.plus(joinAmountUSD);
   dailyUserPoolMetric.save();
+  const lifetimeUserMetric = getOrCreateLifetimeUserMetric(user.address);
+  lifetimeUserMetric.invested = lifetimeUserMetric.invested.plus(joinAmountUSD);
+  lifetimeUserMetric.save();
 
   const join = new PoolJoin(event.transaction.hash.toHexString().concat(event.logIndex.toString()));
   join.sender = liquidityProvider;
@@ -240,6 +248,9 @@ function handlePoolExited(event: ethereum.Event, poolId: Bytes, amounts: BigInt[
   const dailyUserMetric = getOrCreateDailyUserMetric(user.address, event.block);
   dailyUserMetric.withdrawn = dailyUserMetric.withdrawn.plus(exitAmountUSD);
   dailyUserMetric.save();
+  const lifetimeUserMetric = getOrCreateLifetimeUserMetric(user.address);
+  lifetimeUserMetric.withdrawn = lifetimeUserMetric.withdrawn.plus(exitAmountUSD);
+  lifetimeUserMetric.save();
 
   const exit = new PoolExit(event.transaction.hash.toHexString().concat(event.logIndex.toString()));
   exit.pool = pool.id;
@@ -554,6 +565,7 @@ export function handleSwapEvent(event: SwapEvent): void {
     hourlyTokenInPrice.save();
   }
 
+  const lifetimeUserMetric = getOrCreateLifetimeUserMetric(user.address);
   const dailyUserMetric = getOrCreateDailyUserMetric(user.address, event.block);
   const dailyUserPoolMetric = getOrCreateDailyUserPoolMetric(user.address, poolId, event.block);
 
@@ -594,6 +606,8 @@ export function handleSwapEvent(event: SwapEvent): void {
     dailyUserPoolMetric.save();
     dailyUserMetric.withdrawn = dailyUserMetric.withdrawn.plus(exitValueUsd);
     dailyUserMetric.save();
+    lifetimeUserMetric.withdrawn = lifetimeUserMetric.withdrawn.plus(exitValueUsd);
+    lifetimeUserMetric.save();
   } else if (isJoin) {
     const sharesAmount = tokenToDecimal(event.params.amountOut, 18);
     lifetimePoolMetric.totalShares = lifetimePoolMetric.totalShares.plus(sharesAmount);
@@ -629,6 +643,8 @@ export function handleSwapEvent(event: SwapEvent): void {
     dailyUserPoolMetric.save();
     dailyUserMetric.invested = dailyUserMetric.invested.plus(joinValueUsd);
     dailyUserMetric.save();
+    lifetimeUserMetric.invested = lifetimeUserMetric.invested.plus(joinValueUsd);
+    lifetimeUserMetric.save();
   } else {
     const swap = new Swap(event.transaction.hash.toHexString().concat(event.logIndex.toString()));
     swap.poolId = poolId;
@@ -650,9 +666,14 @@ export function handleSwapEvent(event: SwapEvent): void {
     swap.dailyUserPoolMetric = dailyUserPoolMetric.id;
     swap.save();
     dailyUserPoolMetric.swapVolume = dailyUserPoolMetric.swapVolume.plus(swapValueUSD);
+    dailyUserPoolMetric.swapFees = dailyUserPoolMetric.swapFees.plus(swapFeesUSD);
     dailyUserPoolMetric.save();
     dailyUserMetric.swapVolume = dailyUserMetric.swapVolume.plus(swapValueUSD);
+    dailyUserMetric.swapFees = dailyUserMetric.swapFees.plus(swapFeesUSD);
     dailyUserMetric.save();
+    lifetimeUserMetric.swapVolume = lifetimeUserMetric.swapVolume.plus(swapValueUSD);
+    lifetimeUserMetric.swapFees = lifetimeUserMetric.swapFees.plus(swapFeesUSD);
+    lifetimeUserMetric.save();
   }
 
   const preferentialToken = getPreferentialPricingAsset([tokenInAddress, tokenOutAddress]);

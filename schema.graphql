@@ -82,6 +82,7 @@ type Pool @entity(immutable: true) {
 
     userShares: [PoolShares!]! @derivedFrom(field: "pool")
     customPoolData: CustomPoolData
+    farm: PoolFarm!
 
     investments: [PoolInvestmentAction!]! @derivedFrom(field: "pool")
     swaps: [Swap!]! @derivedFrom(field: "pool")
@@ -270,6 +271,12 @@ type PoolToken @entity {
     swapCount: BigInt!
 }
 
+type PoolFarm @entity {
+    id: Bytes!
+    pool: Pool!
+    farm: Farm!
+}
+
 type Farm @entity(immutable: true) {
     id: Bytes!
     pool: Pool!
@@ -341,7 +348,7 @@ type MasterChefFarmEmissionProvider implements FarmEmissionProvider @entity  {
     masterChef: MasterChef!
     farm: Farm!
     farmId: Bytes!
-    masterChefPoolId: Bytes!
+    masterChefPoolId: BigInt!
     allocation: BigInt!
     claimedEmissions: [ClaimedEmission!]! @derivedFrom(field: "emissionProvider")
 }

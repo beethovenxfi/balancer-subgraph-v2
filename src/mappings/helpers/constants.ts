@@ -248,3 +248,7 @@ export let PRICING_ASSETS: Address[] = [
 export const NESTED_LINEAR_PRICING_ASSETS: Address[] = [LINEAR_NATIVE];
 
 export let USD_STABLE_ASSETS: Address[] = [USDC, DAI, USDT, ALT_DAI, ALT_USDC, ALT_USDT];
+
+export const LP_POOL_MAPPING = {
+  ['fbeets']: 'fidelio-pid',
+};

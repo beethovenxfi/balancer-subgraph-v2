@@ -176,6 +176,7 @@ type DailyPoolMetric @entity {
     poolId: Bytes!
     day: Int!
     startTime: Int!
+    totalShares: BigDecimal!
     totalSwapVolume: BigDecimal!
     swapVolume24h: BigDecimal!
     swapVolumeChange24h: BigDecimal!
@@ -269,14 +270,169 @@ type PoolToken @entity {
     swapCount: BigInt!
 }
 
+type Farm @entity(immutable: true) {
+    id: Bytes!
+    pool: Pool!
+    poolId: Bytes!
+    lifetimeFarmMetric: LifetimeFarmMetric!
+    dailyFarmMetrics: [DailyFarmMetric!] @derivedFrom(field: "farm")
+    userShares: [StakedPoolShares!]! @derivedFrom(field: "farm")
+    emissions: [FarmEmissionProvider!]! @derivedFrom(field: "farm")
+}
+
+type StakedPoolShares @entity {
+    id: Bytes!
+    farm: Farm!
+    farmId: Bytes!
+    user: User!
+    userAddress: Bytes!
+    token: Token!
+    tokenAddress: Bytes!
+    balance: BigDecimal!
+}
+
+type LifetimeFarmMetric @entity {
+    id: Bytes!
+    totalShares: BigDecimal!
+    totalLiquidity: BigDecimal!
+}
+
+type DailyFarmMetric @entity {
+    id: Bytes!
+    farm: Farm!
+    day: Int!
+    startTime: Int!
+    totalLiquidity: BigDecimal!
+    liqudityChange24h: BigDecimal!
+}
+
+type MasterChef @entity {
+    id: Bytes!
+    address: Bytes!
+    emissionToken: Token!
+    emissionPerBlock: BigDecimal!
+    totalAllocation: BigInt!
+    farms: [MasterChefFarmRewarderEmissionProvider!] @derivedFrom(field: "masterChef")
+}
+
+interface FarmEmissionProvider {
+    id: Bytes!
+    farm: Farm!
+    farmId: Bytes!
+    claimedEmissions: [ClaimedEmission!]!
+}
+
+type GaugeEmissionProvider implements FarmEmissionProvider @entity {
+    id: Bytes!
+    farm: Farm!
+    farmId: Bytes!
+    address: Bytes!
+    streamer: GaugeStreamer!
+    claimedEmissions: [ClaimedEmission!]!
+}
+
+type GaugeStreamer @entity {
+    id: Bytes!
+    address: Bytes!
+}
+
+type MasterChefFarmEmissionProvider implements FarmEmissionProvider @entity  {
+    id: Bytes!
+    masterChef: MasterChef!
+    farm: Farm!
+    farmId: Bytes!
+    masterChefPoolId: Bytes!
+    allocation: BigInt!
+    claimedEmissions: [ClaimedEmission!]! @derivedFrom(field: "emissionProvider")
+}
+
+type MasterChefFarmRewarderEmissionProvider implements FarmEmissionProvider @entity  {
+    id: Bytes!
+    masterChef: MasterChef!
+    farm: Farm!
+    farmId: Bytes!
+    id: Bytes!
+    address: Bytes!
+    rewardTokens: [MasterChefRewardToken!]! @derivedFrom(field: "rewarder")
+    claimedEmissions: [ClaimedEmission!]! @derivedFrom(field: "emissionProvider")
+}
+
+type MasterChefRewardToken @entity {
+    id: Bytes!
+    tokenAddress: Bytes!
+    token: Token!
+    rewarder: MasterChefFarmRewarderEmissionProvider
+    rewardPerSecond: BigDecimal!
+}
+
+type ClaimedEmission @entity(immutable: true) {
+    id: Bytes!
+    user: User
+    token: Token!
+    amount: BigDecimal!
+    amountUSD: BigDecimal!
+    timestamp: BigInt!
+    block: BigInt!
+    emissionProvider: FarmEmissionProvider!
+    dailyUserPoolMetric: DailyUserPoolMetric!
+}
+
 
 type User @entity(immutable: true) {
     id: Bytes!
     address: Bytes!
-    sharesOwned: [PoolShares!] @derivedFrom(field: "user")
-#    swaps: [Swap!] @derivedFrom(field: "userAddress")
+    poolShares: [PoolShares!] @derivedFrom(field: "user")
+    stakedPoolShares: [StakedPoolShares!]! @derivedFrom(field: "user")
     userInternalBalances: [UserInternalBalance!] @derivedFrom(field: "user")
+    swaps: [Swap!] @derivedFrom(field: "user")
+    interactions: [PoolInteraction!] @derivedFrom(field: "user")
+    investments: [PoolInvestmentAction!] @derivedFrom(field: "user")
+    lifetimeUserMetric: LifetimeUserMetric!
+    dailyUserMetrics: [DailyUserMetric!] @derivedFrom(field: "user")
+    dailyUserPoolMetrics: [DailyUserPoolMetric!] @derivedFrom(field: "user")
+    claimedEmissions: [ClaimedEmission!]! @derivedFrom(field: "user")
 }
+
+type LifetimeUserMetric @entity {
+    id: Bytes!
+    user: User!
+    userAddress: Bytes!
+    swapVolume: BigDecimal!
+    invested: BigDecimal!
+    withdrawn: BigDecimal!
+    claimedEmissions: BigDecimal!
+}
+
+type DailyUserMetric @entity {
+    id: Bytes!
+    user: User!
+    userAddress:Bytes!
+    day: Int!
+    startTime: Int!
+    swapVolume: BigDecimal!
+    invested: BigDecimal!
+    withdrawn: BigDecimal!
+    claimedEmissions: BigDecimal!
+}
+
+type DailyUserPoolMetric @entity {
+    id: Bytes!
+    user: User!
+    userAddress: Bytes!
+    pool: Pool!
+    poolId: Bytes!
+    startTime: Int!
+    day: Int!
+    totalShares: BigDecimal!
+    swapVolume: BigDecimal!
+    invested: BigDecimal!
+    withdrawn: BigDecimal!
+    claimedEmissions: [ClaimedEmission!]! @derivedFrom(field: "dailyUserPoolMetric")
+    swaps: [Swap!] @derivedFrom(field: "dailyUserPoolMetric")
+    interactions: [PoolInteraction!] @derivedFrom(field: "dailyUserPoolMetric")
+    investments: [PoolInvestmentAction!] @derivedFrom(field: "dailyUserPoolMetric")
+}
+
 
 type UserInternalBalance @entity {
     id: Bytes!
@@ -296,6 +452,13 @@ type TokenPrice @entity {
     price: BigDecimal!
     block: BigInt!
     timestamp: Int!
+    priceUSD: BigDecimal!
+}
+
+type LatestTokenPrice @entity {
+    id: Bytes!
+    token: Token!
+    tokenAddress: Bytes!
     priceUSD: BigDecimal!
 }
 
@@ -319,6 +482,7 @@ interface PoolInteraction {
     sender: Bytes!
     user: User!
     userAddress: Bytes!
+    dailyUserPoolMetric: DailyUserPoolMetric!
     valueUSD: BigDecimal!
     tx: Bytes!
 }
@@ -332,6 +496,7 @@ interface PoolInvestmentAction {
     amounts: [BigDecimal!]!
     user: User!
     userAddress: Bytes!
+    dailyUserPoolMetric: DailyUserPoolMetric!
     timestamp: Int!
     valueUSD: BigDecimal!
     tx: Bytes!
@@ -346,6 +511,7 @@ type PoolJoin implements PoolInteraction & PoolInvestmentAction  @entity(immutab
     amounts: [BigDecimal!]!
     user: User!
     userAddress: Bytes!
+    dailyUserPoolMetric: DailyUserPoolMetric!
     timestamp: Int!
     valueUSD: BigDecimal!
     tx: Bytes!
@@ -361,6 +527,7 @@ type PoolExit implements PoolInteraction & PoolInvestmentAction  @entity(immutab
     amounts: [BigDecimal!]!
     user: User!
     userAddress: Bytes!
+    dailyUserPoolMetric: DailyUserPoolMetric!
     timestamp: Int!
     valueUSD: BigDecimal!
     tx: Bytes!
@@ -379,6 +546,7 @@ type Swap implements PoolInteraction  @entity(immutable: true) {
     amountOut: BigDecimal!
     user: User!
     userAddress: Bytes!
+    dailyUserPoolMetric: DailyUserPoolMetric!
     valueUSD: BigDecimal!
     timestamp: Int!
     tx: Bytes!

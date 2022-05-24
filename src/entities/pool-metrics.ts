@@ -32,6 +32,7 @@ export function getOrCreateDailyPoolMetrics(poolId: Bytes, block: ethereum.Block
     dailyPoolMetric.startTime = dayId * 86400;
     dailyPoolMetric.pool = poolId;
     dailyPoolMetric.poolId = poolId;
+    dailyPoolMetric.totalShares = BigDecimal.zero();
     dailyPoolMetric.swapVolume24h = BigDecimal.zero();
     dailyPoolMetric.swapVolumeChange24h = BigDecimal.zero();
     dailyPoolMetric.totalSwapVolume = BigDecimal.zero();

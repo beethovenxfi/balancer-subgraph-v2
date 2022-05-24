@@ -25,10 +25,11 @@ import { scaleDown, tokenToDecimal } from './helpers/misc';
 import { ONE_BD, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
 import { getPoolByAddress } from '../entities/pool';
 import { getOrCreatePoolShares } from '../entities/pool-shares';
-import { getOrCreateLifetimePoolMetrics } from '../entities/pool-metrics';
+import { getOrCreateDailyPoolMetrics, getOrCreateLifetimePoolMetrics } from '../entities/pool-metrics';
 import { updateAmpFactor } from './helpers/stable';
 import { getOrCreatePriceRateProvider } from '../entities/price-rate-provider';
 import { PriceRateCacheUpdated } from '../types/templates/LinearPool/MetaStablePool';
+import { getOrCreateDailyUserPoolMetric } from '../entities/user';
 
 /************************************
  *********** SWAP ENABLED ***********
@@ -205,7 +206,8 @@ export function handleTransfer(event: Transfer): void {
   let isMint = event.params.from.toHex() == ZERO_ADDRESS;
   let isBurn = event.params.to.toHex() == ZERO_ADDRESS;
 
-  const globalPoolMetrics = getOrCreateLifetimePoolMetrics(pool.id, event.block);
+  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(pool.id, event.block);
+  const dailyPoolMetric = getOrCreateDailyPoolMetrics(pool.id, event.block);
 
   let BPT_DECIMALS = 18;
 
@@ -213,37 +215,49 @@ export function handleTransfer(event: Transfer): void {
   const sharesFromBeforeSwap = poolSharesFrom.balance;
   const poolSharesTo = getOrCreatePoolShares(pool.id, event.params.to, event.address);
   const sharesToBeforeSwap = poolSharesTo.balance;
-  if (isMint) {
-    poolSharesTo.balance = poolSharesTo.balance.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
-    globalPoolMetrics.totalShares = globalPoolMetrics.totalShares.plus(
-      tokenToDecimal(event.params.value, BPT_DECIMALS)
-    );
-    poolSharesTo.save();
-    globalPoolMetrics.save();
-  } else if (isBurn) {
-    poolSharesFrom.balance = poolSharesFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));
-    poolSharesFrom.save();
-    globalPoolMetrics.totalShares = globalPoolMetrics.totalShares.minus(
-      tokenToDecimal(event.params.value, BPT_DECIMALS)
-    );
-    poolSharesFrom.save();
-    globalPoolMetrics.save();
-  } else {
-    poolSharesTo.balance = poolSharesTo.balance.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
-    poolSharesTo.save();
+  const amount = tokenToDecimal(event.params.value, BPT_DECIMALS);
 
-    poolSharesFrom.balance = poolSharesFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+  const dailyUserPoolToMetric = getOrCreateDailyUserPoolMetric(pool.id, event.params.to, event.block);
+  const dailyUserPoolFromMetric = getOrCreateDailyUserPoolMetric(pool.id, event.params.from, event.block);
+
+  if (isMint) {
+    poolSharesTo.balance = poolSharesTo.balance.plus(amount);
+    lifetimePoolMetric.totalShares = lifetimePoolMetric.totalShares.plus(amount);
+    dailyPoolMetric.totalShares = dailyPoolMetric.totalShares.plus(amount);
+    poolSharesTo.save();
+    lifetimePoolMetric.save();
+    dailyPoolMetric.save();
+    dailyUserPoolToMetric.totalShares = dailyUserPoolToMetric.totalShares.plus(amount);
+    dailyUserPoolToMetric.save();
+  } else if (isBurn) {
+    poolSharesFrom.balance = poolSharesFrom.balance.minus(amount);
     poolSharesFrom.save();
-    globalPoolMetrics.save();
+    lifetimePoolMetric.totalShares = lifetimePoolMetric.totalShares.minus(amount);
+    dailyPoolMetric.totalShares = dailyPoolMetric.totalShares.minus(amount);
+    poolSharesFrom.save();
+    lifetimePoolMetric.save();
+    dailyPoolMetric.save();
+    dailyUserPoolFromMetric.totalShares = dailyUserPoolFromMetric.totalShares.minus(amount);
+    dailyUserPoolFromMetric.save();
+  } else {
+    poolSharesTo.balance = poolSharesTo.balance.plus(amount);
+    poolSharesTo.save();
+    dailyUserPoolToMetric.totalShares = dailyUserPoolToMetric.totalShares.plus(amount);
+    dailyUserPoolToMetric.save();
+
+    poolSharesFrom.balance = poolSharesFrom.balance.minus(amount);
+    poolSharesFrom.save();
+    dailyUserPoolFromMetric.totalShares = dailyUserPoolFromMetric.totalShares.minus(amount);
+    dailyUserPoolFromMetric.save();
   }
 
   if (poolSharesTo.balance.notEqual(ZERO_BD) && sharesToBeforeSwap.equals(ZERO_BD)) {
-    globalPoolMetrics.holdersCount = globalPoolMetrics.holdersCount.plus(BigInt.fromI32(1));
-    globalPoolMetrics.save();
+    lifetimePoolMetric.holdersCount = lifetimePoolMetric.holdersCount.plus(BigInt.fromI32(1));
+    lifetimePoolMetric.save();
   }
 
   if (poolSharesFrom.balance.equals(ZERO_BD) && sharesFromBeforeSwap.notEqual(ZERO_BD)) {
-    globalPoolMetrics.holdersCount = globalPoolMetrics.holdersCount.minus(BigInt.fromI32(1));
-    globalPoolMetrics.save();
+    lifetimePoolMetric.holdersCount = lifetimePoolMetric.holdersCount.minus(BigInt.fromI32(1));
+    lifetimePoolMetric.save();
   }
 }

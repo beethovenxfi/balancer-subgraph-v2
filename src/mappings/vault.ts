@@ -43,17 +43,12 @@ import {
 } from '../entities/vault-metrics';
 import { loadExistingPoolToken } from '../entities/pool-token';
 import { loadExistingTokenWeight } from '../entities/token-weight';
-import {
-  getOrCreateTokenPrice,
-  getOrCreateHourlyTokenPrice,
-  getTokenPrice,
-  getOrCreateLatestTokenPrice,
-} from '../entities/token-price';
+import { getOrCreateTokenPrice, getOrCreateHourlyTokenPrice, getTokenPrice } from '../entities/token-price';
 import {
   getDailyPoolMetricAtDay,
+  getExistingLifetimePoolMetrics,
   getOrCreateDailyPoolMetrics,
   getOrCreateDailyPoolToken,
-  getOrCreateLifetimePoolMetrics,
 } from '../entities/pool-metrics';
 import { getOrCreateVaultToken } from '../entities/vault-token';
 
@@ -138,13 +133,14 @@ function handlePoolJoined(event: ethereum.Event, poolId: Bytes, amounts: BigInt[
     poolToken.balance = newAmount;
     poolToken.save();
   }
-  const dailyUserMetric = getOrCreateDailyUserMetric(user.address, event.block);
+  const userAddress = Address.fromBytes(user.address);
+  const dailyUserMetric = getOrCreateDailyUserMetric(userAddress, event.block);
   dailyUserMetric.invested = dailyUserMetric.invested.plus(joinAmountUSD);
   dailyUserMetric.save();
-  const dailyUserPoolMetric = getOrCreateDailyUserPoolMetric(user.address, poolId, event.block);
+  const dailyUserPoolMetric = getOrCreateDailyUserPoolMetric(userAddress, poolId, event.block);
   dailyUserPoolMetric.invested = dailyUserPoolMetric.invested.plus(joinAmountUSD);
   dailyUserPoolMetric.save();
-  const lifetimeUserMetric = getOrCreateLifetimeUserMetric(user.address);
+  const lifetimeUserMetric = getOrCreateLifetimeUserMetric(userAddress);
   lifetimeUserMetric.invested = lifetimeUserMetric.invested.plus(joinAmountUSD);
   lifetimeUserMetric.save();
 
@@ -178,7 +174,7 @@ function handlePoolJoined(event: ethereum.Event, poolId: Bytes, amounts: BigInt[
   // Update virtual supply
   if (pool.poolType == 'StablePhantom') {
     let maxTokenBalance = BigDecimal.fromString('5192296858534827.628530496329220095');
-    const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(pool.id, event.block);
+    const lifetimePoolMetric = getExistingLifetimePoolMetrics(pool.id);
     const dailyPoolMetric = getOrCreateDailyPoolMetrics(pool.id, event.block);
     if (lifetimePoolMetric.totalShares.equals(maxTokenBalance)) {
       let initialBpt = ZERO_BD;
@@ -242,13 +238,14 @@ function handlePoolExited(event: ethereum.Event, poolId: Bytes, amounts: BigInt[
     dailyPoolToken.balanceChange24h = dailyPoolToken.balanceChange24h.plus(tokenAmountOut);
     dailyPoolToken.save();
   }
-  const dailyUserPoolMetric = getOrCreateDailyUserPoolMetric(user.address, poolId, event.block);
+  const userAddress = Address.fromBytes(user.address);
+  const dailyUserPoolMetric = getOrCreateDailyUserPoolMetric(userAddress, poolId, event.block);
   dailyUserPoolMetric.withdrawn = dailyUserPoolMetric.withdrawn.plus(exitAmountUSD);
   dailyUserPoolMetric.save();
-  const dailyUserMetric = getOrCreateDailyUserMetric(user.address, event.block);
+  const dailyUserMetric = getOrCreateDailyUserMetric(userAddress, event.block);
   dailyUserMetric.withdrawn = dailyUserMetric.withdrawn.plus(exitAmountUSD);
   dailyUserMetric.save();
-  const lifetimeUserMetric = getOrCreateLifetimeUserMetric(user.address);
+  const lifetimeUserMetric = getOrCreateLifetimeUserMetric(userAddress);
   lifetimeUserMetric.withdrawn = lifetimeUserMetric.withdrawn.plus(exitAmountUSD);
   lifetimeUserMetric.save();
 
@@ -258,7 +255,7 @@ function handlePoolExited(event: ethereum.Event, poolId: Bytes, amounts: BigInt[
   exit.tokenAddresses = pool.tokenAddresses;
   exit.amounts = exitAmounts;
   exit.user = user.id;
-  exit.userAddress = user.address;
+  exit.userAddress = userAddress;
   exit.timestamp = event.block.timestamp.toI32();
   exit.valueUSD = exitAmountUSD;
   exit.sender = liquidityProvider;
@@ -384,7 +381,7 @@ export function handleSwapEvent(event: SwapEvent): void {
     swapFeesUSD = swapValueUSD.times(swapConfig.fee);
   }
 
-  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(poolId, event.block);
+  const lifetimePoolMetric = getExistingLifetimePoolMetrics(poolId);
   lifetimePoolMetric.swapCount = lifetimePoolMetric.swapCount.plus(BigInt.fromI32(1));
   lifetimePoolMetric.totalSwapVolume = lifetimePoolMetric.totalSwapVolume.plus(swapValueUSD);
   lifetimePoolMetric.totalSwapFee = lifetimePoolMetric.totalSwapFee.plus(swapFeesUSD);
@@ -509,9 +506,6 @@ export function handleSwapEvent(event: SwapEvent): void {
     tokenOutPrice.timestamp = event.block.timestamp.toI32();
     tokenOutPrice.block = event.block.number;
     tokenOutPrice.save();
-    const latestTokenOutPrice = getOrCreateLatestTokenPrice(tokenOutAddress);
-    latestTokenOutPrice.priceUSD = tokenOutPrice.priceUSD;
-    latestTokenOutPrice.save();
   }
 
   if (isPricingAsset(tokenOutAddress) && lifetimePoolMetric.totalLiquidity.gt(MIN_VIABLE_LIQUIDITY)) {
@@ -538,9 +532,6 @@ export function handleSwapEvent(event: SwapEvent): void {
     tokenInPrice.timestamp = event.block.timestamp.toI32();
     tokenInPrice.block = event.block.number;
     tokenInPrice.save();
-    const latestTokenInPrice = getOrCreateLatestTokenPrice(tokenInAddress);
-    latestTokenInPrice.priceUSD = tokenInPrice.priceUSD;
-    latestTokenInPrice.save();
   }
 
   if (tokenOutPrice !== null) {
@@ -565,9 +556,10 @@ export function handleSwapEvent(event: SwapEvent): void {
     hourlyTokenInPrice.save();
   }
 
-  const lifetimeUserMetric = getOrCreateLifetimeUserMetric(user.address);
-  const dailyUserMetric = getOrCreateDailyUserMetric(user.address, event.block);
-  const dailyUserPoolMetric = getOrCreateDailyUserPoolMetric(user.address, poolId, event.block);
+  const userAddress = Address.fromBytes(user.address);
+  const lifetimeUserMetric = getOrCreateLifetimeUserMetric(userAddress);
+  const dailyUserMetric = getOrCreateDailyUserMetric(userAddress, event.block);
+  const dailyUserPoolMetric = getOrCreateDailyUserPoolMetric(userAddress, poolId, event.block);
 
   if (isExit) {
     const sharesAmount = tokenToDecimal(event.params.amountIn, 18);
@@ -594,7 +586,7 @@ export function handleSwapEvent(event: SwapEvent): void {
 
     exit.amounts = exitAmounts;
     exit.user = user.id;
-    exit.userAddress = user.address;
+    exit.userAddress = userAddress;
     exit.timestamp = event.block.timestamp.toI32();
     exit.valueUSD = exitValueUsd;
     exit.sender = event.transaction.from;
@@ -633,7 +625,7 @@ export function handleSwapEvent(event: SwapEvent): void {
       : valueInUSD(tokenAmountIn, tokenInAddress);
     join.amounts = joinAmounts;
     join.user = user.id;
-    join.userAddress = user.address;
+    join.userAddress = userAddress;
     join.timestamp = event.block.timestamp.toI32();
     join.valueUSD = joinValueUsd;
     join.tx = event.transaction.hash;
@@ -658,7 +650,7 @@ export function handleSwapEvent(event: SwapEvent): void {
     swap.valueUSD = swapValueUSD;
 
     swap.sender = event.transaction.from;
-    swap.userAddress = user.address;
+    swap.userAddress = userAddress;
     swap.user = user.id;
 
     swap.timestamp = blockTimestamp;

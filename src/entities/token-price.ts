@@ -1,5 +1,5 @@
 import { Address } from '@graphprotocol/graph-ts/index';
-import { HourlyTokenPrice, LatestTokenPrice, TokenPrice } from '../types/schema';
+import { HourlyTokenPrice, TokenPrice } from '../types/schema';
 import { BigDecimal, ethereum } from '@graphprotocol/graph-ts';
 import { vaultId } from './vault';
 
@@ -24,19 +24,6 @@ export function getOrCreateTokenPrice(tokenAddress: Address, pricingAsset: Addre
 
 export function getTokenPrice(tokenAddress: Address, pricingAsset: Address): TokenPrice | null {
   return TokenPrice.load(tokenAddress.concat(pricingAsset));
-}
-
-export function getOrCreateLatestTokenPrice(tokenAddress: Address): LatestTokenPrice {
-  let latestTokenPrice = LatestTokenPrice.load(tokenAddress);
-  if (latestTokenPrice === null) {
-    latestTokenPrice = new LatestTokenPrice(tokenAddress);
-    latestTokenPrice.tokenAddress = tokenAddress;
-    latestTokenPrice.token = tokenAddress;
-    latestTokenPrice.priceUSD = BigDecimal.zero();
-    latestTokenPrice.save();
-  }
-
-  return latestTokenPrice;
 }
 
 export function getOrCreateHourlyTokenPrice(tokenAddress: Address, block: ethereum.Block): HourlyTokenPrice {

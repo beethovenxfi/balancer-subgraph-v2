@@ -1,12 +1,14 @@
 import { Address } from '@graphprotocol/graph-ts/index';
-import { DailyUserMetric, DailyUserPoolMetric, LifetimeUserMetric, User } from '../types/schema';
+import { DailyUserMetric, DailyUserPoolMetric, LifetimeUserMetric, StakedPoolShares, User } from '../types/schema';
 import { BigDecimal, Bytes, ethereum } from '@graphprotocol/graph-ts';
 
 export function getOrCreateUser(address: Address): User {
   let user = User.load(address);
   if (user === null) {
+    const lifetimeUserMetric = getOrCreateLifetimeUserMetric(address);
     user = new User(address);
     user.address = address;
+    user.lifetimeUserMetric = lifetimeUserMetric.id;
     user.save();
   }
   return user;
@@ -16,6 +18,7 @@ export function getOrCreateLifetimeUserMetric(address: Address): LifetimeUserMet
   let lifetimeUserMetric = LifetimeUserMetric.load(address);
   if (lifetimeUserMetric === null) {
     lifetimeUserMetric = new LifetimeUserMetric(address);
+    lifetimeUserMetric.user = address;
     lifetimeUserMetric.userAddress = address;
     lifetimeUserMetric.swapVolume = BigDecimal.zero();
     lifetimeUserMetric.swapFees = BigDecimal.zero();
@@ -73,4 +76,19 @@ export function getOrCreateDailyUserPoolMetric(
     dailyUserPoolMetric.save();
   }
   return dailyUserPoolMetric;
+}
+
+export function getOrCreateStakedPoolShares(userAddress: Address, farmId: Bytes): StakedPoolShares {
+  const id = userAddress.concat(farmId);
+  let stakedPoolShares = StakedPoolShares.load(id);
+  if (stakedPoolShares == null) {
+    stakedPoolShares = new StakedPoolShares(id);
+    stakedPoolShares.farm = farmId;
+    stakedPoolShares.farmId = farmId;
+    stakedPoolShares.user = userAddress;
+    stakedPoolShares.userAddress = userAddress;
+    stakedPoolShares.balance = BigDecimal.zero();
+    stakedPoolShares.save();
+  }
+  return stakedPoolShares;
 }

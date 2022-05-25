@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, Bytes, log } from '@graphprotocol/graph-ts';
 
 import {
   Deposit,
@@ -9,19 +9,26 @@ import {
   UpdateEmissionRate,
   Withdraw,
 } from '../types/MasterChef/MasterChef';
-import { SingleTokenRewarder as SingleTokenRewarderContract } from "../types/MasterChef/SingleTokenRewarder";
-import { MultiTokenRewarder as MultiTokenRewarderContract} from "../types/MasterChef/MultiTokenRewarder";
-import { getOrCreateMasterChef } from '../entities/masterchef-emissions';
 import {
+  getExistingMasterChefFarmEmissionProvider,
+  getOrCreateFarmRewarderEmissionProvider,
+  getOrCreateMasterChef,
+} from '../entities/masterchef-emissions';
+import {
+  ClaimedEmission,
   Farm,
   LifetimeFarmMetric,
   MasterChefFarmEmissionProvider,
-  MasterChefFarmRewarderEmissionProvider, MasterChefRewardToken,
-  PoolAddressToId
-} from "../types/schema";
-import { LP_POOL_MAPPING } from './helpers/constants';
-import { getOrCreateToken } from "../entities/token";
-import { scaleDown } from "./helpers/misc";
+  MasterChefFarmRewarderEmissionProvider,
+  PoolAddressToId,
+} from '../types/schema';
+import { FBEETS_ADDRESS, FBEETS_POOL_ID } from './helpers/constants';
+import { getExistingToken } from '../entities/token';
+import { scaleDown } from './helpers/misc';
+import { getExistingFarm, getExistingLifetimeFarmMetrics, getOrCreateDailyFarmMetric } from '../entities/emissions';
+import { getExistingLifetimePoolMetrics } from '../entities/pool-metrics';
+import { getOrCreateDailyUserPoolMetric, getOrCreateStakedPoolShares } from '../entities/user';
+import { valueInUSD } from './pricing';
 
 export function logPoolAddition(event: LogPoolAddition): void {
   log.info('[MasterChef] Log Pool Addition {} {} {} {}', [
@@ -39,20 +46,20 @@ export function logPoolAddition(event: LogPoolAddition): void {
 
   let poolId: Bytes;
   if (poolMapping !== null) {
-    poolId = poolMapping.id;
+    poolId = poolMapping.poolId;
+  } else if (lpToken.equals(FBEETS_ADDRESS)) {
+    poolId = FBEETS_POOL_ID;
   } else {
-    const mappedPoolId = LP_POOL_MAPPING[lpToken.toHex()];
-    if (!mappedPoolId) {
-      log.error('[MasterChef] No pool mapping found for {}', [lpToken.toHex()]);
-      return;
-    }
-    poolId = Bytes.fromHexString(mappedPoolId);
+    log.error('[MasterChef] No pool mapping found for {}', [lpToken.toHex()]);
+    return;
   }
 
   const farmId = Bytes.fromI32(event.params.pid.toI32());
   const farm = new Farm(farmId);
   farm.poolId = poolId;
   farm.pool = poolId;
+  farm.token = event.params.lpToken;
+  farm.tokenAddress = lpToken;
 
   const lifetimeFarmMetric = new LifetimeFarmMetric(farmId);
   lifetimeFarmMetric.totalShares = BigDecimal.zero();
@@ -62,63 +69,20 @@ export function logPoolAddition(event: LogPoolAddition): void {
   farm.lifetimeFarmMetric = lifetimeFarmMetric.id;
   farm.save();
 
-
-  const rewarderAddress = event.params.rewarder;
-  let farmRewarderEmissionProvider: MasterChefFarmRewarderEmissionProvider | null
-  if (rewarderAddress.notEqual(Address.zero())) {
-    farmRewarderEmissionProvider = new MasterChefFarmRewarderEmissionProvider(farmId);
-    farmRewarderEmissionProvider.farmId = farmId;
-    farmRewarderEmissionProvider.farm = farmId;
-    farmRewarderEmissionProvider.masterChef = masterChef.id;
-
-      const rewarderContract = SingleTokenRewarderContract.bind(rewarderAddress);
-      let rewardTokenResult = rewarderContract.try_rewardToken();
-      if (!rewardTokenResult.reverted) {
-        const rewardTokenAddress = rewardTokenResult.value
-        const token = getOrCreateToken(rewardTokenAddress, false);
-        const rewardToken = new MasterChefRewardToken(rewardTokenAddress)
-        rewardToken.rewardPerSecond = scaleDown(rewarderContract.rewardPerSecond(), token.decimals);
-        rewardToken.token = token.id;
-        rewardToken.tokenAddress = token.address
-        rewardToken.save();
-        SingleTokenRewarderTemplate.create(rewardTokenAddress);
-      } else {
-        const multiTokenRewarderContract = MultiTokenRewarderContract.bind(address);
-        const tokenConfigs = multiTokenRewarderContract.getRewardTokenConfigs();
-        for (let i = 0; i < tokenConfigs.length; i++) {
-          const rewardToken = getRewardToken(rewarder.id, tokenConfigs[i].rewardToken, block);
-
-          const token = getToken(tokenConfigs[i].rewardToken);
-          rewardToken.token = token.id;
-          rewardToken.tokenAddress = token.address;
-          rewardToken.rewardPerSecond = tokenConfigs[i].rewardsPerSecond.divDecimal(BigDecimal_1e(token.decimals));
-          rewardToken.save();
-        }
-        MultiTokenRewarderTemplate.create(address);
-    }
-  }
-
-
   const masterChefFarmEmissionProvider = new MasterChefFarmEmissionProvider(farmId);
   masterChefFarmEmissionProvider.masterChef = masterChef.id;
   masterChefFarmEmissionProvider.farm = farm.id;
   masterChefFarmEmissionProvider.farmId = farm.id;
   masterChefFarmEmissionProvider.masterChefPoolId = event.params.pid;
   masterChefFarmEmissionProvider.allocation = event.params.allocPoint;
-  masterChefFarmEmissionProvider.
+  masterChefFarmEmissionProvider.save();
 
-  const farm = getFarm(event.params.pid, event.block);
-  const farmToken = getToken(event.params.lpToken);
-  const rewarder = getRewarder(event.params.rewarder, event.block);
+  const rewarderAddress = event.params.rewarder;
+  if (rewarderAddress.notEqual(Address.zero())) {
+    getOrCreateFarmRewarderEmissionProvider(rewarderAddress, farmId);
+  }
 
-  farm.token = farmToken.id;
-  farm.tokenAddress = farmToken.address;
-  farm.rewarder = rewarder.id;
-  farm.allocPoint = event.params.allocPoint;
-  farm.save();
-
-  masterChef.totalAllocPoint = masterChef.totalAllocPoint.plus(farm.allocPoint);
-  masterChef.poolCount = masterChef.poolCount.plus(BigInt.fromI32(1));
+  masterChef.totalAllocation = masterChef.totalAllocation.plus(masterChefFarmEmissionProvider.allocation);
   masterChef.save();
 }
 
@@ -127,22 +91,29 @@ export function logSetPool(event: LogSetPool): void {
     event.params.pid.toString(),
     event.params.allocPoint.toString(),
     event.params.rewarder.toHex(),
-    event.params.overwrite == true ? 'true' : 'false',
+    event.params.overwrite ? 'true' : 'false',
   ]);
 
-  const masterChef = getMasterChef(event.block);
-  const pool = getFarm(event.params.pid, event.block);
+  const farmId = Bytes.fromI32(event.params.pid.toI32());
+  const masterChefFarmEmissionProvider = getExistingMasterChefFarmEmissionProvider(farmId);
 
-  if (event.params.overwrite == true) {
-    const rewarder = getRewarder(event.params.rewarder, event.block);
-    pool.rewarder = rewarder.id;
-  }
-
-  masterChef.totalAllocPoint = masterChef.totalAllocPoint.plus(event.params.allocPoint.minus(pool.allocPoint));
+  const masterChef = getOrCreateMasterChef();
+  masterChef.totalAllocation = masterChef.totalAllocation.plus(
+    event.params.allocPoint.minus(masterChefFarmEmissionProvider.allocation)
+  );
   masterChef.save();
 
-  pool.allocPoint = event.params.allocPoint;
-  pool.save();
+  masterChefFarmEmissionProvider.allocation = event.params.allocPoint;
+  masterChefFarmEmissionProvider.save();
+  if (event.params.overwrite) {
+    const existingRewarder = MasterChefFarmRewarderEmissionProvider.load(farmId);
+    if (existingRewarder !== null) {
+      existingRewarder.farm = null;
+      existingRewarder.farmId = null;
+      existingRewarder.save();
+    }
+    getOrCreateFarmRewarderEmissionProvider(event.params.rewarder, farmId);
+  }
 }
 
 export function updateEmissionRate(event: UpdateEmissionRate): void {
@@ -151,8 +122,8 @@ export function updateEmissionRate(event: UpdateEmissionRate): void {
     event.params._beetsPerSec.toString(),
   ]);
 
-  const masterChef = getMasterChef(event.block);
-  masterChef.emissionPerBlock = event.params._beetsPerSec;
+  const masterChef = getOrCreateMasterChef();
+  masterChef.emissionPerBlock = scaleDown(event.params._beetsPerSec, 18);
   masterChef.save();
 }
 
@@ -164,19 +135,27 @@ export function deposit(event: Deposit): void {
     event.params.to.toHex(),
   ]);
 
-  const farm = getFarm(event.params.pid, event.block);
-  const userFarmBalance = getUserFarmBalance(event.params.pid, event.params.to, event.block);
-  const token = getToken(bytesAsAddress(farm.token));
+  const farmId = Bytes.fromI32(event.params.pid.toI32());
+  const farm = getExistingFarm(farmId);
+  const lifetimePoolMetrics = getExistingLifetimePoolMetrics(farm.poolId);
 
-  const amountDecimal = event.params.amount.divDecimal(BigDecimal_1e(token.decimals));
-  farm.balance = farm.balance.plus(amountDecimal);
-  if (userFarmBalance.balance === BIG_DECIMAL_ZERO && event.params.amount > BIG_INT_ZERO) {
-    farm.userCount = farm.userCount.plus(BIG_INT_ONE);
-  }
-  farm.save();
+  const pricePerShare = lifetimePoolMetrics.totalLiquidity.div(lifetimePoolMetrics.totalShares);
 
-  userFarmBalance.balance = userFarmBalance.balance.plus(amountDecimal);
-  userFarmBalance.save();
+  const lifetimeFarmMetrics = getExistingLifetimeFarmMetrics(farmId);
+  const dailyFarmMetric = getOrCreateDailyFarmMetric(farmId, event.block);
+
+  const depositedAmount = scaleDown(event.params.amount, 18);
+  lifetimeFarmMetrics.totalLiquidity = lifetimeFarmMetrics.totalLiquidity.plus(depositedAmount.times(pricePerShare));
+  lifetimeFarmMetrics.totalShares = lifetimeFarmMetrics.totalShares.plus(depositedAmount);
+  lifetimeFarmMetrics.save();
+
+  dailyFarmMetric.liqudityChange24h = dailyFarmMetric.liqudityChange24h.plus(depositedAmount.times(pricePerShare));
+  dailyFarmMetric.totalLiquidity = lifetimeFarmMetrics.totalLiquidity;
+  dailyFarmMetric.save();
+
+  const stakedPoolShares = getOrCreateStakedPoolShares(event.params.to, farmId);
+  stakedPoolShares.balance = stakedPoolShares.balance.plus(depositedAmount);
+  stakedPoolShares.save();
 }
 
 export function withdraw(event: Withdraw): void {
@@ -186,20 +165,27 @@ export function withdraw(event: Withdraw): void {
     event.params.amount.toString(),
     event.params.to.toHex(),
   ]);
+  const farmId = Bytes.fromI32(event.params.pid.toI32());
+  const farm = getExistingFarm(farmId);
+  const lifetimePoolMetrics = getExistingLifetimePoolMetrics(farm.poolId);
 
-  const farm = getFarm(event.params.pid, event.block);
-  const userFarmBalance = getUserFarmBalance(event.params.pid, event.params.to, event.block);
-  const token = getToken(bytesAsAddress(farm.token));
+  const pricePerShare = lifetimePoolMetrics.totalLiquidity.div(lifetimePoolMetrics.totalShares);
 
-  const amountDecimal = event.params.amount.divDecimal(BigDecimal_1e(token.decimals));
-  userFarmBalance.balance = userFarmBalance.balance.minus(amountDecimal);
-  userFarmBalance.save();
+  const lifetimeFarmMetrics = getExistingLifetimeFarmMetrics(farmId);
+  const dailyFarmMetric = getOrCreateDailyFarmMetric(farmId, event.block);
 
-  farm.balance = farm.balance.minus(amountDecimal);
-  if (userFarmBalance.balance === BIG_DECIMAL_ZERO) {
-    farm.userCount = farm.userCount.minus(BIG_INT_ONE);
-  }
-  farm.save();
+  const withdrawnAmount = scaleDown(event.params.amount, 18);
+  lifetimeFarmMetrics.totalLiquidity = lifetimeFarmMetrics.totalLiquidity.minus(withdrawnAmount.times(pricePerShare));
+  lifetimeFarmMetrics.totalShares = lifetimeFarmMetrics.totalShares.minus(withdrawnAmount);
+  lifetimeFarmMetrics.save();
+
+  dailyFarmMetric.liqudityChange24h = dailyFarmMetric.liqudityChange24h.minus(withdrawnAmount.times(pricePerShare));
+  dailyFarmMetric.totalLiquidity = lifetimeFarmMetrics.totalLiquidity;
+  dailyFarmMetric.save();
+
+  const stakedPoolShares = getOrCreateStakedPoolShares(event.params.to, farmId);
+  stakedPoolShares.balance = stakedPoolShares.balance.minus(withdrawnAmount);
+  stakedPoolShares.save();
 }
 
 export function emergencyWithdraw(event: EmergencyWithdraw): void {
@@ -209,17 +195,27 @@ export function emergencyWithdraw(event: EmergencyWithdraw): void {
     event.params.amount.toString(),
     event.params.to.toHex(),
   ]);
+  const farmId = Bytes.fromI32(event.params.pid.toI32());
+  const farm = getExistingFarm(farmId);
+  const lifetimePoolMetrics = getExistingLifetimePoolMetrics(farm.poolId);
 
-  const farm = getFarm(event.params.pid, event.block);
-  const userFarmBalance = getUserFarmBalance(event.params.pid, event.params.to, event.block);
-  const token = getToken(bytesAsAddress(farm.token));
+  const pricePerShare = lifetimePoolMetrics.totalLiquidity.div(lifetimePoolMetrics.totalShares);
 
-  userFarmBalance.balance = BIG_DECIMAL_ZERO;
-  userFarmBalance.save();
+  const lifetimeFarmMetrics = getExistingLifetimeFarmMetrics(farmId);
+  const dailyFarmMetric = getOrCreateDailyFarmMetric(farmId, event.block);
 
-  farm.balance = farm.balance.minus(event.params.amount.divDecimal(BigDecimal_1e(token.decimals)));
-  farm.userCount = farm.userCount.minus(BIG_INT_ONE);
-  farm.save();
+  const withdrawnAmount = scaleDown(event.params.amount, 18);
+  lifetimeFarmMetrics.totalLiquidity = lifetimeFarmMetrics.totalLiquidity.minus(withdrawnAmount.times(pricePerShare));
+  lifetimeFarmMetrics.totalShares = lifetimeFarmMetrics.totalShares.minus(withdrawnAmount);
+  lifetimeFarmMetrics.save();
+
+  dailyFarmMetric.liqudityChange24h = dailyFarmMetric.liqudityChange24h.minus(withdrawnAmount.times(pricePerShare));
+  dailyFarmMetric.totalLiquidity = lifetimeFarmMetrics.totalLiquidity;
+  dailyFarmMetric.save();
+
+  const stakedPoolShares = getOrCreateStakedPoolShares(event.params.to, farmId);
+  stakedPoolShares.balance = stakedPoolShares.balance.minus(withdrawnAmount);
+  stakedPoolShares.save();
 }
 
 export function harvest(event: Harvest): void {
@@ -229,20 +225,28 @@ export function harvest(event: Harvest): void {
     event.params.amount.toString(),
   ]);
 
-  const masterChef = getMasterChef(event.block);
-  const token = getToken(bytesAsAddress(masterChef.emissionToken));
+  const masterChef = getOrCreateMasterChef();
+  const emissionToken = getExistingToken(Address.fromBytes(masterChef.emissionToken));
+  const farmId = Bytes.fromI32(event.params.pid.toI32());
+  const farm = getExistingFarm(farmId);
+
+  const claimedAmount = scaleDown(event.params.amount, emissionToken.decimals);
 
   const id = event.transaction.hash
     .concat(masterChef.id)
     .concatI32(event.params.pid.toI32())
     .concat(event.params.user)
-    .concat(token.id);
+    .concat(emissionToken.id);
 
-  const harvest = new HarvestAction(id);
-  harvest.user = event.params.user;
-  harvest.token = token.id;
-  harvest.amount = event.params.amount.divDecimal(BigDecimal_1e(token.decimals));
-  harvest.block = event.block.number;
-  harvest.timestamp = event.block.timestamp;
-  harvest.save();
+  const dailyUserPoolMetric = getOrCreateDailyUserPoolMetric(event.params.user, farm.poolId, event.block);
+
+  const claimedEmission = new ClaimedEmission(id);
+  claimedEmission.user = event.params.user;
+  claimedEmission.token = emissionToken.address;
+  claimedEmission.amount = claimedAmount;
+  claimedEmission.amountUSD = valueInUSD(claimedAmount, Address.fromBytes(emissionToken.address));
+  claimedEmission.block = event.block.number;
+  claimedEmission.timestamp = event.block.timestamp;
+  claimedEmission.dailyUserPoolMetric = dailyUserPoolMetric.id;
+  claimedEmission.save();
 }

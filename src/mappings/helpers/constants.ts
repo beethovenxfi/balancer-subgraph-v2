@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, Address, dataSource } from '@graphprotocol/graph-ts';
+import { BigDecimal, BigInt, Address, dataSource, Bytes } from '@graphprotocol/graph-ts';
 
 export let ZERO = BigInt.fromI32(0);
 export let ZERO_BD = BigDecimal.fromString('0');
@@ -249,6 +249,5 @@ export const NESTED_LINEAR_PRICING_ASSETS: Address[] = [LINEAR_NATIVE];
 
 export let USD_STABLE_ASSETS: Address[] = [USDC, DAI, USDT, ALT_DAI, ALT_USDC, ALT_USDT];
 
-export const LP_POOL_MAPPING = {
-  ['fbeets']: 'fidelio-pid',
-};
+export const FBEETS_ADDRESS = Address.fromString('0x0000000000000000000000000000000000000000');
+export const FBEETS_POOL_ID = Bytes.fromHexString('0x0000000000000000000000000000000000000000');

@@ -25,7 +25,7 @@ import { scaleDown, tokenToDecimal } from './helpers/misc';
 import { ONE_BD, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
 import { getPoolByAddress } from '../entities/pool';
 import { getOrCreatePoolShares } from '../entities/pool-shares';
-import { getOrCreateDailyPoolMetrics, getOrCreateLifetimePoolMetrics } from '../entities/pool-metrics';
+import { getExistingLifetimePoolMetrics, getOrCreateDailyPoolMetrics } from '../entities/pool-metrics';
 import { updateAmpFactor } from './helpers/stable';
 import { getOrCreatePriceRateProvider } from '../entities/price-rate-provider';
 import { PriceRateCacheUpdated } from '../types/templates/LinearPool/MetaStablePool';
@@ -206,7 +206,7 @@ export function handleTransfer(event: Transfer): void {
   let isMint = event.params.from.toHex() == ZERO_ADDRESS;
   let isBurn = event.params.to.toHex() == ZERO_ADDRESS;
 
-  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(pool.id, event.block);
+  const lifetimePoolMetric = getExistingLifetimePoolMetrics(pool.id);
   const dailyPoolMetric = getOrCreateDailyPoolMetrics(pool.id, event.block);
 
   let BPT_DECIMALS = 18;
@@ -217,8 +217,8 @@ export function handleTransfer(event: Transfer): void {
   const sharesToBeforeSwap = poolSharesTo.balance;
   const amount = tokenToDecimal(event.params.value, BPT_DECIMALS);
 
-  const dailyUserPoolToMetric = getOrCreateDailyUserPoolMetric(pool.id, event.params.to, event.block);
-  const dailyUserPoolFromMetric = getOrCreateDailyUserPoolMetric(pool.id, event.params.from, event.block);
+  const dailyUserPoolToMetric = getOrCreateDailyUserPoolMetric(event.params.to, pool.id, event.block);
+  const dailyUserPoolFromMetric = getOrCreateDailyUserPoolMetric(event.params.from, pool.id, event.block);
 
   if (isMint) {
     poolSharesTo.balance = poolSharesTo.balance.plus(amount);

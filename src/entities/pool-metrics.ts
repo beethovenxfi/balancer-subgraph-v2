@@ -1,23 +1,8 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
 import { DailyPoolMetric, DailyPoolToken, LifetimePoolMetric } from '../types/schema';
 
-export function getOrCreateLifetimePoolMetrics(poolId: Bytes, block: ethereum.Block): LifetimePoolMetric {
-  let lifetimePoolMetric = LifetimePoolMetric.load(poolId);
-  if (lifetimePoolMetric == null) {
-    lifetimePoolMetric = new LifetimePoolMetric(poolId);
-    lifetimePoolMetric.pool = poolId;
-    lifetimePoolMetric.poolId = poolId;
-    lifetimePoolMetric.startTime = block.timestamp.toI32();
-    lifetimePoolMetric.totalSwapVolume = BigDecimal.zero();
-    lifetimePoolMetric.totalLiquidity = BigDecimal.zero();
-    lifetimePoolMetric.dilutedLiquidity = BigDecimal.zero();
-    lifetimePoolMetric.totalShares = BigDecimal.zero();
-    lifetimePoolMetric.swapCount = BigInt.zero();
-    lifetimePoolMetric.totalSwapFee = BigDecimal.zero();
-    lifetimePoolMetric.holdersCount = BigInt.zero();
-    lifetimePoolMetric.save();
-  }
-  return lifetimePoolMetric;
+export function getExistingLifetimePoolMetrics(poolId: Bytes): LifetimePoolMetric {
+  return LifetimePoolMetric.load(poolId) as LifetimePoolMetric;
 }
 
 export function getOrCreateDailyPoolMetrics(poolId: Bytes, block: ethereum.Block): DailyPoolMetric {

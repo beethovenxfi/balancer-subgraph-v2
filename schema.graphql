@@ -82,7 +82,7 @@ type Pool @entity(immutable: true) {
 
     userShares: [PoolShares!]! @derivedFrom(field: "pool")
     customPoolData: CustomPoolData
-    farm: PoolFarm!
+    farms: [Farm!]! @derivedFrom(field: "pool")
 
     investments: [PoolInvestmentAction!]! @derivedFrom(field: "pool")
     swaps: [Swap!]! @derivedFrom(field: "pool")
@@ -271,16 +271,12 @@ type PoolToken @entity {
     swapCount: BigInt!
 }
 
-type PoolFarm @entity {
-    id: Bytes!
-    pool: Pool!
-    farm: Farm!
-}
-
 type Farm @entity(immutable: true) {
     id: Bytes!
     pool: Pool!
     poolId: Bytes!
+    token: Token!
+    tokenAddress: Bytes!
     lifetimeFarmMetric: LifetimeFarmMetric!
     dailyFarmMetrics: [DailyFarmMetric!] @derivedFrom(field: "farm")
     userShares: [StakedPoolShares!]! @derivedFrom(field: "farm")
@@ -293,8 +289,6 @@ type StakedPoolShares @entity {
     farmId: Bytes!
     user: User!
     userAddress: Bytes!
-    token: Token!
-    tokenAddress: Bytes!
     balance: BigDecimal!
 }
 
@@ -324,18 +318,16 @@ type MasterChef @entity {
 
 interface FarmEmissionProvider {
     id: Bytes!
-    farm: Farm!
-    farmId: Bytes!
-    claimedEmissions: [ClaimedEmission!]!
+    farm: Farm
+    farmId: Bytes
 }
 
 type GaugeEmissionProvider implements FarmEmissionProvider @entity {
     id: Bytes!
-    farm: Farm!
-    farmId: Bytes!
+    farm: Farm
+    farmId: Bytes
     address: Bytes!
     streamer: GaugeStreamer!
-    claimedEmissions: [ClaimedEmission!]!
 }
 
 type GaugeStreamer @entity {
@@ -346,22 +338,19 @@ type GaugeStreamer @entity {
 type MasterChefFarmEmissionProvider implements FarmEmissionProvider @entity  {
     id: Bytes!
     masterChef: MasterChef!
-    farm: Farm!
-    farmId: Bytes!
+    farm: Farm
+    farmId: Bytes
     masterChefPoolId: BigInt!
     allocation: BigInt!
-    claimedEmissions: [ClaimedEmission!]! @derivedFrom(field: "emissionProvider")
 }
 
 type MasterChefFarmRewarderEmissionProvider implements FarmEmissionProvider @entity  {
     id: Bytes!
     masterChef: MasterChef!
-    farm: Farm!
-    farmId: Bytes!
-    id: Bytes!
+    farm: Farm
+    farmId: Bytes
     address: Bytes!
     rewardTokens: [MasterChefRewardToken!]! @derivedFrom(field: "rewarder")
-    claimedEmissions: [ClaimedEmission!]! @derivedFrom(field: "emissionProvider")
 }
 
 type MasterChefRewardToken @entity {
@@ -380,7 +369,6 @@ type ClaimedEmission @entity(immutable: true) {
     amountUSD: BigDecimal!
     timestamp: BigInt!
     block: BigInt!
-    emissionProvider: FarmEmissionProvider!
     dailyUserPoolMetric: DailyUserPoolMetric!
 }
 
@@ -462,13 +450,6 @@ type TokenPrice @entity {
     price: BigDecimal!
     block: BigInt!
     timestamp: Int!
-    priceUSD: BigDecimal!
-}
-
-type LatestTokenPrice @entity {
-    id: Bytes!
-    token: Token!
-    tokenAddress: Bytes!
     priceUSD: BigDecimal!
 }
 

@@ -1,9 +1,20 @@
 import { BigInt, Bytes, dataSource } from '@graphprotocol/graph-ts/index';
-import { MasterChef, MasterChefFarmEmissionProvider, MasterChefFarmRewarderEmissionProvider } from '../types/schema';
+import {
+  MasterChef,
+  MasterChefFarmEmissionProvider,
+  MasterChefFarmRewarderEmissionProvider,
+  MasterChefRewardToken,
+} from '../types/schema';
 import { MasterChef as MasterChefContract } from '../types/MasterChef/MasterChef';
 import { getOrCreateToken } from './token';
 import { scaleDown } from '../mappings/helpers/misc';
-import { Address, ethereum } from '@graphprotocol/graph-ts';
+import { Address, BigDecimal } from '@graphprotocol/graph-ts';
+import { SingleTokenRewarder as SingleTokenRewarderContract } from '../types/MasterChef/SingleTokenRewarder';
+import {
+  MultiTokenRewarder as MultiTokenRewarderTemplate,
+  SingleTokenRewarder as SingleTokenRewarderTemplate,
+} from '../types/templates';
+import { MultiTokenRewarder as MultiTokenRewarderContract } from '../types/MasterChef/MultiTokenRewarder';
 
 export const masterChefId = Bytes.fromI32(1);
 
@@ -27,46 +38,60 @@ export function getExistingMasterChefFarmEmissionProvider(farmId: Bytes): Master
 }
 
 export function getExistingMasterChefFarmRewarderEmissionProvider(
-  farmId: Bytes
+  address: Address
 ): MasterChefFarmRewarderEmissionProvider {
-  return MasterChefFarmRewarderEmissionProvider.load(farmId) as MasterChefFarmRewarderEmissionProvider;
+  return MasterChefFarmRewarderEmissionProvider.load(address) as MasterChefFarmRewarderEmissionProvider;
 }
 
-export function getRewarder(address: Address, block: ethereum.Block): Rewarder {
-  let rewarder = Rewarder.load(address);
+export function getOrCreateFarmRewarderEmissionProvider(
+  rewarderAddress: Address,
+  farmId: Bytes
+): MasterChefFarmRewarderEmissionProvider {
+  let farmRewarderEmissionProvider = MasterChefFarmRewarderEmissionProvider.load(farmId);
+  if (farmRewarderEmissionProvider === null) {
+    farmRewarderEmissionProvider = new MasterChefFarmRewarderEmissionProvider(rewarderAddress);
+    farmRewarderEmissionProvider.farmId = farmId;
+    farmRewarderEmissionProvider.farm = farmId;
+    farmRewarderEmissionProvider.masterChef = masterChefId;
+    farmRewarderEmissionProvider.address = rewarderAddress;
+    farmRewarderEmissionProvider.save();
 
-  if (rewarder === null) {
-    rewarder = new MasterChefFarmRewarderEmissionProvider(address);
-    rewarder.address = address;
-
-    if (address != Address.zero()) {
-      const rewarderContract = SingleTokenRewarderContract.bind(address);
-      let rewardTokenResult = rewarderContract.try_rewardToken();
-      if (!rewardTokenResult.reverted) {
-        const rewardToken = getRewardToken(rewarder.id, rewardTokenResult.value, block);
-        const tokenAddress = rewarderContract.rewardToken();
-        const token = getToken(tokenAddress);
-        rewardToken.rewardPerSecond = rewarderContract.rewardPerSecond().divDecimal(BigDecimal_1e(token.decimals));
-        rewardToken.token = token.id;
+    const rewarderContract = SingleTokenRewarderContract.bind(rewarderAddress);
+    let rewardTokenResult = rewarderContract.try_rewardToken();
+    if (!rewardTokenResult.reverted) {
+      const rewardTokenAddress = rewardTokenResult.value;
+      const token = getOrCreateToken(rewardTokenAddress, false);
+      const rewardToken = getOrCreateMasterChefRewardToken(rewardTokenAddress, Address.fromBytes(token.address));
+      rewardToken.rewardPerSecond = scaleDown(rewarderContract.rewardPerSecond(), token.decimals);
+      rewardToken.save();
+      SingleTokenRewarderTemplate.create(rewarderAddress);
+    } else {
+      const multiTokenRewarderContract = MultiTokenRewarderContract.bind(rewarderAddress);
+      const tokenConfigs = multiTokenRewarderContract.getRewardTokenConfigs();
+      for (let i = 0; i < tokenConfigs.length; i++) {
+        const token = getOrCreateToken(tokenConfigs[i].rewardToken, false);
+        const rewardToken = getOrCreateMasterChefRewardToken(
+          tokenConfigs[i].rewardToken,
+          Address.fromBytes(token.address)
+        );
+        rewardToken.rewardPerSecond = scaleDown(tokenConfigs[i].rewardsPerSecond, token.decimals);
         rewardToken.save();
-        SingleTokenRewarderTemplate.create(address);
-      } else {
-        const multiTokenRewarderContract = MultiTokenRewarderContract.bind(address);
-        const tokenConfigs = multiTokenRewarderContract.getRewardTokenConfigs();
-        for (let i = 0; i < tokenConfigs.length; i++) {
-          const rewardToken = getRewardToken(rewarder.id, tokenConfigs[i].rewardToken, block);
-
-          const token = getToken(tokenConfigs[i].rewardToken);
-          rewardToken.token = token.id;
-          rewardToken.tokenAddress = token.address;
-          rewardToken.rewardPerSecond = tokenConfigs[i].rewardsPerSecond.divDecimal(BigDecimal_1e(token.decimals));
-          rewardToken.save();
-        }
-        MultiTokenRewarderTemplate.create(address);
       }
+      MultiTokenRewarderTemplate.create(rewarderAddress);
     }
   }
-
-  rewarder.save();
-  return rewarder as Rewarder;
+  return farmRewarderEmissionProvider;
+}
+export function getOrCreateMasterChefRewardToken(rewarderAddress: Address, token: Address): MasterChefRewardToken {
+  const id = rewarderAddress.concat(token);
+  let rewardToken = MasterChefRewardToken.load(id);
+  if (rewardToken === null) {
+    rewardToken = new MasterChefRewardToken(id);
+    rewardToken.rewardPerSecond = BigDecimal.zero();
+    rewardToken.token = token;
+    rewardToken.tokenAddress = token;
+    rewardToken.rewarder = rewarderAddress;
+    rewardToken.save();
+  }
+  return rewardToken;
 }

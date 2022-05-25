@@ -1,5 +1,5 @@
-import { Pool, PoolAddressToId, SwapConfig } from '../types/schema';
-import { Address, Bytes } from '@graphprotocol/graph-ts/index';
+import { LifetimePoolMetric, Pool, PoolAddressToId, SwapConfig } from '../types/schema';
+import { Address, BigInt, Bytes } from '@graphprotocol/graph-ts/index';
 import { getOrCreateVault } from './vault';
 import { WeightedPool } from '../types/templates/WeightedPool/WeightedPool';
 import { BigDecimal, ethereum } from '@graphprotocol/graph-ts';
@@ -7,7 +7,6 @@ import { Vault } from '../types/Vault/Vault';
 import { VAULT_ADDRESS } from '../mappings/helpers/constants';
 import { createPoolToken } from './pool-token';
 import { scaleDown } from '../mappings/helpers/misc';
-import { getOrCreateLifetimePoolMetrics } from './pool-metrics';
 import { getOrCreateToken } from './token';
 
 export function createPool(poolAddress: Address, poolType: string, phantomPool: boolean, block: ethereum.Block): Pool {
@@ -21,7 +20,19 @@ export function createPool(poolAddress: Address, poolType: string, phantomPool: 
 
   const vault = getOrCreateVault(block);
 
-  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(poolId, block);
+  const lifetimePoolMetric = new LifetimePoolMetric(poolId);
+  lifetimePoolMetric.pool = poolId;
+  lifetimePoolMetric.poolId = poolId;
+  lifetimePoolMetric.startTime = block.timestamp.toI32();
+  lifetimePoolMetric.totalSwapVolume = BigDecimal.zero();
+  lifetimePoolMetric.totalLiquidity = BigDecimal.zero();
+  lifetimePoolMetric.dilutedLiquidity = BigDecimal.zero();
+  lifetimePoolMetric.totalShares = BigDecimal.zero();
+  lifetimePoolMetric.swapCount = BigInt.zero();
+  lifetimePoolMetric.totalSwapFee = BigDecimal.zero();
+  lifetimePoolMetric.holdersCount = BigInt.zero();
+  lifetimePoolMetric.save();
+
   const shareToken = getOrCreateToken(Address.fromBytes(poolAddress), true);
   pool.address = poolAddress;
   pool.vault = vault.id;

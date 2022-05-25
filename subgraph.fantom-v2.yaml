@@ -494,12 +494,14 @@ dataSources:
       entities:
         - MasterChef
         - Farm
-        - UserFarmBalance
-        - HarvestAction
-        - Token
-        - User
-        - Rewarder
-        - RewardToken
+        - StakedPoolShares
+        - LifetimeFarmMetric
+        - DailyFarmMetric
+        - MasterChefFarmEmissionProvider
+        - MasterChefFarmRewarderEmissionProvider
+        - MasterChefRewardToken
+        - ClaimedEmission
+        - StakedPoolShares
       abis:
         - name: MasterChef
           file: ./abis/MasterChef.json
@@ -770,3 +772,69 @@ templates:
           handler: handleSwapFeePercentageChange
         - event: TargetsSet(indexed address,uint256,uint256)
           handler: handleTargetsSet
+  - kind: ethereum/contract
+    name: SingleTokenRewarder
+    network: fantom
+    source:
+      abi: SingleTokenRewarder
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/masterchef-single-token-rewarder.ts
+      entities:
+        - MasterChef
+        - Farm
+        - StakedPoolShares
+        - LifetimeFarmMetric
+        - DailyFarmMetric
+        - MasterChefFarmEmissionProvider
+        - MasterChefFarmRewarderEmissionProvider
+        - MasterChefRewardToken
+        - ClaimedEmission
+        - StakedPoolShares
+      abis:
+        - name: SingleTokenRewarder
+          file: ./abis/SingleTokenRewarder.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: MasterChef
+          file: ./abis/MasterChef.json
+      eventHandlers:
+        - event: LogRewardPerSecond(uint256)
+          handler: logRewardPerSecond
+        - event: LogOnReward(indexed address,indexed uint256,uint256,indexed address)
+          handler: logOnReward
+  - kind: ethereum/contract
+    name: MultiTokenRewarder
+    network: fantom
+    source:
+      abi: MultiTokenRewarder
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/masterchef-multitoken-rewarder.ts
+      entities:
+        - MasterChef
+        - Farm
+        - StakedPoolShares
+        - LifetimeFarmMetric
+        - DailyFarmMetric
+        - MasterChefFarmEmissionProvider
+        - MasterChefFarmRewarderEmissionProvider
+        - MasterChefRewardToken
+        - ClaimedEmission
+        - StakedPoolShares
+      abis:
+        - name: MultiTokenRewarder
+          file: ./abis/MultiTokenRewarder.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: MasterChef
+          file: ./abis/MasterChef.json
+      eventHandlers:
+        - event: LogRewardsPerSecond(address[],uint256[])
+          handler: logRewardsPerSecond
+        - event: LogOnReward(indexed address,indexed uint256,address,uint256,indexed address)
+          handler: logOnReward

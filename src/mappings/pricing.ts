@@ -4,7 +4,7 @@ import { hasVirtualSupply, PoolType } from './helpers/pools';
 import { loadExistingPoolToken } from '../entities/pool-token';
 import { getOrCreateTokenPrice, getTokenPrice } from '../entities/token-price';
 import { getOrCreateDailyVaultMetric, getOrCreateLifetimeVaultMetric } from '../entities/vault-metrics';
-import { getOrCreateDailyPoolMetrics, getOrCreateLifetimePoolMetrics } from '../entities/pool-metrics';
+import { getExistingLifetimePoolMetrics, getOrCreateDailyPoolMetrics } from '../entities/pool-metrics';
 import { LinearPoolData, Pool } from '../types/schema';
 import { getPoolByAddress, isPoolAddress } from '../entities/pool';
 
@@ -85,7 +85,7 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
     }
   }
 
-  const lifetimePoolMetric = getOrCreateLifetimePoolMetrics(poolId, block);
+  const lifetimePoolMetric = getExistingLifetimePoolMetrics(poolId);
 
   let oldPoolLiquidity: BigDecimal = lifetimePoolMetric.totalLiquidity;
   let newPoolLiquidity: BigDecimal = valueInUSD(poolValue, pricingAsset) || ZERO_BD;

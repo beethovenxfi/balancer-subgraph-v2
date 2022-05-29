@@ -8,7 +8,7 @@ export function getOrCreateUser(address: Address): User {
     const lifetimeUserMetric = getOrCreateLifetimeUserMetric(address);
     user = new User(address);
     user.address = address;
-    user.lifetimeUserMetric = lifetimeUserMetric.id;
+    user.lifetimeMetric = lifetimeUserMetric.id;
     user.save();
   }
   return user;

@@ -1,4 +1,4 @@
-import { BigInt, log } from '@graphprotocol/graph-ts';
+import { BigDecimal, BigInt, log } from '@graphprotocol/graph-ts';
 import { Transfer } from '../types/templates/WeightedPool/BalancerPoolToken';
 import { SwapFeePercentageChanged } from '../types/templates/WeightedPool/WeightedPool';
 import {
@@ -22,14 +22,16 @@ import {
 } from '../types/schema';
 
 import { scaleDown, tokenToDecimal } from './helpers/misc';
-import { ONE_BD, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
+import { ONE_BD, USDC, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
 import { getPoolByAddress } from '../entities/pool';
 import { getOrCreatePoolShares } from '../entities/pool-shares';
 import { getExistingLifetimePoolMetrics, getOrCreateDailyPoolMetrics } from '../entities/pool-metrics';
 import { updateAmpFactor } from './helpers/stable';
 import { getOrCreatePriceRateProvider } from '../entities/price-rate-provider';
 import { PriceRateCacheUpdated } from '../types/templates/LinearPool/MetaStablePool';
-import { getOrCreateDailyUserPoolMetric } from '../entities/user';
+import { getOrCreateDailyUserPoolMetric, getOrCreateLifetimeUserMetric } from '../entities/user';
+import { getExistingToken } from '../entities/token';
+import { getTokenPrice } from '../entities/token-price';
 
 /************************************
  *********** SWAP ENABLED ***********
@@ -240,15 +242,27 @@ export function handleTransfer(event: Transfer): void {
     dailyUserPoolFromMetric.totalShares = dailyUserPoolFromMetric.totalShares.minus(amount);
     dailyUserPoolFromMetric.save();
   } else {
+    const lifetimeUserToMetric = getOrCreateLifetimeUserMetric(event.params.to);
+    const lifetimeUserFromMetric = getOrCreateLifetimeUserMetric(event.params.from);
+
+    const tokenPrice = getTokenPrice(event.address, USDC);
+    const amountUSD = tokenPrice !== null ? amount.times(tokenPrice.priceUSD) : ZERO_BD;
+
     poolSharesTo.balance = poolSharesTo.balance.plus(amount);
     poolSharesTo.save();
     dailyUserPoolToMetric.totalShares = dailyUserPoolToMetric.totalShares.plus(amount);
+    dailyUserPoolToMetric.invested = dailyUserPoolToMetric.invested.plus(amountUSD);
     dailyUserPoolToMetric.save();
+    lifetimeUserToMetric.invested = lifetimeUserToMetric.invested.plus(amountUSD);
+    lifetimeUserToMetric.save();
 
     poolSharesFrom.balance = poolSharesFrom.balance.minus(amount);
     poolSharesFrom.save();
     dailyUserPoolFromMetric.totalShares = dailyUserPoolFromMetric.totalShares.minus(amount);
+    dailyUserPoolFromMetric.withdrawn = dailyUserPoolFromMetric.withdrawn.plus(amountUSD);
     dailyUserPoolFromMetric.save();
+    lifetimeUserFromMetric.withdrawn = lifetimeUserFromMetric.withdrawn.plus(amountUSD);
+    lifetimeUserFromMetric.save();
   }
 
   if (poolSharesTo.balance.notEqual(ZERO_BD) && sharesToBeforeSwap.equals(ZERO_BD)) {

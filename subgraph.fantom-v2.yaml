@@ -524,8 +524,6 @@ dataSources:
           handler: logPoolAddition
         - event: LogSetPool(indexed uint256,uint256,indexed address,bool)
           handler: logSetPool
-        - event: LogUpdatePool(indexed uint256,uint256,uint256,uint256)
-          handler: logUpdatePool
         - event: UpdateEmissionRate(indexed address,uint256)
           handler: updateEmissionRate
 templates:

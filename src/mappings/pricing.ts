@@ -1,5 +1,12 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
-import { NESTED_LINEAR_PRICING_ASSETS, ONE_BD, PRICING_ASSETS, USD_STABLE_ASSETS, ZERO_BD } from './helpers/constants';
+import {
+  NESTED_LINEAR_PRICING_ASSETS,
+  ONE_BD,
+  PRICING_ASSETS,
+  USD_STABLE_ASSETS,
+  USDC,
+  ZERO_BD,
+} from './helpers/constants';
 import { hasVirtualSupply, PoolType } from './helpers/pools';
 import { loadExistingPoolToken } from '../entities/pool-token';
 import { getOrCreateTokenPrice, getTokenPrice } from '../entities/token-price';
@@ -125,8 +132,8 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
   dailyPoolMetric.dilutedLiquidity = newDilutedLiquidity;
   dailyPoolMetric.save();
 
-  // update share token price
-  const sharesTokenPrice = getOrCreateTokenPrice(Address.fromBytes(pool.address), pricingAsset, block);
+  // update share token price, always use USDC as pricing asset
+  const sharesTokenPrice = getOrCreateTokenPrice(Address.fromBytes(pool.address), USDC, block);
   sharesTokenPrice.price = lifetimePoolMetric.totalShares.gt(BigDecimal.zero())
     ? poolValue.div(lifetimePoolMetric.totalShares)
     : BigDecimal.zero();

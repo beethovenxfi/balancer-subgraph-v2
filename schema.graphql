@@ -277,8 +277,8 @@ type Farm @entity(immutable: true) {
     poolId: Bytes!
     token: Token!
     tokenAddress: Bytes!
-    lifetimeFarmMetric: LifetimeFarmMetric!
-    dailyFarmMetrics: [DailyFarmMetric!] @derivedFrom(field: "farm")
+    lifetimeMetric: LifetimeFarmMetric!
+    dailyMetrics: [DailyFarmMetric!] @derivedFrom(field: "farm")
     userShares: [StakedPoolShares!]! @derivedFrom(field: "farm")
     emissions: [FarmEmissionProvider!]! @derivedFrom(field: "farm")
 }
@@ -382,9 +382,9 @@ type User @entity(immutable: true) {
     swaps: [Swap!] @derivedFrom(field: "user")
     interactions: [PoolInteraction!] @derivedFrom(field: "user")
     investments: [PoolInvestmentAction!] @derivedFrom(field: "user")
-    lifetimeUserMetric: LifetimeUserMetric!
-    dailyUserMetrics: [DailyUserMetric!] @derivedFrom(field: "user")
-    dailyUserPoolMetrics: [DailyUserPoolMetric!] @derivedFrom(field: "user")
+    lifetimeMetric: LifetimeUserMetric!
+    dailyMetrics: [DailyUserMetric!] @derivedFrom(field: "user")
+    dailyPoolMetrics: [DailyUserPoolMetric!] @derivedFrom(field: "user")
     claimedEmissions: [ClaimedEmission!]! @derivedFrom(field: "user")
 }
 

@@ -66,7 +66,7 @@ export function logPoolAddition(event: LogPoolAddition): void {
   lifetimeFarmMetric.totalLiquidity = BigDecimal.zero();
   lifetimeFarmMetric.save();
 
-  farm.lifetimeFarmMetric = lifetimeFarmMetric.id;
+  farm.lifetimeMetric = lifetimeFarmMetric.id;
   farm.save();
 
   const masterChefFarmEmissionProvider = new MasterChefFarmEmissionProvider(farmId);

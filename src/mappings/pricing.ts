@@ -134,13 +134,12 @@ export function updatePoolLiquidity(poolId: Bytes, pricingAsset: Address, block:
 
   // update share token price, always use USDC as pricing asset
   const sharesTokenPrice = getOrCreateTokenPrice(Address.fromBytes(pool.address), USDC, block);
-  sharesTokenPrice.price = lifetimePoolMetric.totalShares.gt(BigDecimal.zero())
-    ? poolValue.div(lifetimePoolMetric.totalShares)
-    : BigDecimal.zero();
-  sharesTokenPrice.priceUSD = lifetimePoolMetric.totalShares.gt(BigDecimal.zero())
+  const priceUSD = lifetimePoolMetric.totalShares.gt(BigDecimal.zero())
     ? newPoolLiquidity.div(lifetimePoolMetric.totalShares)
     : BigDecimal.zero();
-  sharesTokenPrice.pricingAsset = pricingAsset;
+  sharesTokenPrice.price = priceUSD;
+  sharesTokenPrice.priceUSD = priceUSD;
+  sharesTokenPrice.pricingAsset = USDC;
   sharesTokenPrice.timestamp = block.timestamp.toI32();
   sharesTokenPrice.block = block.number;
   sharesTokenPrice.save();

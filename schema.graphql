@@ -322,17 +322,36 @@ interface FarmEmissionProvider {
     farmId: Bytes
 }
 
+type GaugeFactory @entity {
+    id: ID!
+    numGauges: Int!
+    gauges: [GaugeEmissionProvider!] @derivedFrom(field: "factory")
+}
+
 type GaugeEmissionProvider implements FarmEmissionProvider @entity {
     id: Bytes!
     farm: Farm
     farmId: Bytes
+    factory: GaugeFactory!
     address: Bytes!
     streamer: GaugeStreamer!
+    rewardTokens: [GaugeRewardToken!]! @derivedFrom(field: "emissionProvider")
 }
 
 type GaugeStreamer @entity {
     id: Bytes!
     address: Bytes!
+    emissionProvider: GaugeEmissionProvider!
+    rewardTokens: [GaugeRewardToken!]! @derivedFrom(field: "streamer")
+}
+
+type GaugeRewardToken @entity {
+    id: Bytes!
+    tokenAddress: Bytes!
+    token: Token!
+    emissionProvider: GaugeEmissionProvider!
+    streamer: GaugeStreamer
+    totalDeposited: BigDecimal!
 }
 
 type MasterChefFarmEmissionProvider implements FarmEmissionProvider @entity  {

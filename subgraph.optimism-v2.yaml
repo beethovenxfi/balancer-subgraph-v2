@@ -11,11 +11,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Vault
-    network: fantom
+    network: optimism
     source:
-      address: '0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce'
+      address: '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
       abi: Vault
-      startBlock: 17433594
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -72,11 +72,11 @@ dataSources:
           handler: handleInternalBalanceChange
   - kind: ethereum/contract
     name: WeightedPoolFactory
-    network: fantom
+    network: optimism
     source:
-      address: '0x60467cb225092cE0c989361934311175f437Cf53'
+      address: '0xdAE7e32ADc5d490a43cCba1f0c736033F2b4eFca'
       abi: WeightedPoolFactory
-      startBlock: 16897200
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -106,11 +106,11 @@ dataSources:
           handler: handleNewWeightedPool
   - kind: ethereum/contract
     name: WeightedPool2TokenFactory
-    network: fantom
+    network: optimism
     source:
-      address: '0x92b377187bcCC6556FceD2f1e6DAd65850C20630'
+      address: '0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e'
       abi: WeightedPoolFactory
-      startBlock: 16897244
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -140,11 +140,11 @@ dataSources:
           handler: handleNewWeightedPool
   - kind: ethereum/contract
     name: StablePoolFactory
-    network: fantom
+    network: optimism
     source:
-      address: '0x55df810876354Fc3e249f701Dd78DeDE57991F8D'
+      address: '0x41B953164995c11C81DA73D212ED8Af25741b7Ac'
       abi: StablePoolFactory
-      startBlock: 16897287
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -177,11 +177,11 @@ dataSources:
           handler: handleNewStablePool
   - kind: ethereum/contract
     name: MetaStablePoolFactory
-    network: fantom
+    network: optimism
     source:
-      address: '0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554'
+      address: '0xb08E16cFc07C684dAA2f93C70323BAdb2A6CBFd2'
       abi: MetaStablePoolFactory
-      startBlock: 16898079
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -216,11 +216,11 @@ dataSources:
           handler: handleNewMetaStablePool
   - kind: ethereum/contract
     name: LiquidityBootstrappingPoolFactory
-    network: fantom
+    network: optimism
     source:
-      address: '0x458368B3724B5a1c1057A00b28eB03FEb5b64968'
+      address: '0xf302f9F50958c5593770FDf4d4812309fF77414f'
       abi: LiquidityBootstrappingPoolFactory
-      startBlock: 16897962
+      startBlock: 6000000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -251,285 +251,49 @@ dataSources:
       eventHandlers:
         - event: PoolCreated(indexed address)
           handler: handleNewLiquidityBootstrappingPool
-  - kind: ethereum/contract
-    name: NoProtocolFeeLiquidityBootstrappingPoolFactory
-    network: fantom
-    source:
-      address: '0x2C774732c93CE393eC8125bDA49fb3737Ae6F473'
-      abi: LiquidityBootstrappingPoolFactory
-      startBlock: 24906900
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/poolFactory.ts
-      entities:
-        - Balancer
-        - GlobalVaultMetric
-        - Pool
-        - Amp
-        - PoolToken
-        - PoolAddressToId
-        - SwapConfig
-        - TokenWeight
-        - GlobalPoolMetric
-        - Token
-      abis:
-        - name: Vault
-          file: ./abis/Vault.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: WeightedPool
-          file: ./abis/WeightedPool.json
-        - name: LiquidityBootstrappingPoolFactory
-          file: ./abis/LiquidityBootstrappingPoolFactory.json
-        - name: LiquidityBootstrappingPool
-          file: ./abis/LiquidityBootstrappingPool.json
-      eventHandlers:
-        - event: PoolCreated(indexed address)
-          handler: handleNewLiquidityBootstrappingPool
-  - kind: ethereum/contract
-    name: StablePhantomPoolFactory
-    network: fantom
-    source:
-      address: '0x0E2AFa0b5F9174750d4E84Bf9798f89b79Bd5bF4'
-      abi: StablePhantomPoolFactory
-      startBlock: 28658437
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/poolFactory.ts
-      entities:
-        - Balancer
-        - GlobalVaultMetric
-        - Pool
-        - StablePoolData
-        - Amp
-        - PoolToken
-        - PoolAddressToId
-        - SwapConfig
-        - GlobalPoolMetric
-        - Token
-      abis:
-        - name: Vault
-          file: ./abis/Vault.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: WeightedPool
-          file: ./abis/WeightedPool.json
-        - name: StablePhantomPoolFactory
-          file: ./abis/StablePhantomPoolFactory.json
-        - name: StablePool
-          file: ./abis/StablePool.json
-        - name: StablePhantomPool
-          file: ./abis/StablePhantomPool.json
-      eventHandlers:
-        - event: PoolCreated(indexed address)
-          handler: handleNewStablePhantomPool
-  - kind: ethereum/contract
-    name: YearnLinearPoolFactory
-    network: fantom
-    source:
-      address: '0x1F73AE6ED391A2b1e84Ff988A1Bb5394B78a4A71'
-      abi: LinearPoolFactory
-      startBlock: 28657909
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/poolFactory.ts
-      entities:
-        - Balancer
-        - GlobalVaultMetric
-        - Pool
-        - LinearPoolData
-        - LinearPoolTarget
-        - PriceRateProvider
-        - PoolToken
-        - PoolAddressToId
-        - SwapConfig
-        - GlobalPoolMetric
-        - Token
-      abis:
-        - name: Vault
-          file: ./abis/Vault.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: LinearPoolFactory
-          file: ./abis/LinearPoolFactory.json
-        - name: LinearPool
-          file: ./abis/LinearPool.json
-        - name: WeightedPool
-          file: ./abis/WeightedPool.json
-      eventHandlers:
-        - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
-  - kind: ethereum/contract
-    name: BooLinearPoolFactory
-    network: fantom
-    source:
-      address: '0xba306e3Cf84751d8Ef5e812C18cAa6C567c783E8'
-      abi: LinearPoolFactory
-      startBlock: 32452165
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/poolFactory.ts
-      entities:
-        - Balancer
-        - GlobalVaultMetric
-        - Pool
-        - LinearPoolData
-        - LinearPoolTarget
-        - PriceRateProvider
-        - PoolToken
-        - PoolAddressToId
-        - SwapConfig
-        - GlobalPoolMetric
-        - Token
-      abis:
-        - name: Vault
-          file: ./abis/Vault.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: LinearPoolFactory
-          file: ./abis/LinearPoolFactory.json
-        - name: LinearPool
-          file: ./abis/LinearPool.json
-        - name: WeightedPool
-          file: ./abis/WeightedPool.json
-      eventHandlers:
-        - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
-  - kind: ethereum/contract
-    name: ReaperLinearPoolFactory
-    network: fantom
-    source:
-      address: '0x80434cF3661313D1a0632f567c1ba389ee2F7665'
-      abi: LinearPoolFactory
-      startBlock: 35348849
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/poolFactory.ts
-      entities:
-        - Balancer
-        - GlobalVaultMetric
-        - Pool
-        - LinearPoolData
-        - LinearPoolTarget
-        - PriceRateProvider
-        - PoolToken
-        - PoolAddressToId
-        - SwapConfig
-        - GlobalPoolMetric
-        - Token
-      abis:
-        - name: Vault
-          file: ./abis/Vault.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: LinearPoolFactory
-          file: ./abis/LinearPoolFactory.json
-        - name: LinearPool
-          file: ./abis/LinearPool.json
-        - name: WeightedPool
-          file: ./abis/WeightedPool.json
-      eventHandlers:
-        - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
-  - kind: ethereum/contract
-    name: TarotLinearPoolFactory
-    network: fantom
-    source:
-      address: '0x681B59C9cbBb6AB43ee3360ac6C34E1Dd2f147e9'
-      abi: LinearPoolFactory
-      startBlock: 36713100
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/poolFactory.ts
-      entities:
-        - Balancer
-        - GlobalVaultMetric
-        - Pool
-        - LinearPoolData
-        - LinearPoolTarget
-        - PriceRateProvider
-        - PoolToken
-        - PoolAddressToId
-        - SwapConfig
-        - GlobalPoolMetric
-        - Token
-      abis:
-        - name: Vault
-          file: ./abis/Vault.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: LinearPoolFactory
-          file: ./abis/LinearPoolFactory.json
-        - name: LinearPool
-          file: ./abis/LinearPool.json
-        - name: WeightedPool
-          file: ./abis/WeightedPool.json
-      eventHandlers:
-        - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
-  - kind: ethereum/contract
-    name: MasterChef
-    network: fantom
-    source:
-      address: '0x8166994d9ebBe5829EC86Bd81258149B87faCfd3'
-      abi: MasterChef
-      startBlock: 18508300
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/mappings/masterchef-emissions.ts
-      entities:
-        - MasterChef
-        - Farm
-        - StakedPoolShares
-        - LifetimeFarmMetric
-        - DailyFarmMetric
-        - MasterChefFarmEmissionProvider
-        - MasterChefFarmRewarderEmissionProvider
-        - MasterChefRewardToken
-        - ClaimedEmission
-        - StakedPoolShares
-      abis:
-        - name: MasterChef
-          file: ./abis/MasterChef.json
-        - name: SingleTokenRewarder
-          file: ./abis/SingleTokenRewarder.json
-        - name: MultiTokenRewarder
-          file: ./abis/MultiTokenRewarder.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-      eventHandlers:
-        - event: Deposit(indexed address,indexed uint256,uint256,indexed address)
-          handler: deposit
-        - event: Withdraw(indexed address,indexed uint256,uint256,indexed address)
-          handler: withdraw
-        - event: EmergencyWithdraw(indexed address,indexed uint256,uint256,indexed address)
-          handler: emergencyWithdraw
-        - event: Harvest(indexed address,indexed uint256,uint256)
-          handler: harvest
-        - event: LogPoolAddition(indexed uint256,uint256,indexed address,indexed address)
-          handler: logPoolAddition
-        - event: LogSetPool(indexed uint256,uint256,indexed address,bool)
-          handler: logSetPool
-        - event: UpdateEmissionRate(indexed address,uint256)
-          handler: updateEmissionRate
+#  - kind: ethereum/contract
+#    name: StablePhantomPoolFactory
+#    network: optimism
+#    source:
+#      address: '0x0E2AFa0b5F9174750d4E84Bf9798f89b79Bd5bF4'
+#      abi: StablePhantomPoolFactory
+#      startBlock: 28658437
+#    mapping:
+#      kind: ethereum/events
+#      apiVersion: 0.0.6
+#      language: wasm/assemblyscript
+#      file: ./src/mappings/poolFactory.ts
+#      entities:
+#        - Balancer
+#        - GlobalVaultMetric
+#        - Pool
+#        - StablePoolData
+#        - Amp
+#        - PoolToken
+#        - PoolAddressToId
+#        - SwapConfig
+#        - GlobalPoolMetric
+#        - Token
+#      abis:
+#        - name: Vault
+#          file: ./abis/Vault.json
+#        - name: ERC20
+#          file: ./abis/ERC20.json
+#        - name: WeightedPool
+#          file: ./abis/WeightedPool.json
+#        - name: StablePhantomPoolFactory
+#          file: ./abis/StablePhantomPoolFactory.json
+#        - name: StablePool
+#          file: ./abis/StablePool.json
+#        - name: StablePhantomPool
+#          file: ./abis/StablePhantomPool.json
+#      eventHandlers:
+#        - event: PoolCreated(indexed address)
+#          handler: handleNewStablePhantomPool
   - kind: ethereum/contract
     name: ChildChainLiquidityGaugeFactory
     # prettier-ignore
-    network: fantom
+    network: optimism
     source:
       address: '0x2E96068b3D5B5BAE3D7515da4A1D2E52d08A2647'
       abi: ChildChainLiquidityGaugeFactory
@@ -537,7 +301,7 @@ dataSources:
       startBlock: 9112420
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/gauge-emissions.ts
       abis:
@@ -565,7 +329,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: WeightedPool
-    network: fantom
+    network: optimism
     source:
       abi: WeightedPool
     mapping:
@@ -599,7 +363,7 @@ templates:
           handler: handleSwapFeePercentageChange
   - kind: ethereum/contract
     name: StablePool
-    network: fantom
+    network: optimism
     source:
       abi: StablePool
     mapping:
@@ -639,7 +403,7 @@ templates:
           handler: handleAmpUpdateStopped
   - kind: ethereum/contract
     name: MetaStablePool
-    network: fantom
+    network: optimism
     source:
       abi: MetaStablePool
     mapping:
@@ -686,7 +450,7 @@ templates:
           handler: handlePriceRateCacheUpdated
   - kind: ethereum/contract
     name: LiquidityBootstrappingPool
-    network: fantom
+    network: optimism
     source:
       abi: LiquidityBootstrappingPool
     mapping:
@@ -723,7 +487,7 @@ templates:
           handler: handleGradualWeightUpdateScheduled
   - kind: ethereum/contract
     name: StablePhantomPool
-    network: fantom
+    network: optimism
     source:
       abi: StablePhantomPool
     mapping:
@@ -770,7 +534,7 @@ templates:
           handler: handlePriceRateCacheUpdated
   - kind: ethereum/contract
     name: LinearPool
-    network: fantom
+    network: optimism
     source:
       abi: LinearPool
     mapping:
@@ -808,7 +572,7 @@ templates:
           handler: handleTargetsSet
   - kind: ethereum/contract
     name: SingleTokenRewarder
-    network: fantom
+    network: optimism
     source:
       abi: SingleTokenRewarder
     mapping:
@@ -841,7 +605,7 @@ templates:
           handler: logOnReward
   - kind: ethereum/contract
     name: MultiTokenRewarder
-    network: fantom
+    network: optimism
     source:
       abi: MultiTokenRewarder
     mapping:
@@ -875,12 +639,12 @@ templates:
   - kind: ethereum/contract
     name: RewardsOnlyGauge
     # prettier-ignore
-    network: fantom
+    network: optimism
     source:
       abi: RewardsOnlyGauge
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/gauge-emissions.ts
       entities:
@@ -911,7 +675,7 @@ templates:
       abi: ChildChainStreamer
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/gauge-emissions.ts
       entities:

@@ -1,0 +1,34 @@
+{
+  "stableAssets": [
+    {
+      "address": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+      "symbol": "USDC"
+    },
+    {
+      "address": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "symbol": "DAI"
+    },
+    {
+      "address": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+      "symbol": "USDT"
+    },
+    {
+      "address": "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
+      "symbol": "SUSD"
+    }
+  ],
+  "pricingAssets": [
+    {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    {
+      "address": "0x4200000000000000000000000000000000000042",
+      "symbol": "OP"
+    },
+    {
+      "address": "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
+      "symbol": "WBTC"
+    }
+  ]
+}

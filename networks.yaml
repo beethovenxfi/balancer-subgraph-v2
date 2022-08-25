@@ -264,6 +264,9 @@ optimism:
   StablePhantomPoolFactory:
     address: "0xb08E16cFc07C684dAA2f93C70323BAdb2A6CBFd2"
     startBlock: 13766527
+  AaveLinearPoolV2Factory:
+    address: "0x994086630773dC6cB54D3A5E0Ef0963532789E75"
+    startBlock: 20254490
   ERC4626LinearPoolFactory:
     address: "0x4C4287b07d293E361281bCeEe8715c8CDeB64E34"
     startBlock: 13408800

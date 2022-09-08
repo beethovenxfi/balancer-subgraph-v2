@@ -22,6 +22,7 @@ class AddressByNetwork {
   public polygon: string;
   public arbitrum: string;
   public optimism: string;
+  public fantom: string;
   public dev: string;
 }
 
@@ -33,6 +34,7 @@ let vaultAddressByNetwork: AddressByNetwork = {
   polygon: '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
   arbitrum: '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
   optimism: '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
+  fantom: '0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce',
   dev: '0xa0B05b20e511B1612E908dFCeE0E407E22B76028',
 };
 
@@ -47,6 +49,8 @@ function forNetwork(addressByNetwork: AddressByNetwork, network: string): Addres
     return Address.fromString(addressByNetwork.arbitrum);
   } else if (network == 'optimism') {
     return Address.fromString(addressByNetwork.optimism);
+  } else if (network == 'fantom') {
+    return Address.fromString(addressByNetwork.fantom);
   } else {
     return Address.fromString(addressByNetwork.dev);
   }

@@ -589,6 +589,122 @@ dataSources:
         - event: PoolCreated(indexed address)
           handler: handleNewGyro3Pool
   {{/if}}
+  {{#if YearnLinearPoolFactory}}
+  - kind: ethereum/contract
+    name: YearnLinearPoolFactory
+    network: {{network}}
+    source:
+      address: '{{YearnLinearPoolFactory.address}}'
+      abi: LinearPoolFactory
+      startBlock: {{YearnLinearPoolFactory.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolFactory.ts
+      entities:
+        - Balancer
+        - Pool
+      abis:
+        - name: Vault
+          file: ./abis/Vault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: LinearPoolFactory
+          file: ./abis/LinearPoolFactory.json
+        - name: LinearPool
+          file: ./abis/LinearPool.json
+      eventHandlers:
+        - event: PoolCreated(indexed address)
+          handler: handleNewLinearPool
+  {{/if}}
+  {{#if BooLinearPoolFactory}}
+  - kind: ethereum/contract
+    name: BooLinearPoolFactory
+    network: {{network}}
+    source:
+      address: '{{BooLinearPoolFactory.address}}'
+      abi: LinearPoolFactory
+      startBlock: {{BooLinearPoolFactory.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolFactory.ts
+      entities:
+        - Balancer
+        - Pool
+      abis:
+        - name: Vault
+          file: ./abis/Vault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: LinearPoolFactory
+          file: ./abis/LinearPoolFactory.json
+        - name: LinearPool
+          file: ./abis/LinearPool.json
+      eventHandlers:
+        - event: PoolCreated(indexed address)
+          handler: handleNewLinearPool
+  {{/if}}
+  {{#if ReaperLinearPoolFactory}}
+  - kind: ethereum/contract
+    name: ReaperLinearPoolFactory
+    network: {{network}}
+    source:
+      address: '{{ReaperLinearPoolFactory.address}}'
+      abi: LinearPoolFactory
+      startBlock: {{ReaperLinearPoolFactory.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolFactory.ts
+      entities:
+        - Balancer
+        - Pool
+      abis:
+        - name: Vault
+          file: ./abis/Vault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: LinearPoolFactory
+          file: ./abis/LinearPoolFactory.json
+        - name: LinearPool
+          file: ./abis/LinearPool.json
+      eventHandlers:
+        - event: PoolCreated(indexed address)
+          handler: handleNewLinearPool
+  {{/if}}
+  {{#if TarotLinearPoolFactory}}
+  - kind: ethereum/contract
+    name: TarotLinearPoolFactory
+    network: {{network}}
+    source:
+      address: '{{TarotLinearPoolFactory.address}}'
+      abi: LinearPoolFactory
+      startBlock: {{TarotLinearPoolFactory.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolFactory.ts
+      entities:
+        - Balancer
+        - Pool
+      abis:
+        - name: Vault
+          file: ./abis/Vault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: LinearPoolFactory
+          file: ./abis/LinearPoolFactory.json
+        - name: LinearPool
+          file: ./abis/LinearPool.json
+      eventHandlers:
+        - event: PoolCreated(indexed address)
+          handler: handleNewLinearPool
+  {{/if}}
 templates:
   - kind: ethereum/contract
     name: WeightedPool
@@ -962,4 +1078,4 @@ templates:
           handler: handleTransfer
         - event: SwapFeePercentageChanged(uint256)
           handler: handleSwapFeePercentageChange
-    
+

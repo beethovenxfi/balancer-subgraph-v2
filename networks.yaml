@@ -270,3 +270,53 @@ optimism:
   ERC4626LinearPoolFactory:
     address: "0x4C4287b07d293E361281bCeEe8715c8CDeB64E34"
     startBlock: 13408800
+fantom:
+  network: fantom
+  Vault:
+    address: "0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce"
+    startBlock: 17433594
+  WeightedPoolFactory:
+    address: "0x60467cb225092cE0c989361934311175f437Cf53"
+    startBlock: 16897200
+  WeightedPool2TokenFactory:
+    address: "0x92b377187bcCC6556FceD2f1e6DAd65850C20630"
+    startBlock: 16897244
+  StablePoolFactory:
+    address: "0x55df810876354Fc3e249f701Dd78DeDE57991F8D"
+    startBlock: 16897287
+  StablePoolV2Factory:
+    address: "0xc01f37345f14686396Ef43Ad19F72E323Cd1EC43"
+    startBlock: 45593952
+  ComposableStablePoolFactory:
+      address: "0x3bCF41E62aBCa9BFa82C5F097a810F7cBAb39096"
+      startBlock: 45594814
+  MetaStablePoolFactory:
+    address: "0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554"
+    startBlock: 16898079
+  LiquidityBootstrappingPoolFactory:
+    address: "0x458368B3724B5a1c1057A00b28eB03FEb5b64968"
+    startBlock: 16897962
+  TempLiquidityBootstrappingPoolFactory:
+    address: "0x2C774732c93CE393eC8125bDA49fb3737Ae6F473"
+    startBlock: 24906900
+  StablePhantomPoolFactory:
+    address: "0x0E2AFa0b5F9174750d4E84Bf9798f89b79Bd5bF4"
+    startBlock: 28658437
+  YearnLinearPoolFactory:
+    address: "0x1F73AE6ED391A2b1e84Ff988A1Bb5394B78a4A71"
+    startBlock: 28657909
+  BooLinearPoolFactory:
+    address: "0xba306e3Cf84751d8Ef5e812C18cAa6C567c783E8"
+    startBlock: 32452165
+  ReaperLinearPoolFactory:
+    address: "0x80434cF3661313D1a0632f567c1ba389ee2F7665"
+    startBlock: 35348849
+  TarotLinearPoolFactory:
+    address: "0x681B59C9cbBb6AB43ee3360ac6C34E1Dd2f147e9"
+    startBlock: 36713100
+  AaveLinearPoolV2Factory:
+    address: "0x7bDB51A8bD24679AC7Fa5398981130a4Ae8a01D3"
+    startBlock: 45594529
+  ERC4626LinearPoolFactory:
+    address: "0x31445c40Aa6664c285bB478315487DF54d07D668"
+    startBlock: 45594169

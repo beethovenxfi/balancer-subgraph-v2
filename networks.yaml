@@ -253,8 +253,8 @@ optimism:
     address: "0xeb151668006CD04DAdD098AFd0a82e78F77076c3"
     startBlock: 11088891
   ComposableStablePoolFactory:
-    address: "0x7C71313d3b84728cA0FD4cDaD8c86067E3548dCe"
-    startBlock: 20274340
+    address: "0xf145caFB67081895EE80eB7c04A30Cf87f07b745"
+    startBlock: 22182522
   MetaStablePoolFactory:
     address: "0xb08E16cFc07C684dAA2f93C70323BAdb2A6CBFd2"
     startBlock: 6000000
@@ -288,8 +288,8 @@ fantom:
     address: "0xc01f37345f14686396Ef43Ad19F72E323Cd1EC43"
     startBlock: 45593952
   ComposableStablePoolFactory:
-      address: "0x3bCF41E62aBCa9BFa82C5F097a810F7cBAb39096"
-      startBlock: 45594814
+    address: "0xB384A86F2Fd7788720db42f9daa60fc07EcBeA06"
+    startBlock: 46579020
   MetaStablePoolFactory:
     address: "0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554"
     startBlock: 16898079
@@ -305,12 +305,18 @@ fantom:
   YearnLinearPoolFactory:
     address: "0x1F73AE6ED391A2b1e84Ff988A1Bb5394B78a4A71"
     startBlock: 28657909
+  YearnLinearPoolV2Factory:
+    address: "0x20fB73d46Efa073D210A4d63FeC16E9b01291AaD"
+    startBlock: 46579960
   BooLinearPoolFactory:
     address: "0xba306e3Cf84751d8Ef5e812C18cAa6C567c783E8"
     startBlock: 32452165
   ReaperLinearPoolFactory:
     address: "0x80434cF3661313D1a0632f567c1ba389ee2F7665"
     startBlock: 35348849
+  ReaperLinearPoolV2Factory:
+    address: "0xAC372C8a6D59c4f22a3B9867d4b677C554302145"
+    startBlock: 46580210
   TarotLinearPoolFactory:
     address: "0x681B59C9cbBb6AB43ee3360ac6C34E1Dd2f147e9"
     startBlock: 36713100

@@ -258,6 +258,9 @@ optimism:
   WeightedPoolFactory:
     address: "0xdAE7e32ADc5d490a43cCba1f0c736033F2b4eFca"
     startBlock: 6000000
+  WeightedPoolV2Factory:
+    address: "0xad901309d9e9DbC5Df19c84f729f429F0189a633"
+    startBlock: 22410480
   WeightedPool2TokenFactory:
     address: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e"
     startBlock: 6000000
@@ -293,6 +296,9 @@ fantom:
   WeightedPoolFactory:
     address: "0x60467cb225092cE0c989361934311175f437Cf53"
     startBlock: 16897200
+  WeightedPoolV2Factory:
+    address: "0x8ea1c497c16726E097f62C8C9FBD944143F27090"
+    startBlock: 46631160
   WeightedPool2TokenFactory:
     address: "0x92b377187bcCC6556FceD2f1e6DAd65850C20630"
     startBlock: 16897244

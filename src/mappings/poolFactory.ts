@@ -180,15 +180,7 @@ export function handleNewCCPPool(event: PoolCreated): void {
   CCPoolTemplate.create(poolAddress);
 }
 
-export function handleNewAaveLinearPool(event: PoolCreated): void {
-  handleNewLinearPool(event, PoolType.AaveLinear);
-}
-
-export function handleNewERC4626LinearPool(event: PoolCreated): void {
-  handleNewLinearPool(event, PoolType.ERC4626Linear);
-}
-
-function handleNewLinearPool(event: PoolCreated, poolType: string): void {
+function handleNewLinearPool(event: PoolCreated): void {
   let poolAddress: Address = event.params.pool;
 
   let poolContract = LinearPool.bind(poolAddress);
@@ -201,7 +193,7 @@ function handleNewLinearPool(event: PoolCreated, poolType: string): void {
 
   let pool = handleNewPool(event, poolId, swapFee);
 
-  pool.poolType = poolType;
+  pool.poolType = PoolType.Linear;
   let mainIndexCall = poolContract.try_getMainIndex();
   pool.mainIndex = mainIndexCall.value.toI32();
   let wrappedIndexCall = poolContract.try_getWrappedIndex();

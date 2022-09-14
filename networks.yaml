@@ -288,6 +288,12 @@ optimism:
   ERC4626LinearPoolFactory:
     address: "0x4C4287b07d293E361281bCeEe8715c8CDeB64E34"
     startBlock: 13408800
+  ReaperLinearPoolFactory:
+    address: "0x19968D4b7126904Fd665eD25417599Df9604Df83"
+    startBlock: 22842161
+  YearnLinearPoolFactory:
+    address: "0xad4Eb727D219121007762C6f0e6Af8255ec6794E"
+    startBlock: 22842214
 fantom:
   network: fantom
   Vault:

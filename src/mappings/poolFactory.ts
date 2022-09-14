@@ -180,7 +180,7 @@ export function handleNewCCPPool(event: PoolCreated): void {
   CCPoolTemplate.create(poolAddress);
 }
 
-function handleNewLinearPool(event: PoolCreated): void {
+export function handleNewLinearPool(event: PoolCreated): void {
   let poolAddress: Address = event.params.pool;
 
   let poolContract = LinearPool.bind(poolAddress);

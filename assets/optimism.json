@@ -23,12 +23,36 @@
       "symbol": "WETH"
     },
     {
+      "address": "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D",
+      "symbol": "rETH"
+    },
+    {
+      "address": "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb",
+      "symbol": "wstETH"
+    },
+    {
       "address": "0x4200000000000000000000000000000000000042",
       "symbol": "OP"
     },
     {
       "address": "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
       "symbol": "WBTC"
+    },
+    {
+      "address": "0x888a6195D42a95e80D81e1c506172772a80b80Bc",
+      "symbol": "bb-rf-aDAI"
+    },
+    {
+      "address": "0x9253d7e1B42fa01eDE2c53f3A21b3B4d13239cD4",
+      "symbol": "bb-rf-aUSDT"
+    },
+    {
+      "address": "0xba7834bb3cd2DB888E6A06Fb45E82b4225Cd0C71",
+      "symbol": "bb-rf-aUSDC"
+    },
+    {
+      "address": "0x6222ae1d2a9f6894dA50aA25Cb7b303497f9BEbd",
+      "symbol": "bb-rf-aUSD"
     }
   ]
 }

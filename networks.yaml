@@ -279,9 +279,6 @@ optimism:
   TempLiquidityBootstrappingPoolFactory:
     address: "0xf302f9F50958c5593770FDf4d4812309fF77414f"
     startBlock: 13730248
-  StablePhantomPoolFactory:
-    address: "0xb08E16cFc07C684dAA2f93C70323BAdb2A6CBFd2"
-    startBlock: 13766527
   AaveLinearPoolV2Factory:
     address: "0x994086630773dC6cB54D3A5E0Ef0963532789E75"
     startBlock: 20254490

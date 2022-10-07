@@ -288,6 +288,9 @@ optimism:
   ReaperLinearPoolFactory:
     address: "0x19968D4b7126904Fd665eD25417599Df9604Df83"
     startBlock: 22842161
+  ReaperLinearPoolV2Factory:
+    address: "0x0473136B0732606e826fFeB42f3abC81A7A766d5"
+    startBlock: 27971000
   YearnLinearPoolFactory:
     address: "0xad4Eb727D219121007762C6f0e6Af8255ec6794E"
     startBlock: 22842214
@@ -339,8 +342,8 @@ fantom:
     address: "0x80434cF3661313D1a0632f567c1ba389ee2F7665"
     startBlock: 35348849
   ReaperLinearPoolV2Factory:
-    address: "0xAC372C8a6D59c4f22a3B9867d4b677C554302145"
-    startBlock: 46580210
+    address: "0x71BF735A83a452dEC081E43131581be9277dB73b"
+    startBlock: 48611000
   TarotLinearPoolFactory:
     address: "0x681B59C9cbBb6AB43ee3360ac6C34E1Dd2f147e9"
     startBlock: 36713100

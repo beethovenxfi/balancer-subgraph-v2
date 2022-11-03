@@ -24,11 +24,12 @@ import {
 import { updatePoolWeights } from './helpers/weighted';
 import {
   isPricingAsset,
-  updatePoolLiquidity,
+  addHistoricalPoolLiquidityRecord,
   valueInUSD,
   swapValueInUSD,
   getPreferentialPricingAsset,
   updateLatestPrice,
+  updatePoolLiquidity,
 } from './pricing';
 import {
   MIN_POOL_LIQUIDITY,
@@ -39,8 +40,17 @@ import {
   ZERO_ADDRESS,
   ZERO_BD,
 } from './helpers/constants';
-import { hasVirtualSupply, isVariableWeightPool, isStableLikePool, PoolType } from './helpers/pools';
+import {
+  hasVirtualSupply,
+  isVariableWeightPool,
+  isStableLikePool,
+  PoolType,
+  isLinearPool,
+  isFXPool,
+} from './helpers/pools';
 import { updateAmpFactor } from './helpers/stable';
+import { BaseToUsdAssimilator } from '../types/Vault/BaseToUsdAssimilator';
+import { USDC_ADDRESS } from './helpers/assets';
 
 /************************************
  ******** INTERNAL BALANCES *********
@@ -105,6 +115,7 @@ function handlePoolJoined(event: PoolBalanceChanged): void {
   let join = new JoinExit(joinId);
   join.sender = event.params.liquidityProvider;
   let joinAmounts = new Array<BigDecimal>(amounts.length);
+  let valueUSD = ZERO_BD;
   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
     let poolToken = loadPoolToken(poolId, tokenAddress);
@@ -113,14 +124,17 @@ function handlePoolJoined(event: PoolBalanceChanged): void {
     }
     let joinAmount = scaleDown(amounts[i], poolToken.decimals);
     joinAmounts[i] = joinAmount;
+    let tokenJoinAmountInUSD = valueInUSD(joinAmount, tokenAddress);
+    valueUSD = valueUSD.plus(tokenJoinAmountInUSD);
   }
   join.type = 'Join';
   join.amounts = joinAmounts;
-  join.valueUSD = BigDecimal.zero();
   join.pool = event.params.poolId.toHexString();
   join.user = event.params.liquidityProvider.toHexString();
   join.timestamp = blockTimestamp;
   join.tx = transactionHash;
+  join.valueUSD = valueUSD;
+  join.save();
 
   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
@@ -132,31 +146,27 @@ function handlePoolJoined(event: PoolBalanceChanged): void {
     }
     let amountIn = amounts[i].minus(protocolFeeAmounts[i]);
     let tokenAmountIn = tokenToDecimal(amountIn, poolToken.decimals);
-    let newAmount = poolToken.balance.plus(tokenAmountIn);
-    let tokenAmountInUSD = valueInUSD(tokenAmountIn, tokenAddress);
-
-    join.valueUSD = join.valueUSD.plus(tokenAmountInUSD);
+    let newBalance = poolToken.balance.plus(tokenAmountIn);
+    poolToken.balance = newBalance;
+    poolToken.save();
 
     let token = getToken(tokenAddress);
-    token.totalBalanceNotional = token.totalBalanceNotional.plus(tokenAmountIn);
-    token.totalBalanceUSD = token.totalBalanceUSD.plus(tokenAmountInUSD);
+    const tokenTotalBalanceNotional = token.totalBalanceNotional.plus(tokenAmountIn);
+    const tokenTotalBalanceUSD = valueInUSD(tokenTotalBalanceNotional, tokenAddress);
+    token.totalBalanceNotional = tokenTotalBalanceNotional;
+    token.totalBalanceUSD = tokenTotalBalanceUSD;
     token.save();
 
     let tokenSnapshot = getTokenSnapshot(tokenAddress, event);
-    tokenSnapshot.totalBalanceNotional = token.totalBalanceNotional;
-    tokenSnapshot.totalBalanceUSD = token.totalBalanceUSD;
+    tokenSnapshot.totalBalanceNotional = tokenTotalBalanceNotional;
+    tokenSnapshot.totalBalanceUSD = tokenTotalBalanceUSD;
     tokenSnapshot.save();
-
-    poolToken.balance = newAmount;
-    poolToken.save();
   }
-
-  join.save();
 
   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
     if (isPricingAsset(tokenAddress)) {
-      let success = updatePoolLiquidity(poolId, event.block.number, tokenAddress, blockTimestamp);
+      let success = addHistoricalPoolLiquidityRecord(poolId, event.block.number, tokenAddress);
       // Some pricing assets may not have a route back to USD yet
       // so we keep trying until we find one
       if (success) {
@@ -179,6 +189,8 @@ function handlePoolJoined(event: PoolBalanceChanged): void {
     pool.totalShares = pool.totalShares.minus(preMintedBpt);
     pool.save();
   }
+
+  updatePoolLiquidity(poolId, blockTimestamp);
 }
 
 function handlePoolExited(event: PoolBalanceChanged): void {
@@ -202,6 +214,7 @@ function handlePoolExited(event: PoolBalanceChanged): void {
   let exit = new JoinExit(exitId);
   exit.sender = event.params.liquidityProvider;
   let exitAmounts = new Array<BigDecimal>(amounts.length);
+  let valueUSD = ZERO_BD;
   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
     let poolToken = loadPoolToken(poolId, tokenAddress);
@@ -210,14 +223,17 @@ function handlePoolExited(event: PoolBalanceChanged): void {
     }
     let exitAmount = scaleDown(amounts[i].neg(), poolToken.decimals);
     exitAmounts[i] = exitAmount;
+    let tokenExitAmountInUSD = valueInUSD(exitAmount, tokenAddress);
+    valueUSD = valueUSD.plus(tokenExitAmountInUSD);
   }
   exit.type = 'Exit';
   exit.amounts = exitAmounts;
-  exit.valueUSD = BigDecimal.zero();
   exit.pool = event.params.poolId.toHexString();
   exit.user = event.params.liquidityProvider.toHexString();
   exit.timestamp = blockTimestamp;
   exit.tx = transactionHash;
+  exit.valueUSD = valueUSD;
+  exit.save();
 
   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
@@ -229,31 +245,27 @@ function handlePoolExited(event: PoolBalanceChanged): void {
     }
     let amountOut = amounts[i].minus(protocolFeeAmounts[i]).neg();
     let tokenAmountOut = tokenToDecimal(amountOut, poolToken.decimals);
-    let newAmount = poolToken.balance.minus(tokenAmountOut);
-    let tokenAmountOutUSD = valueInUSD(tokenAmountOut, tokenAddress);
-
-    exit.valueUSD = exit.valueUSD.plus(tokenAmountOutUSD);
-
-    poolToken.balance = newAmount;
+    let newBalance = poolToken.balance.minus(tokenAmountOut);
+    poolToken.balance = newBalance;
     poolToken.save();
 
     let token = getToken(tokenAddress);
-    token.totalBalanceNotional = token.totalBalanceNotional.minus(tokenAmountOut);
-    token.totalBalanceUSD = token.totalBalanceUSD.minus(tokenAmountOutUSD);
+    const tokenTotalBalanceNotional = token.totalBalanceNotional.minus(tokenAmountOut);
+    const tokenTotalBalanceUSD = valueInUSD(tokenTotalBalanceNotional, tokenAddress);
+    token.totalBalanceNotional = tokenTotalBalanceNotional;
+    token.totalBalanceUSD = tokenTotalBalanceUSD;
     token.save();
 
     let tokenSnapshot = getTokenSnapshot(tokenAddress, event);
-    tokenSnapshot.totalBalanceNotional = token.totalBalanceNotional;
-    tokenSnapshot.totalBalanceUSD = token.totalBalanceUSD;
+    tokenSnapshot.totalBalanceNotional = tokenTotalBalanceNotional;
+    tokenSnapshot.totalBalanceUSD = tokenTotalBalanceUSD;
     tokenSnapshot.save();
   }
-
-  exit.save();
 
   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
     if (isPricingAsset(tokenAddress)) {
-      let success = updatePoolLiquidity(poolId, event.block.number, tokenAddress, blockTimestamp);
+      let success = addHistoricalPoolLiquidityRecord(poolId, event.block.number, tokenAddress);
       // Some pricing assets may not have a route back to USD yet
       // so we keep trying until we find one
       if (success) {
@@ -261,6 +273,8 @@ function handlePoolExited(event: PoolBalanceChanged): void {
       }
     }
   }
+
+  updatePoolLiquidity(poolId, blockTimestamp);
 }
 
 /************************************
@@ -368,9 +382,31 @@ export function handleSwapEvent(event: SwapEvent): void {
   let swapFeesUSD = ZERO_BD;
 
   if (poolAddress != tokenInAddress && poolAddress != tokenOutAddress) {
-    let swapFee = pool.swapFee;
     swapValueUSD = swapValueInUSD(tokenInAddress, tokenAmountIn, tokenOutAddress, tokenAmountOut);
-    swapFeesUSD = swapValueUSD.times(swapFee);
+    if (!isLinearPool(pool) && !isFXPool(pool)) {
+      let swapFee = pool.swapFee;
+      swapFeesUSD = swapValueUSD.times(swapFee);
+    } else if (isFXPool(pool)) {
+      // Custom logic for calculating trading fee for FXPools
+      let isTokenInBase = tokenOutAddress == USDC_ADDRESS;
+      let baseAssimilator = isTokenInBase ? poolTokenIn.assimilator : poolTokenOut.assimilator;
+      if (baseAssimilator) {
+        let assimilatorAddress = Address.fromString(baseAssimilator.toHexString());
+        let assimilator = BaseToUsdAssimilator.bind(assimilatorAddress);
+        let rateRes = assimilator.try_getRate();
+
+        if (!rateRes.reverted) {
+          let baseRate = scaleDown(rateRes.value, 8);
+          if (isTokenInBase) {
+            // tokenIn = baseToken, fee = (amountIn * rate) - amountOut
+            swapFeesUSD = tokenAmountIn.times(baseRate).minus(tokenAmountOut);
+          } else {
+            // tokenIn = USDC, fee = amountIn - (amountOut * rate)
+            swapFeesUSD = tokenAmountIn.minus(tokenAmountOut.times(baseRate));
+          }
+        }
+      }
+    }
   }
 
   let swapId = transactionHash.toHexString().concat(logIndex.toString());
@@ -510,6 +546,8 @@ export function handleSwapEvent(event: SwapEvent): void {
 
   const preferentialToken = getPreferentialPricingAsset([tokenInAddress, tokenOutAddress]);
   if (preferentialToken != ZERO_ADDRESS) {
-    updatePoolLiquidity(poolId.toHex(), block, preferentialToken, blockTimestamp);
+    addHistoricalPoolLiquidityRecord(poolId.toHex(), block, preferentialToken);
   }
+
+  updatePoolLiquidity(poolId.toHex(), blockTimestamp);
 }

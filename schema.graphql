@@ -14,6 +14,7 @@ type Pool @entity {
   id: ID!
   address: Bytes!
   poolType: String
+  poolTypeVersion: Int
   factory: Bytes
   strategyType: Int!
   oracleEnabled: Boolean!
@@ -74,6 +75,33 @@ type Pool @entity {
 
   # Gyro3Pool Only
   root3Alpha: BigDecimal
+
+  # GyroCEMMPool Only
+  c: BigDecimal
+  s: BigDecimal
+  tauAlphaX: BigDecimal
+  tauAlphaY: BigDecimal
+  tauBetaX: BigDecimal
+  tauBetaY: BigDecimal
+  u: BigDecimal
+  v: BigDecimal
+  w: BigDecimal
+  z: BigDecimal
+  dSq: BigDecimal
+
+  # GyroCEMMPool+FXPool Only
+  alpha: BigDecimal
+  beta: BigDecimal
+  lambda: BigDecimal
+
+  # FXPool Only
+  delta: BigDecimal
+  epsilon: BigDecimal
+
+  # Composable and WeightedV2 Only
+  protocolSwapFeeCache: BigDecimal
+  protocolYieldFeeCache: BigDecimal
+  protocolAumFeeCache: BigDecimal
 }
 
 type PoolToken @entity {
@@ -93,6 +121,12 @@ type PoolToken @entity {
 
   # WeightedPool Only
   weight: BigDecimal
+
+  # ComposableStablePool Only
+  isExemptFromYieldProtocolFee: Boolean
+
+  # FXPool Only
+  assimilator: Bytes
 }
 
 type PriceRateProvider @entity {
@@ -100,10 +134,10 @@ type PriceRateProvider @entity {
   poolId: Pool!
   token: PoolToken!
   address: Bytes!
-  rate: BigDecimal!
-  lastCached: Int!
-  cacheDuration: Int!
-  cacheExpiry: Int!
+  rate: BigDecimal
+  lastCached: Int
+  cacheDuration: Int
+  cacheExpiry: Int
 }
 
 type PoolShare @entity {
@@ -148,6 +182,16 @@ type AmpUpdate @entity {
   endAmp: BigInt!
 }
 
+type SwapFeeUpdate @entity {
+  id: ID!
+  pool: Pool!
+  scheduledTimestamp: Int!
+  startTimestamp: BigInt!
+  endTimestamp: BigInt!
+  startSwapFeePercentage: BigDecimal!
+  endSwapFeePercentage: BigDecimal!
+}
+
 type Swap @entity {
   id: ID!
   caller: Bytes!
@@ -174,7 +218,7 @@ type JoinExit @entity {
   type: InvestType!
   sender: Bytes!
   amounts: [BigDecimal!]!
-  valueUSD: BigDecimal!
+  valueUSD: BigDecimal
   pool: Pool!
   user: User!
   timestamp: Int!

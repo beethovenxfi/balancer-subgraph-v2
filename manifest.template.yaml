@@ -558,7 +558,7 @@ dataSources:
           file: ./abis/AaveLinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewAaveLinearPool
+          handler: handleNewGenericLinearPool
   {{/if}}
   {{#if AaveLinearPoolV2Factory}}
   - kind: ethereum/contract
@@ -591,7 +591,7 @@ dataSources:
           file: ./abis/AaveLinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewAaveLinearPoolV2
+          handler: handleNewGenericLinearPoolV2
   {{/if}}
   {{#if ERC4626LinearPoolFactoryBeta}}
   - kind: ethereum/contract

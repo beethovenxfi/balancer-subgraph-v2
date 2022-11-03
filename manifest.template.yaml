@@ -143,7 +143,7 @@ dataSources:
           file: ./abis/WeightedPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewWeightedPool
+          handler: handleNewWeightedPoolV2
   {{/if}}
   {{#if WeightedPool2TokenFactory}}
   - kind: ethereum/contract
@@ -525,7 +525,7 @@ dataSources:
           file: ./abis/StablePool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewStablePhantomPoolV2
+          handler: handleNewComposableStablePool
   {{/if}}
   {{#if AaveLinearPoolFactory}}
   - kind: ethereum/contract
@@ -558,7 +558,7 @@ dataSources:
           file: ./abis/AaveLinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewAaveLinearPool
   {{/if}}
   {{#if AaveLinearPoolV2Factory}}
   - kind: ethereum/contract
@@ -591,7 +591,7 @@ dataSources:
           file: ./abis/AaveLinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewAaveLinearPool
+          handler: handleNewAaveLinearPoolV2
   {{/if}}
   {{#if ERC4626LinearPoolFactoryBeta}}
   - kind: ethereum/contract
@@ -624,7 +624,7 @@ dataSources:
           file: ./abis/ERC4626LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewERC4626LinearPool
   {{/if}}
   {{#if ERC4626LinearPoolFactory}}
   - kind: ethereum/contract
@@ -657,7 +657,7 @@ dataSources:
           file: ./abis/ERC4626LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewERC4626LinearPool
   {{/if}}
   {{#if Gyro2PoolFactory}}
   - kind: ethereum/contract
@@ -812,7 +812,7 @@ dataSources:
           file: ./abis/LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewGenericLinearPool
   {{/if}}
   {{#if YearnLinearPoolV2Factory}}
   - kind: ethereum/contract
@@ -843,7 +843,7 @@ dataSources:
           file: ./abis/LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewGenericLinearPoolV2
   {{/if}}
   {{#if BooLinearPoolFactory}}
   - kind: ethereum/contract
@@ -874,7 +874,7 @@ dataSources:
           file: ./abis/LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewGenericLinearPool
   {{/if}}
   {{#if ReaperLinearPoolFactory}}
   - kind: ethereum/contract
@@ -905,7 +905,7 @@ dataSources:
           file: ./abis/LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewGenericLinearPool
   {{/if}}
   {{#if ReaperLinearPoolV2Factory}}
   - kind: ethereum/contract
@@ -936,7 +936,7 @@ dataSources:
           file: ./abis/LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewGenericLinearPoolV2
   {{/if}}
   {{#if ReaperLinearPoolV3Factory}}
   - kind: ethereum/contract
@@ -967,7 +967,7 @@ dataSources:
           file: ./abis/LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewGenericLinearPoolV2
   {{/if}}
   {{#if TarotLinearPoolFactory}}
   - kind: ethereum/contract
@@ -998,7 +998,7 @@ dataSources:
           file: ./abis/LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewLinearPool
+          handler: handleNewGenericLinearPool
   {{/if}}
 templates:
   - kind: ethereum/contract

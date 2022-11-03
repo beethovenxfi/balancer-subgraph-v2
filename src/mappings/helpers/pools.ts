@@ -31,6 +31,8 @@ export function isVariableWeightPool(pool: Pool): boolean {
 export function hasVirtualSupply(pool: Pool): boolean {
   return (
     pool.poolType == PoolType.Linear ||
+    pool.poolType == PoolType.AaveLinear ||
+    pool.poolType == PoolType.ERC4626Linear ||
     pool.poolType == PoolType.StablePhantom ||
     pool.poolType == PoolType.ComposableStable
   );
@@ -41,7 +43,9 @@ export function isComposablePool(pool: Pool): boolean {
 }
 
 export function isLinearPool(pool: Pool): boolean {
-  return pool.poolType == PoolType.AaveLinear || pool.poolType == PoolType.ERC4626Linear;
+  return (
+    pool.poolType == PoolType.AaveLinear || pool.poolType == PoolType.ERC4626Linear || pool.poolType == PoolType.Linear
+  );
 }
 
 export function isStableLikePool(pool: Pool): boolean {

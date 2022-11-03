@@ -241,6 +241,8 @@ function handleNewLinearPool(event: PoolCreated, poolType: string, poolTypeVersi
 
   let pool = handleNewPool(event, poolId, swapFee);
 
+  // do we want to set all to LINEAR type? since we also have aavelinearpools
+  // pool.poolType = PoolType.Linear
   pool.poolType = poolType;
   pool.poolTypeVersion = poolTypeVersion;
 

@@ -263,8 +263,8 @@ fantom:
     address: "0x8ea1c497c16726E097f62C8C9FBD944143F27090"
     startBlock: 46631160
   WeightedPoolV3Factory:
-    address: "0xea87F3dFfc679035653C0FBa70e7bfe46E3FB733"
-    startBlock: 50385115
+    address: "0xB2ED595Afc445b47Db7043bEC25e772bf0FA1fbb"
+    startBlock: 50594491
   WeightedPool2TokenFactory:
     address: "0x92b377187bcCC6556FceD2f1e6DAd65850C20630"
     startBlock: 16897244
@@ -278,8 +278,8 @@ fantom:
     address: "0xB384A86F2Fd7788720db42f9daa60fc07EcBeA06"
     startBlock: 46579020
   ComposableStablePoolV2Factory:
-    address: "0x44814E3A603bb7F1198617995c5696C232F6e8Ed"
-    startBlock: 50384885
+    address: "0x5AdAF6509BCEc3219455348AC45d6D3261b1A990"
+    startBlock: 50564007
   MetaStablePoolFactory:
     address: "0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554"
     startBlock: 16898079
@@ -317,5 +317,5 @@ fantom:
     address: "0x7bDB51A8bD24679AC7Fa5398981130a4Ae8a01D3"
     startBlock: 45594529
   ERC4626LinearPoolFactory:
-    address: "0x31445c40Aa6664c285bB478315487DF54d07D668"
-    startBlock: 45594169
+    address: "0xf9F0ad4B944eEcCbBfEcaE7311d7B40272E186B1"
+    startBlock: 50654196

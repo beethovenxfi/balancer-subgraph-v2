@@ -53,6 +53,18 @@
     {
       "address": "0x6222ae1d2a9f6894dA50aA25Cb7b303497f9BEbd",
       "symbol": "bb-rf-aUSD"
+    },
+    {
+      "address": "0x62ec8b26c08ffe504f22390a65e6e3c1e45e9877",
+      "symbol": "bb-rf-soDAI"
+    },
+    {
+      "address": "0xb96c5bada4bf6a70e71795a3197ba94751dae2db",
+      "symbol": "bb-rf-soUSDT"
+    },
+    {
+      "address": "0xedcfaf390906a8f91fb35b7bac23f3111dbaee1c",
+      "symbol": "bb-rf-soUSDC"
     }
   ]
 }

@@ -29,8 +29,9 @@ import {
   getPoolTokenId,
   loadPriceRateProvider,
   getPoolShare,
+  getToken,
 } from './helpers/misc';
-import { ONE_BD, ProtocolFeeType, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
+import { ONE_BD, ProtocolFeeType, PROTOCOL_FEE_COLLECTOR_ADDRESS, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
 import { updateAmpFactor } from './helpers/stable';
 import { ProtocolFeePercentageCacheUpdated } from '../types/WeightedPoolV2Factory/WeightedPoolV2';
 
@@ -383,6 +384,27 @@ export function handleTransfer(event: Transfer): void {
     poolShareTo.balance = poolShareTo.balance.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
     poolShareTo.save();
     pool.totalShares = pool.totalShares.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+    if(event.params.to == PROTOCOL_FEE_COLLECTOR_ADDRESS){
+      log.error("we collected fees",[]);
+      // we collected fees with this mint
+      const bptAddress = Address.fromString(pool.address.toHexString());
+      let bptToken = getToken(bptAddress);
+      let bptValueUSD = bptToken.latestUSDPrice;
+      if(!bptValueUSD){
+        bptValueUSD = ZERO_BD
+      }
+      log.error("bpt value: {}", [bptValueUSD.toString()]);
+      const collectedFeeValue = tokenToDecimal(event.params.value, BPT_DECIMALS).times(bptValueUSD)
+      const swapFeeBpts = pool.totalAccruedSwapFeesSinceLastFeeCollection
+      const yieldFeeBpts = tokenToDecimal(event.params.value, BPT_DECIMALS).minus(swapFeeBpts);
+      if(yieldFeeBpts.lt(ZERO_BD)){
+        log.critical("swapFeeBPTs where higher than total collected BPTs in fee for pool {}", [pool.address.toHex()]);
+      }
+      pool.totalFees = pool.totalFees.plus(collectedFeeValue);
+      pool.totalYieldFee = pool.totalYieldFee.plus(yieldFeeBpts.times(bptValueUSD));
+      pool.totalSwapFeeFromBptBalance = pool.totalSwapFeeFromBptBalance.plus(swapFeeBpts.times(bptValueUSD));
+      pool.totalAccruedSwapFeesSinceLastFeeCollection = ZERO_BD;
+    }
   } else if (isBurn) {
     poolShareFrom.balance = poolShareFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));
     poolShareFrom.save();

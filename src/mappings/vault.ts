@@ -548,6 +548,18 @@ export function handleSwapEvent(event: SwapEvent): void {
   if (preferentialToken != ZERO_ADDRESS) {
     addHistoricalPoolLiquidityRecord(poolId.toHex(), block, preferentialToken);
   }
+  
+  updatePoolLiquidity(poolId.toHex(), blockTimestamp);  
 
-  updatePoolLiquidity(poolId.toHex(), blockTimestamp);
+  const bptAddress = Address.fromString(pool.address.toHexString());
+  let bptToken = getToken(bptAddress);
+  const bptValueUSD = bptToken.latestUSDPrice;
+  
+  if(bptValueUSD && bptValueUSD.gt(ZERO_BD)){
+    const swapFeeValueInBpt = swapFeesUSD.div(bptValueUSD);
+    pool.totalAccruedSwapFeesSinceLastFeeCollection = pool.totalAccruedSwapFeesSinceLastFeeCollection.plus(swapFeeValueInBpt);
+    pool.save();
+  }else{
+    log.warning('No bpt value for pool {}',[pool.address.toHex()]);
+  }
 }

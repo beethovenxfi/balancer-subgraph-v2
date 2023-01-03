@@ -385,24 +385,37 @@ export function handleTransfer(event: Transfer): void {
     poolShareTo.save();
     pool.totalShares = pool.totalShares.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
     if(event.params.to == PROTOCOL_FEE_COLLECTOR_ADDRESS){
-      log.error("we collected fees",[]);
-      // we collected fees with this mint
+      // we collected fees in BPT with this mint
       const bptAddress = Address.fromString(pool.address.toHexString());
       let bptToken = getToken(bptAddress);
       let bptValueUSD = bptToken.latestUSDPrice;
       if(!bptValueUSD){
         bptValueUSD = ZERO_BD
       }
-      log.error("bpt value: {}", [bptValueUSD.toString()]);
-      const collectedFeeValue = tokenToDecimal(event.params.value, BPT_DECIMALS).times(bptValueUSD)
-      const swapFeeBpts = pool.totalAccruedSwapFeesSinceLastFeeCollection
-      const yieldFeeBpts = tokenToDecimal(event.params.value, BPT_DECIMALS).minus(swapFeeBpts);
-      if(yieldFeeBpts.lt(ZERO_BD)){
-        log.critical("swapFeeBPTs where higher than total collected BPTs in fee for pool {}", [pool.address.toHex()]);
+
+      const collectedFeeBptAmount = tokenToDecimal(event.params.value, BPT_DECIMALS);
+      let swapFeeBptAmount = pool.totalAccruedSwapFeesSinceLastFeeCollection;
+      let yieldFeeBptAmount = collectedFeeBptAmount.minus(swapFeeBptAmount);
+
+      //TODO: if there is no yield fee but the price of the bpt is higher now than at the time of the swap, 
+      // a yield fee will still be added because collectedFeeBptAmount > swapFeeBptAmount 
+      //(swapFeeBptAmount is calculated based on bptValue at the time of the swap)
+      // is this true? 
+      if(yieldFeeBptAmount.lt(ZERO_BD)){
+        /* this will happen when the yield fee is smaller (or has no yield fee)
+        than the price timing-discrepancy of the swap pricing and bpt pricing
+        */
+       log.error("swapFeeBPTs where higher than total collected BPTs in fee for pool {}. Not adding to yield fee.", [pool.address.toHex()]);
+        swapFeeBptAmount = collectedFeeBptAmount;
+        yieldFeeBptAmount = ZERO_BD;
       }
+        
+      pool.totalYieldFee = pool.totalYieldFee.plus(yieldFeeBptAmount.times(bptValueUSD));
+            
+      const collectedFeeValue = collectedFeeBptAmount.times(bptValueUSD);
       pool.totalFees = pool.totalFees.plus(collectedFeeValue);
-      pool.totalYieldFee = pool.totalYieldFee.plus(yieldFeeBpts.times(bptValueUSD));
-      pool.totalSwapFeeFromBptBalance = pool.totalSwapFeeFromBptBalance.plus(swapFeeBpts.times(bptValueUSD));
+
+      pool.totalSwapFeeFromBptBalance = pool.totalSwapFeeFromBptBalance.plus(swapFeeBptAmount.times(bptValueUSD));
       pool.totalAccruedSwapFeesSinceLastFeeCollection = ZERO_BD;
     }
   } else if (isBurn) {

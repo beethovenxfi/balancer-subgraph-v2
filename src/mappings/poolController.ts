@@ -414,7 +414,11 @@ export function handleTransfer(event: Transfer): void {
 
       // check if this pool collects yield fee
       let poolCollectsYieldFee = false;
-      if (pool.poolType === PoolType.MetaStable || pool.poolType === PoolType.ComposableStable) {
+      if (
+        pool.poolType === PoolType.MetaStable ||
+        pool.poolType === PoolType.ComposableStable ||
+        pool.poolType === PoolType.StablePhantom
+      ) {
         log.warning('Possible this pool collects yield fee: {}', [pool.address.toHex()]);
         let tokenAddresses = pool.tokensList;
         for (let i: i32 = 0; i < tokenAddresses.length; i++) {

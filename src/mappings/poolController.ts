@@ -20,7 +20,14 @@ import {
   TokenRateProviderSet,
 } from '../types/templates/StablePhantomPoolV2/ComposableStablePool';
 import { AssimilatorIncluded, ParametersSet } from '../types/templates/FXPool/FXPool';
-import { Pool, PriceRateProvider, GradualWeightUpdate, AmpUpdate, SwapFeeUpdate } from '../types/schema';
+import {
+  Pool,
+  PriceRateProvider,
+  GradualWeightUpdate,
+  AmpUpdate,
+  SwapFeeUpdate,
+  PoolHistoricalLiquidity,
+} from '../types/schema';
 
 import {
   tokenToDecimal,
@@ -406,7 +413,9 @@ export function handleTransfer(event: Transfer): void {
       // is this true? at the time of swap, didn't the pool accumulate the surplus of bpt?
 
       // check if this pool collects yield fee
+      let poolCollectsYieldFee = false;
       if (pool.poolType === PoolType.MetaStable || pool.poolType === PoolType.ComposableStable) {
+        log.warning('Possible this pool collects yield fee: {}', [pool.address.toHex()]);
         let tokenAddresses = pool.tokensList;
         for (let i: i32 = 0; i < tokenAddresses.length; i++) {
           let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
@@ -414,37 +423,48 @@ export function handleTransfer(event: Transfer): void {
           if (poolToken == null) {
             throw new Error('poolToken not found');
           }
-          if (poolToken && poolToken.priceRate.gt(ONE_BD) && !poolToken.isExemptFromYieldProtocolFee) {
-            // pool collects yield fee
-            // calc yield fee based on BPT
-            let yieldFeeBptAmount = collectedFeeBptAmount.minus(swapFeeBasedOnBpt);
-            if (yieldFeeBptAmount.lt(ZERO_BD)) {
-              /* this will happen when the yield fee is smaller (or has no yield fee)
-                than the price timing-discrepancy of the swap pricing and bpt pricing
-                */
-              log.error(
-                'swapFeeBPTs where higher than total collected BPTs in fee for pool {}. Not adding to yield fee.',
-                [pool.address.toHex()]
-              );
-              swapFeeBasedOnBpt = collectedFeeBptAmount;
-              yieldFeeBptAmount = ZERO_BD;
-            }
-            pool.totalYieldFeeFromBpt = pool.totalYieldFeeFromBpt.plus(yieldFeeBptAmount.times(bptValueUSD));
-
-            let yieldFeeUSDAmount = collectedFeeValue.minus(swapFeeBasedOnUSD);
-            if (yieldFeeUSDAmount.lt(ZERO_BD)) {
-              /* this will happen when the yield fee is smaller (or has no yield fee)
-                than the price timing-discrepancy of the swap pricing and bpt pricing
-                */
-              log.error(
-                'swapFeeBasedOnUSD where higher than total collected BPTs in fee for pool {}. Not adding to yield fee.',
-                [pool.address.toHex()]
-              );
-              yieldFeeUSDAmount = ZERO_BD;
-            }
-            pool.totalYieldFeeFromUSD = pool.totalYieldFeeFromUSD.plus(yieldFeeUSDAmount);
+          log.warning('Pooltoken {}: priceRate: {} , isExempt: {}', [
+            poolToken.address,
+            poolToken.priceRate.toString(),
+            poolToken.isExemptFromYieldProtocolFee.toString(),
+          ]);
+          if (poolToken.priceRate.gt(ONE_BD) && !poolToken.isExemptFromYieldProtocolFee) {
+            poolCollectsYieldFee = true;
           }
         }
+      }
+
+      if (poolCollectsYieldFee) {
+        log.error('pool collects yieldfee: {}', [pool.address.toHex()]);
+        // pool collects yield fee
+        // calc yield fee based on BPT
+        let yieldFeeBptAmount = collectedFeeBptAmount.minus(swapFeeBasedOnBpt);
+        if (yieldFeeBptAmount.lt(ZERO_BD)) {
+          /* this will happen when the yield fee is smaller (or has no yield fee)
+                than the price timing-discrepancy of the swap pricing and bpt pricing
+                */
+          log.error('swapFeeBPTs where higher than total collected BPTs in fee for pool {}. Not adding to yield fee.', [
+            pool.address.toHex(),
+          ]);
+          swapFeeBasedOnBpt = collectedFeeBptAmount;
+          yieldFeeBptAmount = ZERO_BD;
+        }
+        pool.totalYieldFeeFromBpt = pool.totalYieldFeeFromBpt.plus(yieldFeeBptAmount.times(bptValueUSD));
+
+        let yieldFeeUSDAmount = collectedFeeValue.minus(swapFeeBasedOnUSD);
+        if (yieldFeeUSDAmount.lt(ZERO_BD)) {
+          /* this will happen when the yield fee is smaller (or has no yield fee)
+                than the price timing-discrepancy of the swap pricing and bpt pricing
+                */
+          log.error(
+            'swapFeeBasedOnUSD where higher than total collected BPTs in fee for pool {}. Not adding to yield fee.',
+            [pool.address.toHex()]
+          );
+          yieldFeeUSDAmount = ZERO_BD;
+        }
+        pool.totalYieldFeeFromUSD = pool.totalYieldFeeFromUSD.plus(yieldFeeUSDAmount);
+      } else {
+        log.error('pool does not collect yieldfee: {}', [pool.address.toHex()]);
       }
 
       pool.totalFeesBasedOnBpt = pool.totalFeesBasedOnBpt.plus(collectedFeeValue);

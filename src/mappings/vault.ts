@@ -551,18 +551,21 @@ export function handleSwapEvent(event: SwapEvent): void {
 
   updatePoolLiquidity(poolId.toHex(), blockTimestamp);
 
-  const bptAddress = Address.fromString(pool.address.toHexString());
-  let bptToken = getToken(bptAddress);
-  const bptValueUSD = bptToken.latestUSDPrice;
-
-  pool.accruedSwapFeesSinceLastFeeCollectionInUSD = pool.accruedSwapFeesSinceLastFeeCollectionInUSD.plus(swapFeesUSD);
-  if (bptValueUSD && bptValueUSD.gt(ZERO_BD)) {
-    const swapFeeValueInBpt = swapFeesUSD.div(bptValueUSD);
-    pool.accruedSwapFeesSinceLastFeeCollectionInBpt = pool.accruedSwapFeesSinceLastFeeCollectionInBpt.plus(
-      swapFeeValueInBpt
-    );
-    pool.save();
+  // We calculate the BPT price by using: pool.totalLiquidity / pool.totalShares
+  let swapFeeValueInBpt = ZERO_BD;
+  if (swapFeesUSD.gt(ZERO_BD) && pool.totalShares.gt(ZERO_BD) && pool.totalLiquidity.gt(ZERO_BD)) {
+    swapFeeValueInBpt = swapFeesUSD.div(pool.totalLiquidity.div(pool.totalShares));
+    log.warning('Got swapFeeValueInBpt: {}', [swapFeeValueInBpt.toString()]);
   } else {
-    log.warning('No bpt value for pool {}', [pool.address.toHex()]);
+    log.error('Could not get swapFeeValueInBpt. PoolId: {}, totalShares: {}, totalLiquidity: {}, swapFeesUSD: {}', [
+      pool.id,
+      pool.totalShares.toString(),
+      pool.totalLiquidity.toString(),
+      swapFeesUSD.toString(),
+    ]);
   }
+  pool.accruedSwapFeesSinceLastFeeCollectionInBpt = pool.accruedSwapFeesSinceLastFeeCollectionInBpt.plus(
+    swapFeeValueInBpt
+  );
+  pool.accruedSwapFeesSinceLastFeeCollectionInUSD = pool.accruedSwapFeesSinceLastFeeCollectionInUSD.plus(swapFeesUSD);
 }

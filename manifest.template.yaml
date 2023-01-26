@@ -525,72 +525,6 @@ dataSources:
         - event: PoolCreated(indexed address)
           handler: handleNewHighAmpComposableStablePool
   {{/if}}
-  {{#if ComposableStablePoolV2Factory}}
-  - kind: ethereum/contract
-    name: ComposableStablePoolV2Factory
-    network: {{network}}
-    source:
-      address: '{{ComposableStablePoolV2Factory.address}}'
-      abi: ComposableStablePoolFactory
-      startBlock: {{ComposableStablePoolV2Factory.startBlock}}
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.5
-      language: wasm/assemblyscript
-      file: ./src/mappings/poolFactory.ts
-      entities:
-        - Balancer
-        - Pool
-      abis:
-        - name: Vault
-          file: ./abis/Vault.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: WeightedPool
-          file: ./abis/WeightedPool.json
-        - name: ComposableStablePoolFactory
-          file: ./abis/ComposableStablePoolFactory.json
-        - name: ComposableStablePool
-          file: ./abis/ComposableStablePool.json
-        - name: StablePool
-          file: ./abis/StablePool.json
-      eventHandlers:
-        - event: PoolCreated(indexed address)
-          handler: handleNewHighAmpComposableStablePool
-  {{/if}}
-  {{#if ComposableStablePoolV2Factory}}
-  - kind: ethereum/contract
-    name: ComposableStablePoolV2Factory
-    network: {{network}}
-    source:
-      address: '{{ComposableStablePoolV2Factory.address}}'
-      abi: ComposableStablePoolFactory
-      startBlock: {{ComposableStablePoolV2Factory.startBlock}}
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.5
-      language: wasm/assemblyscript
-      file: ./src/mappings/poolFactory.ts
-      entities:
-        - Balancer
-        - Pool
-      abis:
-        - name: Vault
-          file: ./abis/Vault.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: WeightedPool
-          file: ./abis/WeightedPool.json
-        - name: ComposableStablePoolFactory
-          file: ./abis/ComposableStablePoolFactory.json
-        - name: ComposableStablePool
-          file: ./abis/ComposableStablePool.json
-        - name: StablePool
-          file: ./abis/StablePool.json
-      eventHandlers:
-        - event: PoolCreated(indexed address)
-          handler: handleNewComposableStablePool
-  {{/if}}
   {{#if AaveLinearPoolFactory}}
   - kind: ethereum/contract
     name: AaveLinearPoolFactory
@@ -721,7 +655,7 @@ dataSources:
           file: ./abis/ERC4626LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewERC4626LinearPool
+          handler: handleNewGenericLinearPool
   {{/if}}
   {{#if ERC4626LinearPoolFactory}}
   - kind: ethereum/contract
@@ -754,7 +688,7 @@ dataSources:
           file: ./abis/ERC4626LinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewERC4626LinearPool
+          handler: handleNewGenericLinearPool
   {{/if}}
   {{#if Gyro2PoolFactory}}
   - kind: ethereum/contract

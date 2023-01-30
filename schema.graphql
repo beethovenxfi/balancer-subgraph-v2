@@ -31,13 +31,20 @@ type Pool @entity {
   totalShares: BigDecimal!
 
   totalYieldFeeFromBpt: BigDecimal!
+  totalYieldFeeFromBptFromPrice: BigDecimal!
+
   totalYieldFeeFromUSD: BigDecimal!
+  totalYieldFeeFromUSDFromPrice: BigDecimal!
+
   totalSwapFeeFromBpt: BigDecimal!
+  totalSwapFeeFromBptFromPrice: BigDecimal!
   totalSwapFeeFromUSD: BigDecimal!
 
   totalFeesBasedOnBpt: BigDecimal!
+  totalFeesBasedOnBptFromPrice: BigDecimal!
 
   accruedSwapFeesSinceLastFeeCollectionInBpt: BigDecimal!
+  accruedSwapFeesSinceLastFeeCollectionInBptFromPrice: BigDecimal!
   accruedSwapFeesSinceLastFeeCollectionInUSD: BigDecimal!
 
   createTime: Int!

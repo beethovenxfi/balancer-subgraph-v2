@@ -96,6 +96,7 @@ export function newPoolEntity(poolId: string): Pool {
   pool.totalSwapFeeFromBpt = ZERO_BD;
   pool.totalSwapFeeFromUSD = ZERO_BD;
   pool.accruedSwapFeesSinceLastFeeCollectionInBpt = ZERO_BD;
+  pool.accruedSwapFeesSinceLastFeeCollectionInBptFromPrice = ZERO_BD;
   pool.accruedSwapFeesSinceLastFeeCollectionInUSD = ZERO_BD;
 
   return pool;

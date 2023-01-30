@@ -572,8 +572,13 @@ export function handleSwapEvent(event: SwapEvent): void {
     bptPrice = ZERO_BD;
     log.critical('BPT has $0 value for pool {}', [pool.address.toHex()]);
   }
-  const swapFeeValueInBptFromPrice = swapFeesUSD.div(bptPrice);
+  let swapFeeValueInBptFromPrice = swapFeesUSD.div(bptPrice);
 
+  if (pool.poolType == PoolType.ComposableStable || (pool.poolType == PoolType.Weighted && pool.poolTypeVersion == 2)) {
+    swapFeeValueInBptFromLiq = swapFeeValueInBptFromLiq.times(pool.protocolSwapFeeCache!);
+    swapFeeValueInBptFromPrice = swapFeeValueInBptFromPrice.times(pool.protocolSwapFeeCache!);
+    swapFeesUSD = swapFeesUSD.times(pool.protocolSwapFeeCache!);
+  }
   pool.accruedSwapFeesSinceLastFeeCollectionInBptFromPrice = pool.accruedSwapFeesSinceLastFeeCollectionInBptFromPrice.plus(
     swapFeeValueInBptFromPrice
   );

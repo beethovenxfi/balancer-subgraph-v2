@@ -306,6 +306,9 @@ optimism:
   WeightedPoolV2Factory:
     address: "0xad901309d9e9DbC5Df19c84f729f429F0189a633"
     startBlock: 22410480
+  WeightedPoolV4Factory:
+    address: "0xA0DAbEBAAd1b243BBb243f933013d560819eB66f"
+    startBlock: 71597343
   WeightedPool2TokenFactory:
     address: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e"
     startBlock: 6000000
@@ -318,6 +321,9 @@ optimism:
   ComposableStablePoolFactory:
     address: "0xf145caFB67081895EE80eB7c04A30Cf87f07b745"
     startBlock: 22182522
+  ComposableStablePoolV3Factory:
+    address: "0xe2E901AB09f37884BA31622dF3Ca7FC19AA443Be"
+    startBlock: 71597343
   MetaStablePoolFactory:
     address: "0xb08E16cFc07C684dAA2f93C70323BAdb2A6CBFd2"
     startBlock: 6000000

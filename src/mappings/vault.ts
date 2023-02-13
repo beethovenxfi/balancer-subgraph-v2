@@ -568,11 +568,14 @@ export function handleSwapEvent(event: SwapEvent): void {
   const bptAddress = Address.fromString(pool.address.toHexString());
   let bptToken = getToken(bptAddress);
   let bptPrice = bptToken.latestUSDPrice;
-  if (!bptPrice) {
+  if (!bptPrice || bptPrice.equals(ZERO_BD)) {
     bptPrice = ZERO_BD;
-    log.critical('BPT has $0 value for pool {}', [pool.address.toHex()]);
+    log.error('No BPT value for pool {}. Setting 0.', [pool.address.toHex()]);
   }
-  let swapFeeValueInBptFromPrice = swapFeesUSD.div(bptPrice);
+  let swapFeeValueInBptFromPrice = ZERO_BD;
+  if (bptPrice.gt(ZERO_BD)) {
+    swapFeeValueInBptFromPrice = swapFeesUSD.div(bptPrice);
+  }
 
   if (pool.poolType == PoolType.ComposableStable || (pool.poolType == PoolType.Weighted && pool.poolTypeVersion == 2)) {
     swapFeeValueInBptFromLiq = swapFeeValueInBptFromLiq.times(pool.protocolSwapFeeCache!);

@@ -468,5 +468,8 @@ fantom:
     address: "0x7bDB51A8bD24679AC7Fa5398981130a4Ae8a01D3"
     startBlock: 45594529
   ERC4626LinearPoolFactory:
+    address: "0xf9F0ad4B944eEcCbBfEcaE7311d7B40272E186B1"
+    startBlock: 50654196
+  ERC4626LinearPoolV3Factory:
     address: "0x89857161e0ad36F8c5a537733c1FCf7145220AaE"
     startBlock: 55683200

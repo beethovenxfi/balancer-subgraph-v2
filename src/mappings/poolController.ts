@@ -530,7 +530,9 @@ export function handleTransfer(event: Transfer): void {
       }
 
       pool.totalSwapFeeFromBpt = pool.totalSwapFeeFromBpt.plus(accruedSwapFeeInBptFromLiq.times(bptPriceFromLiq));
-      pool.totalSwapFeeFromBptFromPrice = pool.totalSwapFeeFromBptFromPrice.plus(collectedFeeUsdFromPrice);
+      pool.totalSwapFeeFromBptFromPrice = pool.totalSwapFeeFromBptFromPrice.plus(
+        accruedSwapFeeInBptFromPrice.times(bptPrice)
+      );
       pool.totalSwapFeeFromUSD = pool.totalSwapFeeFromUSD.plus(accruedSwapFeeInUsd);
 
       pool.totalFeesBasedOnBpt = pool.totalFeesBasedOnBpt.plus(collectedFeeUsdFromLiq);

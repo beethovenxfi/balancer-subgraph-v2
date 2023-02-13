@@ -196,7 +196,7 @@ dataSources:
           file: ./abis/WeightedPoolV2.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewWeightedPoolV2
+          handler: handleNewWeightedPoolV3
   {{/if}}
   {{#if WeightedPool2TokenFactory}}
   - kind: ethereum/contract
@@ -644,7 +644,7 @@ dataSources:
           file: ./abis/AaveLinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewGenericLinearPool
+          handler: handleNewAaveLinearPool
   {{/if}}
   {{#if AaveLinearPoolV2Factory}}
   - kind: ethereum/contract
@@ -677,7 +677,7 @@ dataSources:
           file: ./abis/AaveLinearPool.json
       eventHandlers:
         - event: PoolCreated(indexed address)
-          handler: handleNewGenericLinearPoolV2
+          handler: handleNewAaveLinearPoolV2
   {{/if}}
   {{#if AaveLinearPoolV3Factory}}
   - kind: ethereum/contract
@@ -710,7 +710,7 @@ dataSources:
           file: ./abis/AaveLinearPool.json
       eventHandlers:
         - event: AaveLinearPoolCreated(indexed address,indexed uint256)
-          handler: handleNewGenericLinearPoolV2
+          handler: handleNewAaveLinearPoolV3
   {{/if}}
   {{#if ERC4626LinearPoolFactoryBeta}}
   - kind: ethereum/contract

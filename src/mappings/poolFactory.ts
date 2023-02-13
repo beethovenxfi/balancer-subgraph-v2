@@ -251,6 +251,10 @@ export function handleNewGenericLinearPoolV2(event: PoolCreated): void {
   handleNewLinearPool(event, PoolType.Linear, 2);
 }
 
+export function handleNewGenericLinearPoolV3(event: PoolCreated): void {
+  handleNewLinearPool(event, PoolType.Linear, 3);
+}
+
 export function handleNewAaveLinearPool(event: PoolCreated): void {
   handleNewLinearPool(event, PoolType.AaveLinear);
 }

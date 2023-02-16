@@ -591,4 +591,6 @@ export function handleSwapEvent(event: SwapEvent): void {
   );
 
   pool.accruedSwapFeesSinceLastFeeCollectionInUSD = pool.accruedSwapFeesSinceLastFeeCollectionInUSD.plus(swapFeesUSD);
+
+  pool.save();
 }

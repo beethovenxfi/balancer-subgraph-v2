@@ -61,14 +61,102 @@
             "type": "tuple"
           },
           {
-            "internalType": "uint256",
-            "name": "sqrtAlpha",
-            "type": "uint256"
+            "components": [
+              {
+                "internalType": "int256",
+                "name": "alpha",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "beta",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "c",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "s",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "lambda",
+                "type": "int256"
+              }
+            ],
+            "internalType": "struct GyroECLPMath.Params",
+            "name": "eclpParams",
+            "type": "tuple"
           },
           {
-            "internalType": "uint256",
-            "name": "sqrtBeta",
-            "type": "uint256"
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "int256",
+                    "name": "x",
+                    "type": "int256"
+                  },
+                  {
+                    "internalType": "int256",
+                    "name": "y",
+                    "type": "int256"
+                  }
+                ],
+                "internalType": "struct GyroECLPMath.Vector2",
+                "name": "tauAlpha",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "int256",
+                    "name": "x",
+                    "type": "int256"
+                  },
+                  {
+                    "internalType": "int256",
+                    "name": "y",
+                    "type": "int256"
+                  }
+                ],
+                "internalType": "struct GyroECLPMath.Vector2",
+                "name": "tauBeta",
+                "type": "tuple"
+              },
+              {
+                "internalType": "int256",
+                "name": "u",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "v",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "w",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "z",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "dSq",
+                "type": "int256"
+              }
+            ],
+            "internalType": "struct GyroECLPMath.DerivedParams",
+            "name": "derivedEclpParams",
+            "type": "tuple"
           },
           {
             "internalType": "address",
@@ -103,7 +191,7 @@
             "type": "address"
           }
         ],
-        "internalType": "struct Gyro2CLPPool.GyroParams",
+        "internalType": "struct GyroECLPPool.GyroParams",
         "name": "params",
         "type": "tuple"
       },
@@ -190,11 +278,82 @@
       {
         "indexed": false,
         "internalType": "bool",
+        "name": "derivedParamsValidated",
+        "type": "bool"
+      }
+    ],
+    "name": "ECLPDerivedParamsValidated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "paramsValidated",
+        "type": "bool"
+      }
+    ],
+    "name": "ECLPParamsValidated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "invariantAfterJoin",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvariantAterInitializeJoin",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldInvariant",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newInvariant",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvariantOldAndNew",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bool",
         "name": "enabled",
         "type": "bool"
       }
     ],
     "name": "OracleEnabledChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oracleUpdatedIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "OracleIndexUpdated",
     "type": "event"
   },
   {
@@ -252,6 +411,43 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "balances",
+        "type": "uint256[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "int256",
+            "name": "x",
+            "type": "int256"
+          },
+          {
+            "internalType": "int256",
+            "name": "y",
+            "type": "int256"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct GyroECLPMath.Vector2",
+        "name": "invariant",
+        "type": "tuple"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "SwapParams",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "from",
@@ -287,6 +483,188 @@
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_dSq",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_paramsAlpha",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_paramsBeta",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_paramsC",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_paramsLambda",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_paramsS",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_tauAlphaX",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_tauAlphaY",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_tauBetaX",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_tauBetaY",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_u",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_v",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_w",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_z",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
       }
     ],
     "stateMutability": "view",
@@ -353,45 +731,6 @@
       {
         "internalType": "uint256",
         "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "balanceTokenIn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "balanceTokenOut",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "tokenInIsToken0",
-        "type": "bool"
-      }
-    ],
-    "name": "calculateCurrentValues",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "currentInvariant",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "virtualParamIn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "virtualParamOut",
         "type": "uint256"
       }
     ],
@@ -543,6 +882,112 @@
         "internalType": "contract IAuthorizer",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getECLPParams",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "int256",
+            "name": "alpha",
+            "type": "int256"
+          },
+          {
+            "internalType": "int256",
+            "name": "beta",
+            "type": "int256"
+          },
+          {
+            "internalType": "int256",
+            "name": "c",
+            "type": "int256"
+          },
+          {
+            "internalType": "int256",
+            "name": "s",
+            "type": "int256"
+          },
+          {
+            "internalType": "int256",
+            "name": "lambda",
+            "type": "int256"
+          }
+        ],
+        "internalType": "struct GyroECLPMath.Params",
+        "name": "params",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "int256",
+                "name": "x",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "y",
+                "type": "int256"
+              }
+            ],
+            "internalType": "struct GyroECLPMath.Vector2",
+            "name": "tauAlpha",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "int256",
+                "name": "x",
+                "type": "int256"
+              },
+              {
+                "internalType": "int256",
+                "name": "y",
+                "type": "int256"
+              }
+            ],
+            "internalType": "struct GyroECLPMath.Vector2",
+            "name": "tauBeta",
+            "type": "tuple"
+          },
+          {
+            "internalType": "int256",
+            "name": "u",
+            "type": "int256"
+          },
+          {
+            "internalType": "int256",
+            "name": "v",
+            "type": "int256"
+          },
+          {
+            "internalType": "int256",
+            "name": "w",
+            "type": "int256"
+          },
+          {
+            "internalType": "int256",
+            "name": "z",
+            "type": "int256"
+          },
+          {
+            "internalType": "int256",
+            "name": "dSq",
+            "type": "int256"
+          }
+        ],
+        "internalType": "struct GyroECLPMath.DerivedParams",
+        "name": "d",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -801,19 +1246,6 @@
   },
   {
     "inputs": [],
-    "name": "getSqrtParameters",
-    "outputs": [
-      {
-        "internalType": "uint256[2]",
-        "name": "",
-        "type": "uint256[2]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "getSwapFeePercentage",
     "outputs": [
       {
@@ -882,19 +1314,6 @@
         "internalType": "contract IVault",
         "name": "",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getVirtualParameters",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "virtualParams",
-        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",

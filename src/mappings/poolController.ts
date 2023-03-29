@@ -20,14 +20,7 @@ import {
   TokenRateProviderSet,
 } from '../types/templates/StablePhantomPoolV2/ComposableStablePool';
 import { AssimilatorIncluded, ParametersSet } from '../types/templates/FXPool/FXPool';
-import {
-  Pool,
-  PriceRateProvider,
-  GradualWeightUpdate,
-  AmpUpdate,
-  SwapFeeUpdate,
-  PoolHistoricalLiquidity,
-} from '../types/schema';
+import { Pool, PriceRateProvider, GradualWeightUpdate, AmpUpdate, SwapFeeUpdate } from '../types/schema';
 
 import {
   tokenToDecimal,
@@ -36,7 +29,6 @@ import {
   getPoolTokenId,
   loadPriceRateProvider,
   getPoolShare,
-  getToken,
 } from './helpers/misc';
 import { ONE_BD, ProtocolFeeType, PROTOCOL_FEE_COLLECTOR_ADDRESS, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
 import { updateAmpFactor } from './helpers/stable';

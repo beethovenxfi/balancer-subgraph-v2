@@ -392,11 +392,12 @@ export function handleTransfer(event: Transfer): void {
     poolShareTo.balance = poolShareTo.balance.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
     poolShareTo.save();
     pool.totalShares = pool.totalShares.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+
+    // check if we collected fees in BPT with this mint
     if (event.params.to == PROTOCOL_FEE_COLLECTOR_ADDRESS) {
-      // we collected fees in BPT with this mint
-      let bptPriceFromLiq = ZERO_BD;
+      let currentBptPrice = ZERO_BD;
       if (pool.totalShares.gt(ZERO_BD)) {
-        bptPriceFromLiq = pool.totalLiquidity.div(pool.totalShares);
+        currentBptPrice = pool.totalLiquidity.div(pool.totalShares);
       } else {
         log.critical('Could not get bptPrice. PoolId: {}, totalLiquidity: {}, totalShares: {}', [
           pool.id,
@@ -405,16 +406,8 @@ export function handleTransfer(event: Transfer): void {
         ]);
       }
 
-      const bptAddress = Address.fromString(pool.address.toHexString());
-      let bptToken = getToken(bptAddress);
-      let bptPrice = bptToken.latestUSDPrice;
-      if (!bptPrice) {
-        bptPrice = ZERO_BD;
-        log.critical('BPT has $0 value for pool {}', [pool.address.toHex()]);
-      }
-
       const collectedFeeBptAmount = tokenToDecimal(event.params.value, BPT_DECIMALS);
-      const collectedFeeUsd = collectedFeeBptAmount.times(bptPriceFromLiq);
+      const collectedFeeUsd = collectedFeeBptAmount.times(currentBptPrice);
 
       const accruedProtocolSwapFeeInUsd = pool.accruedProtocolSwapFeesSinceLastFeeCollection;
 
@@ -422,7 +415,7 @@ export function handleTransfer(event: Transfer): void {
       let poolCollectsYieldFee = false;
       if (
         pool.poolType == PoolType.ComposableStable ||
-        (pool.poolType == PoolType.Weighted && pool.poolTypeVersion == 2)
+        (pool.poolType == PoolType.Weighted && pool.poolTypeVersion >= 2)
       ) {
         let tokenAddresses = pool.tokensList;
         for (let i: i32 = 0; i < tokenAddresses.length; i++) {
@@ -451,8 +444,6 @@ export function handleTransfer(event: Transfer): void {
         pool.totalYieldFee = pool.totalYieldFee.plus(yieldFeeUSDAmount.times(pool.protocolYieldFeeCache!));
       }
 
-      pool.accruedSwapFeesSinceLastFeeCollectionInBpt = ZERO_BD;
-      pool.accruedSwapFeesSinceLastFeeCollectionInBptFromPrice = ZERO_BD;
       pool.accruedProtocolSwapFeesSinceLastFeeCollection = ZERO_BD;
     }
   } else if (isBurn) {

@@ -53,6 +53,16 @@ let vaultAddressByNetwork: AddressByNetwork = {
   dev: '0xa0B05b20e511B1612E908dFCeE0E407E22B76028',
 };
 
+let protocolFeeCollectorAddressByNetwork: AddressByNetwork = {
+  mainnet: '0xce88686553686da562ce7cea497ce749da109f9f',
+  goerli: '0xce88686553686da562ce7cea497ce749da109f9f',
+  polygon: '0xce88686553686da562ce7cea497ce749da109f9f',
+  arbitrum: '0xce88686553686da562ce7cea497ce749da109f9f',
+  optimism: '0xce88686553686da562ce7cea497ce749da109f9f',
+  fantom: '0xc6920d3a369e7c8bd1a22dbe385e11d1f7af948f',
+  dev: '0xce88686553686da562ce7cea497ce749da109f9f',
+};
+
 function forNetwork(addressByNetwork: AddressByNetwork, network: string): Address {
   if (network == 'mainnet') {
     return Address.fromString(addressByNetwork.mainnet);
@@ -76,3 +86,4 @@ function forNetwork(addressByNetwork: AddressByNetwork, network: string): Addres
 }
 
 export let VAULT_ADDRESS = forNetwork(vaultAddressByNetwork, network);
+export let PROTOCOL_FEE_COLLECTOR_ADDRESS = forNetwork(protocolFeeCollectorAddressByNetwork, network);

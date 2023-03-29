@@ -89,6 +89,9 @@ export function newPoolEntity(poolId: string): Pool {
   pool.swapsCount = BigInt.fromI32(0);
   pool.holdersCount = BigInt.fromI32(0);
 
+  pool.totalYieldFee = ZERO_BD;
+  pool.accruedProtocolSwapFeesSinceLastFeeCollection = ZERO_BD;
+
   return pool;
 }
 

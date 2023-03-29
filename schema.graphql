@@ -28,8 +28,11 @@ type Pool @entity {
   totalWeight: BigDecimal
   totalSwapVolume: BigDecimal!
   totalSwapFee: BigDecimal!
+  totalYieldFee: BigDecimal!
   totalLiquidity: BigDecimal!
   totalShares: BigDecimal!
+
+  accruedProtocolSwapFeesSinceLastFeeCollection: BigDecimal!
 
   createTime: Int!
   swapsCount: BigInt!

@@ -28,8 +28,9 @@ import {
   loadPriceRateProvider,
   getPoolShare,
 } from './helpers/misc';
-import { ONE_BD, ProtocolFeeType, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
+import { ONE_BD, ProtocolFeeType, PROTOCOL_FEE_COLLECTOR_ADDRESS, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
 import { updateAmpFactor } from './helpers/stable';
+import { PoolType } from './helpers/pools';
 import {
   ProtocolFeePercentageCacheUpdated,
   RecoveryModeStateChanged,
@@ -401,6 +402,60 @@ export function handleTransfer(event: Transfer): void {
     poolShareTo.balance = poolShareTo.balance.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
     poolShareTo.save();
     pool.totalShares = pool.totalShares.plus(tokenToDecimal(event.params.value, BPT_DECIMALS));
+
+    // check if we collected fees in BPT with this mint
+    if (event.params.to == PROTOCOL_FEE_COLLECTOR_ADDRESS) {
+      let currentBptPrice = ZERO_BD;
+      if (pool.totalShares.gt(ZERO_BD)) {
+        currentBptPrice = pool.totalLiquidity.div(pool.totalShares);
+      } else {
+        log.critical('Could not get bptPrice. PoolId: {}, totalLiquidity: {}, totalShares: {}', [
+          pool.id,
+          pool.totalLiquidity.toString(),
+          pool.totalShares.toString(),
+        ]);
+      }
+
+      const collectedFeeBptAmount = tokenToDecimal(event.params.value, BPT_DECIMALS);
+      const collectedFeeUsd = collectedFeeBptAmount.times(currentBptPrice);
+
+      const accruedProtocolSwapFeeInUsd = pool.accruedProtocolSwapFeesSinceLastFeeCollection;
+
+      // check if this pool collects yield fee
+      let poolCollectsYieldFee = false;
+      if (
+        pool.poolType == PoolType.ComposableStable ||
+        (pool.poolType == PoolType.Weighted && pool.poolTypeVersion >= 2)
+      ) {
+        let tokenAddresses = pool.tokensList;
+        for (let i: i32 = 0; i < tokenAddresses.length; i++) {
+          let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
+
+          let poolToken = loadPoolToken(poolId.toHex(), tokenAddress);
+          if (poolToken == null) {
+            throw new Error('poolToken not found');
+          }
+
+          if (poolToken.priceRate.gt(ONE_BD) && !poolToken.isExemptFromYieldProtocolFee) {
+            poolCollectsYieldFee = true;
+          }
+        }
+      }
+
+      if (poolCollectsYieldFee) {
+        let yieldFeeUSDAmount = collectedFeeUsd.minus(accruedProtocolSwapFeeInUsd);
+        if (yieldFeeUSDAmount.le(ZERO_BD)) {
+          /* 
+            This can happen if the yield fee is smaller (or has no yield fee)
+            than the price discrepancy of the price as swap time vs now.
+          */
+          yieldFeeUSDAmount = ZERO_BD;
+        }
+        pool.totalYieldFee = pool.totalYieldFee.plus(yieldFeeUSDAmount.times(pool.protocolYieldFeeCache!));
+      }
+
+      pool.accruedProtocolSwapFeesSinceLastFeeCollection = ZERO_BD;
+    }
   } else if (isBurn) {
     poolShareFrom.balance = poolShareFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));
     poolShareFrom.save();

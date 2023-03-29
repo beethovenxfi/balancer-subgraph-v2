@@ -33,7 +33,7 @@ import {
 import { ONE_BD, ProtocolFeeType, PROTOCOL_FEE_COLLECTOR_ADDRESS, ZERO_ADDRESS, ZERO_BD } from './helpers/constants';
 import { updateAmpFactor } from './helpers/stable';
 import { ProtocolFeePercentageCacheUpdated } from '../types/WeightedPoolV2Factory/WeightedPoolV2';
-import { getPoolTokens, PoolType } from './helpers/pools';
+import { PoolType } from './helpers/pools';
 
 export function handleProtocolFeePercentageCacheUpdated(event: ProtocolFeePercentageCacheUpdated): void {
   let poolAddress = event.address;

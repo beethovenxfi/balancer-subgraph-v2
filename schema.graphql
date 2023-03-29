@@ -23,6 +23,7 @@ type Pool @entity {
   swapEnabled: Boolean!
   swapFee: BigDecimal!
   owner: Bytes
+  isPaused: Boolean
 
   totalWeight: BigDecimal
   totalSwapVolume: BigDecimal!
@@ -79,7 +80,7 @@ type Pool @entity {
   # Gyro3Pool Only
   root3Alpha: BigDecimal
 
-  # GyroCEMMPool Only
+  # GyroEPool Only
   c: BigDecimal
   s: BigDecimal
   tauAlphaX: BigDecimal
@@ -92,7 +93,7 @@ type Pool @entity {
   z: BigDecimal
   dSq: BigDecimal
 
-  # GyroCEMMPool+FXPool Only
+  # GyroEPool+FXPool Only
   alpha: BigDecimal
   beta: BigDecimal
   lambda: BigDecimal
@@ -102,9 +103,18 @@ type Pool @entity {
   epsilon: BigDecimal
 
   # Composable and WeightedV2 Only
+  isInRecoveryMode: Boolean
   protocolSwapFeeCache: BigDecimal
   protocolYieldFeeCache: BigDecimal
   protocolAumFeeCache: BigDecimal
+
+  # AaveLinearV3 Only
+  protocolId: Int
+}
+
+type PoolContract @entity {
+  id: ID!
+  pool: Pool!
 }
 
 type PoolToken @entity {
@@ -115,6 +125,7 @@ type PoolToken @entity {
   symbol: String!
   name: String!
   decimals: Int!
+  index: Int # TODO: make mandatory at next full sync
   address: String!
   priceRate: BigDecimal!
   balance: BigDecimal!
@@ -127,9 +138,6 @@ type PoolToken @entity {
 
   # ComposableStablePool Only
   isExemptFromYieldProtocolFee: Boolean
-
-  # FXPool Only
-  assimilator: Bytes
 }
 
 type PriceRateProvider @entity {
@@ -299,6 +307,7 @@ type Token @entity {
   totalSwapCount: BigInt!
   latestPrice: LatestPrice # latest price of token, updated when pool liquidity changes
   latestUSDPrice: BigDecimal # latest price of token in USD, updated when pool liquidity changes
+  latestFXPrice: BigDecimal # latest "off-chain" price of token in USD, only available if token has an offchain price aggregator
   pool: Pool # pool entity associated with the token, if it is a Balancer pool
 }
 

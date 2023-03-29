@@ -414,17 +414,9 @@ export function handleTransfer(event: Transfer): void {
       }
 
       const collectedFeeBptAmount = tokenToDecimal(event.params.value, BPT_DECIMALS);
-      const collectedFeeUsdFromLiq = collectedFeeBptAmount.times(bptPriceFromLiq);
-      const collectedFeeUsdFromPrice = collectedFeeBptAmount.times(bptPrice);
+      const collectedFeeUsd = collectedFeeBptAmount.times(bptPriceFromLiq);
 
-      const accruedSwapFeeInBptFromLiq = pool.accruedSwapFeesSinceLastFeeCollectionInBpt;
-      const accruedSwapFeeInBptFromPrice = pool.accruedSwapFeesSinceLastFeeCollectionInBptFromPrice;
-      const accruedSwapFeeInUsd = pool.accruedSwapFeesSinceLastFeeCollectionInUSD;
-
-      //TODO: if there is no yield fee but the price of the bpt is higher now than at the time of the swap,
-      // a yield fee will still be added because collectedFeeBptAmount > swapFeeBptAmount
-      //(swapFeeBptAmount is calculated based on bptValue at the time of the swap)
-      // is this true? at the time of swap, didn't the pool accumulate the surplus of bpt?
+      const accruedProtocolSwapFeeInUsd = pool.accruedProtocolSwapFeesSinceLastFeeCollection;
 
       // check if this pool collects yield fee
       let poolCollectsYieldFee = false;
@@ -435,15 +427,12 @@ export function handleTransfer(event: Transfer): void {
         let tokenAddresses = pool.tokensList;
         for (let i: i32 = 0; i < tokenAddresses.length; i++) {
           let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
+
           let poolToken = loadPoolToken(poolId.toHex(), tokenAddress);
           if (poolToken == null) {
             throw new Error('poolToken not found');
           }
-          log.info('Pooltoken {}: priceRate: {} , isExempt: {}', [
-            poolToken.address,
-            poolToken.priceRate.toString(),
-            poolToken.isExemptFromYieldProtocolFee.toString(),
-          ]);
+
           if (poolToken.priceRate.gt(ONE_BD) && !poolToken.isExemptFromYieldProtocolFee) {
             poolCollectsYieldFee = true;
           }
@@ -451,96 +440,20 @@ export function handleTransfer(event: Transfer): void {
       }
 
       if (poolCollectsYieldFee) {
-        log.info('pool collects yieldfee: {}', [pool.address.toHex()]);
-        /*
-        ********************************************************************
-        This section uses the usd value from the swap to calculate yield fee with total liq based BPT pricing
-        ********************************************************************
-        */
-        let yieldFeeUSDAmount = collectedFeeUsdFromLiq.minus(accruedSwapFeeInUsd);
+        let yieldFeeUSDAmount = collectedFeeUsd.minus(accruedProtocolSwapFeeInUsd);
         if (yieldFeeUSDAmount.le(ZERO_BD)) {
-          /* this will happen when the yield fee is smaller (or has no yield fee)
-                than the price timing-discrepancy of the swap pricing and bpt pricing
-                */
-          log.error(
-            'accruedSwapFeeInUsd ({}) where higher than collectedFeeUsd ({}) in fee for pool {}. Not adding to yield fee.',
-            [accruedSwapFeeInUsd.toString(), collectedFeeUsdFromLiq.toString(), pool.id]
-          );
+          /* 
+            This can happen if the yield fee is smaller (or has no yield fee)
+            than the price discrepancy of the price as swap time vs now.
+          */
           yieldFeeUSDAmount = ZERO_BD;
         }
-        pool.totalYieldFeeFromUSD = pool.totalYieldFeeFromUSD.plus(yieldFeeUSDAmount);
-
-        /*
-        ********************************************************************
-        This section uses the usd value from the swap to calculate yield fee with internal BPT pricing
-        ********************************************************************
-        */
-        yieldFeeUSDAmount = collectedFeeUsdFromPrice.minus(accruedSwapFeeInUsd);
-        if (yieldFeeUSDAmount.le(ZERO_BD)) {
-          /* this will happen when the yield fee is smaller (or has no yield fee)
-                than the price timing-discrepancy of the swap pricing and bpt pricing
-                */
-          log.error(
-            'accruedSwapFeeInUsd ({}) where higher than collectedFeeUsdFromPrice ({}) in fee for pool {}. Not adding to yield fee.',
-            [accruedSwapFeeInUsd.toString(), collectedFeeUsdFromPrice.toString(), pool.id]
-          );
-          yieldFeeUSDAmount = ZERO_BD;
-        }
-        pool.totalYieldFeeFromUSDFromPrice = pool.totalYieldFeeFromUSDFromPrice.plus(yieldFeeUSDAmount);
-
-        /*
-        ********************************************************************
-        This section uses the bpt value from the swap based on totalliq / total shares to calculate yield fee
-        ********************************************************************
-        */
-        // calc yield fee based on BPT
-        let yieldFeeBptAmount = collectedFeeBptAmount.minus(accruedSwapFeeInBptFromLiq);
-        if (yieldFeeBptAmount.lt(ZERO_BD)) {
-          /* this will happen when the yield fee is smaller (or has no yield fee)
-          than the price timing-discrepancy of the swap pricing and bpt pricing
-          */
-          log.error(
-            'accruedSwapFeeInBpt ({}) where higher than collectedFeeBptAmount ({}) in fee for pool {}. Not adding to yield fee.',
-            [accruedSwapFeeInBptFromLiq.toString(), collectedFeeBptAmount.toString(), pool.id]
-          );
-          yieldFeeBptAmount = ZERO_BD;
-        }
-        pool.totalYieldFeeFromBpt = pool.totalYieldFeeFromBpt.plus(yieldFeeBptAmount.times(bptPriceFromLiq));
-
-        /*
-        ********************************************************************
-        This section uses the bpt value from the swap based on internal bpt pricing to calculate yield fee
-        ********************************************************************
-        */
-        // calc yield fee based on BPT
-        yieldFeeBptAmount = collectedFeeBptAmount.minus(accruedSwapFeeInBptFromPrice);
-        if (yieldFeeBptAmount.lt(ZERO_BD)) {
-          /* this will happen when the yield fee is smaller (or has no yield fee)
-          than the price timing-discrepancy of the swap pricing and bpt pricing
-          */
-          log.error(
-            'accruedSwapFeeInBptFromPrice ({}) where higher than collectedFeeBptAmount ({}) in fee for pool {}. Not adding to yield fee.',
-            [accruedSwapFeeInBptFromPrice.toString(), collectedFeeBptAmount.toString(), pool.id]
-          );
-          yieldFeeBptAmount = ZERO_BD;
-        }
-        pool.totalYieldFeeFromBptFromPrice = pool.totalYieldFeeFromBptFromPrice.plus(yieldFeeBptAmount.times(bptPrice));
-      } else {
-        log.warning('pool does not collect yieldfee: {}', [pool.address.toHex()]);
+        pool.totalYieldFee = pool.totalYieldFee.plus(yieldFeeUSDAmount.times(pool.protocolYieldFeeCache!));
       }
-
-      pool.totalSwapFeeFromBpt = pool.totalSwapFeeFromBpt.plus(accruedSwapFeeInBptFromLiq.times(bptPriceFromLiq));
-      pool.totalSwapFeeFromBptFromPrice = pool.totalSwapFeeFromBptFromPrice.plus(
-        accruedSwapFeeInBptFromPrice.times(bptPrice)
-      );
-      pool.totalSwapFeeFromUSD = pool.totalSwapFeeFromUSD.plus(accruedSwapFeeInUsd);
-
-      pool.totalFeesBasedOnBpt = pool.totalFeesBasedOnBpt.plus(collectedFeeUsdFromLiq);
-      pool.totalFeesBasedOnBptFromPrice = pool.totalFeesBasedOnBptFromPrice.plus(collectedFeeUsdFromPrice);
 
       pool.accruedSwapFeesSinceLastFeeCollectionInBpt = ZERO_BD;
       pool.accruedSwapFeesSinceLastFeeCollectionInBptFromPrice = ZERO_BD;
-      pool.accruedSwapFeesSinceLastFeeCollectionInUSD = ZERO_BD;
+      pool.accruedProtocolSwapFeesSinceLastFeeCollection = ZERO_BD;
     }
   } else if (isBurn) {
     poolShareFrom.balance = poolShareFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));

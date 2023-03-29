@@ -551,46 +551,15 @@ export function handleSwapEvent(event: SwapEvent): void {
 
   updatePoolLiquidity(poolId.toHex(), blockTimestamp);
 
-  // We calculate the BPT price by using: pool.totalLiquidity / pool.totalShares
-  let swapFeeValueInBptFromLiq = ZERO_BD;
-  if (swapFeesUSD.gt(ZERO_BD) && pool.totalShares.gt(ZERO_BD) && pool.totalLiquidity.gt(ZERO_BD)) {
-    swapFeeValueInBptFromLiq = swapFeesUSD.div(pool.totalLiquidity.div(pool.totalShares));
-    log.warning('Got swapFeeValueInBpt: {}', [swapFeeValueInBptFromLiq.toString()]);
-  } else {
-    log.error('Could not get swapFeeValueInBpt. PoolId: {}, totalShares: {}, totalLiquidity: {}, swapFeesUSD: {}', [
-      pool.id,
-      pool.totalShares.toString(),
-      pool.totalLiquidity.toString(),
-      swapFeesUSD.toString(),
-    ]);
-  }
-
-  const bptAddress = Address.fromString(pool.address.toHexString());
-  let bptToken = getToken(bptAddress);
-  let bptPrice = bptToken.latestUSDPrice;
-  if (!bptPrice || bptPrice.equals(ZERO_BD)) {
-    bptPrice = ZERO_BD;
-    log.error('No BPT value for pool {}. Setting 0.', [pool.address.toHex()]);
-  }
-  let swapFeeValueInBptFromPrice = ZERO_BD;
-  if (bptPrice.gt(ZERO_BD)) {
-    swapFeeValueInBptFromPrice = swapFeesUSD.div(bptPrice);
-  }
-
+  // add the protocol swap fee portion to the accrued fees
+  let protocolSwapFee = ZERO_BD;
   if (pool.poolType == PoolType.ComposableStable || (pool.poolType == PoolType.Weighted && pool.poolTypeVersion == 2)) {
-    swapFeeValueInBptFromLiq = swapFeeValueInBptFromLiq.times(pool.protocolSwapFeeCache!);
-    swapFeeValueInBptFromPrice = swapFeeValueInBptFromPrice.times(pool.protocolSwapFeeCache!);
-    swapFeesUSD = swapFeesUSD.times(pool.protocolSwapFeeCache!);
+    protocolSwapFee = swapFeesUSD.times(pool.protocolSwapFeeCache!);
   }
-  pool.accruedSwapFeesSinceLastFeeCollectionInBptFromPrice = pool.accruedSwapFeesSinceLastFeeCollectionInBptFromPrice.plus(
-    swapFeeValueInBptFromPrice
-  );
 
-  pool.accruedSwapFeesSinceLastFeeCollectionInBpt = pool.accruedSwapFeesSinceLastFeeCollectionInBpt.plus(
-    swapFeeValueInBptFromLiq
+  pool.accruedProtocolSwapFeesSinceLastFeeCollection = pool.accruedProtocolSwapFeesSinceLastFeeCollection.plus(
+    protocolSwapFee
   );
-
-  pool.accruedSwapFeesSinceLastFeeCollectionInUSD = pool.accruedSwapFeesSinceLastFeeCollectionInUSD.plus(swapFeesUSD);
 
   pool.save();
 }

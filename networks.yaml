@@ -414,8 +414,8 @@ optimism:
 fantom:
   network: fantom
   graft: 
-    block: 55681400
-    base: Qma6pwjjEkdifrJmjLWVTWjaoVaXUCuHQFtu6SsYVq6Uva
+    block: 58624000
+    base: Qma7PREd5qc1Hfr3CHmMHUc2KwQ8UdwNWxs2z8UvRnYdxG
   Vault:
     address: "0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce"
     startBlock: 17433594
@@ -427,10 +427,13 @@ fantom:
     startBlock: 46631160
   WeightedPoolV3Factory:
     address: "0xB2ED595Afc445b47Db7043bEC25e772bf0FA1fbb"
-    startBlock: 50594491
+    startBlock: 50594400
   WeightedPoolV4Factory:
     address: "0xd678b6Acd834Cc969Bb19Ce82727f2a541fb7941"
     startBlock: 55681500
+  WeightedPoolV5Factory:
+    address: "0xb841Df73861E65E6D61a80F503F095a91ce75e15"
+    startBlock: 58624700
   WeightedPool2TokenFactory:
     address: "0x92b377187bcCC6556FceD2f1e6DAd65850C20630"
     startBlock: 16897244
@@ -449,6 +452,9 @@ fantom:
   ComposableStablePoolV3Factory:
     address: "0x911566c808bF00acB200B418564440A2Af177548"
     startBlock: 55681400 
+  ComposableStablePoolV4Factory:
+    address: "0x5c3094982cF3c97A06b7d62A6f7669F14a199B19"
+    startBlock: 58624600
   MetaStablePoolFactory:
     address: "0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554"
     startBlock: 16898079

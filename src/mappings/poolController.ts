@@ -419,7 +419,7 @@ export function handleTransfer(event: Transfer): void {
       const collectedFeeBptAmount = tokenToDecimal(event.params.value, BPT_DECIMALS);
       const collectedFeeUsd = collectedFeeBptAmount.times(currentBptPrice);
 
-      const accruedProtocolSwapFeeInUsd = pool.accruedProtocolSwapFeesSinceLastFeeCollection;
+      const accruedProtocolSwapFeeInUsd = pool.accumulatedProtocolSwapFeesSinceLastFeeCollection;
 
       // check if this pool collects yield fee
       let poolCollectsYieldFee = false;
@@ -431,7 +431,7 @@ export function handleTransfer(event: Transfer): void {
         for (let i: i32 = 0; i < tokenAddresses.length; i++) {
           let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
 
-          let poolToken = loadPoolToken(poolId.toHex(), tokenAddress);
+          let poolToken = loadPoolToken(poolId, tokenAddress);
           if (poolToken == null) {
             throw new Error('poolToken not found');
           }
@@ -451,10 +451,10 @@ export function handleTransfer(event: Transfer): void {
           */
           yieldFeeUSDAmount = ZERO_BD;
         }
-        pool.totalYieldFee = pool.totalYieldFee.plus(yieldFeeUSDAmount.times(pool.protocolYieldFeeCache!));
+        pool.totalYieldRevenue = pool.totalYieldRevenue.plus(yieldFeeUSDAmount.div(pool.protocolYieldFeeCache!));
       }
 
-      pool.accruedProtocolSwapFeesSinceLastFeeCollection = ZERO_BD;
+      pool.accumulatedProtocolSwapFeesSinceLastFeeCollection = ZERO_BD;
     }
   } else if (isBurn) {
     poolShareFrom.balance = poolShareFrom.balance.minus(tokenToDecimal(event.params.value, BPT_DECIMALS));

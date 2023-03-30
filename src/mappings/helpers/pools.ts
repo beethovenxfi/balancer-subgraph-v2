@@ -61,7 +61,6 @@ export function isComposableStablePool(pool: Pool): boolean {
 
 export function isLinearPool(pool: Pool): boolean {
   return (
-    (
     pool.poolType == PoolType.AaveLinear ||
     pool.poolType == PoolType.BeefyLinear ||
     pool.poolType == PoolType.ERC4626Linear ||

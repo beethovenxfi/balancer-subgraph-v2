@@ -590,7 +590,7 @@ export function handleSwapEvent(event: SwapEvent): void {
     protocolSwapFee = swapFeesUSD.times(pool.protocolSwapFeeCache!);
   }
 
-  pool.accruedProtocolSwapFeesSinceLastFeeCollection = pool.accruedProtocolSwapFeesSinceLastFeeCollection.plus(
+  pool.accumulatedProtocolSwapFeesSinceLastFeeCollection = pool.accumulatedProtocolSwapFeesSinceLastFeeCollection.plus(
     protocolSwapFee
   );
 

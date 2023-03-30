@@ -411,9 +411,9 @@ gnosis:
     startBlock: 25415236
 optimism:
   network: optimism
-  graft:
-    block: 72832600
-    base: QmYvM6M4h9mdzdY4RYknCGjQabY9mudjbLBGU2kJkaamTc
+  # graft:
+  #   block: 72832600
+  #   base: QmYvM6M4h9mdzdY4RYknCGjQabY9mudjbLBGU2kJkaamTc
   Vault:
     address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
     startBlock: 6000000
@@ -423,7 +423,7 @@ optimism:
   WeightedPoolV2Factory: #griefing vuln, mitigation no fee
     address: "0xad901309d9e9DbC5Df19c84f729f429F0189a633"
     startBlock: 22410480
-  WeightedPoolV3Factory:  #griefing vuln fixed
+  WeightedPoolV3Factory: #griefing vuln fixed
     address: "0xA0DAbEBAAd1b243BBb243f933013d560819eB66f"
     startBlock: 72832650
   WeightedPoolV4Factory: #pool id salt
@@ -479,9 +479,9 @@ optimism:
     startBlock: 49164540
 fantom:
   network: fantom
-  graft: 
-    block: 58624000
-    base: Qma7PREd5qc1Hfr3CHmMHUc2KwQ8UdwNWxs2z8UvRnYdxG
+  # graft:
+  #   block: 58624000
+  #   base: Qma7PREd5qc1Hfr3CHmMHUc2KwQ8UdwNWxs2z8UvRnYdxG
   Vault:
     address: "0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce"
     startBlock: 17433594
@@ -494,7 +494,7 @@ fantom:
   WeightedPoolV3Factory: #griefing vuln, mitigation no fee
     address: "0xB2ED595Afc445b47Db7043bEC25e772bf0FA1fbb"
     startBlock: 50594400
-  WeightedPoolV3FactoryV1:  #griefing vuln fixed
+  WeightedPoolV3FactoryV1: #griefing vuln fixed
     address: "0xd678b6Acd834Cc969Bb19Ce82727f2a541fb7941"
     startBlock: 55681500
   WeightedPoolV4Factory: #pool id salt, beets fee collector
@@ -517,7 +517,7 @@ fantom:
     startBlock: 50564007
   ComposableStablePoolV3Factory: #griefing vuln, mitigation no fee
     address: "0x911566c808bF00acB200B418564440A2Af177548"
-    startBlock: 55681400 
+    startBlock: 55681400
   ComposableStablePoolV4Factory: #griefing vuln fixed, pool id salt, beets fee collector
     address: "0x5c3094982cF3c97A06b7d62A6f7669F14a199B19"
     startBlock: 58624600

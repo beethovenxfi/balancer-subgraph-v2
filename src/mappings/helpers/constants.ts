@@ -59,6 +59,8 @@ let protocolFeeCollectorAddressByNetwork: AddressByNetwork = {
   polygon: '0xce88686553686da562ce7cea497ce749da109f9f',
   arbitrum: '0xce88686553686da562ce7cea497ce749da109f9f',
   optimism: '0xce88686553686da562ce7cea497ce749da109f9f',
+  gnosis: '',
+  bnb: '',
   fantom: '0xc6920d3a369e7c8bd1a22dbe385e11d1f7af948f',
   dev: '0xce88686553686da562ce7cea497ce749da109f9f',
 };

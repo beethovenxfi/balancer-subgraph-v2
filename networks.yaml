@@ -347,7 +347,7 @@ optimism:
   network: optimism
   graft:
     block: 72832600
-    base: QmYvM6M4h9mdzdY4RYknCGjQabY9mudjbLBGU2kJkaamTc
+    base: QmNZVnVAhjaPmCAxx6Vg4nR1siBTxwXArLTYk6UMg7gSpN
   Vault:
     address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
     startBlock: 6000000

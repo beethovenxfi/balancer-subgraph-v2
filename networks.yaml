@@ -346,7 +346,7 @@ gnosis:
 optimism:
   network: optimism
   graft:
-    block: 72832600
+    block: 82737400
     base: QmNZVnVAhjaPmCAxx6Vg4nR1siBTxwXArLTYk6UMg7gSpN
   Vault:
     address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"

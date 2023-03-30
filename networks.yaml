@@ -360,7 +360,7 @@ optimism:
   WeightedPoolV4Factory:
     address: "0xA0DAbEBAAd1b243BBb243f933013d560819eB66f"
     startBlock: 72832650
- WeightedPoolV5Factory: #pool id salt
+  WeightedPoolV5Factory: #pool id salt
     address: "0x230a59F4d9ADc147480f03B0D3fFfeCd56c3289a"
     startBlock: 82737500
   WeightedPool2TokenFactory:
@@ -419,7 +419,7 @@ optimism:
     startBlock: 49164540
 fantom:
   network: fantom
-  graft: 
+  graft:
     block: 58624000
     base: Qma7PREd5qc1Hfr3CHmMHUc2KwQ8UdwNWxs2z8UvRnYdxG
   Vault:
@@ -457,7 +457,7 @@ fantom:
     startBlock: 50564007
   ComposableStablePoolV3Factory:
     address: "0x911566c808bF00acB200B418564440A2Af177548"
-    startBlock: 55681400 
+    startBlock: 55681400
   ComposableStablePoolV4Factory:
     address: "0x5c3094982cF3c97A06b7d62A6f7669F14a199B19"
     startBlock: 58624600

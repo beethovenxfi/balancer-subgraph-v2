@@ -9,7 +9,7 @@
     "lint": "eslint --max-warnings 0 . --ext .ts",
     "test": "jest ./test/*.test.ts",
     "deploy": "graph deploy balancer-labs/balancer-v2 --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
-    "deploy:local": "graph deploy balancer-labs/balancer-v2 subgraph.dockerParity.yaml --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
+    "deploy:local": "graph deploy balancer-labs/balancer-v2 subgraph.yaml --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
     "deploy:fantom": "yarn codegen && yarn generate-assets fantom && yarn graph deploy --product hosted-service beethovenxfi/beethovenx subgraph.fantom.yaml",
     "deploy:optimism": "yarn codegen && yarn generate-assets optimism && yarn graph deploy --product hosted-service beethovenxfi/beethovenx-optimism subgraph.optimism.yaml",
     "import-abis": "ts-node ./scripts/update-abis.ts",

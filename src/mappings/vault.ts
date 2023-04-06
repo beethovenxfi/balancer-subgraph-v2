@@ -615,8 +615,6 @@ export function handleSwapEvent(event: SwapEvent): void {
     addHistoricalPoolLiquidityRecord(poolId.toHex(), blockNumber, preferentialToken);
   }
 
-  updatePoolLiquidity(poolId.toHex(), blockNumber, event.block.timestamp);
-
   // add the protocol swap fee portion to the accrued fees
   let protocolSwapFee = ZERO_BD;
   if (pool.poolType == PoolType.ComposableStable || (pool.poolType == PoolType.Weighted && pool.poolTypeVersion >= 2)) {
@@ -627,5 +625,7 @@ export function handleSwapEvent(event: SwapEvent): void {
     protocolSwapFee
   );
 
-  pool.save();
+  // pool.save();
+
+  updatePoolLiquidity(poolId.toHex(), blockNumber, event.block.timestamp);
 }

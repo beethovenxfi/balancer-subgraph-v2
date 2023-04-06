@@ -14,25 +14,17 @@ class Assets {
 export const USDC_ADDRESS = Address.fromString('0x7F5c764cBc14f9669B88837ca1490cCa17c31607');
 export const DAI_ADDRESS = Address.fromString('0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1');
 export const USDT_ADDRESS = Address.fromString('0x94b008aA00579c1307B0EF2c499aD98a8ce58e58');
-export const SUSD_ADDRESS = Address.fromString('0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9');
 
 export const assets: Assets = {
   stableAssets: [
     Address.fromString('0x7F5c764cBc14f9669B88837ca1490cCa17c31607'), // USDC
     Address.fromString('0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1'), // DAI
     Address.fromString('0x94b008aA00579c1307B0EF2c499aD98a8ce58e58'), // USDT
-    Address.fromString('0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9'), // SUSD
   ],
   pricingAssets: [
     Address.fromString('0x4200000000000000000000000000000000000006'), // WETH
     Address.fromString('0x9Bcef72be871e61ED4fBbc7630889beE758eb81D'), // rETH
     Address.fromString('0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb'), // wstETH
-    Address.fromString('0x4200000000000000000000000000000000000042'), // OP
-    Address.fromString('0x68f180fcCe6836688e9084f035309E29Bf0A2095'), // WBTC
-    Address.fromString('0x888a6195D42a95e80D81e1c506172772a80b80Bc'), // bb-rf-aDAI
-    Address.fromString('0x9253d7e1B42fa01eDE2c53f3A21b3B4d13239cD4'), // bb-rf-aUSDT
-    Address.fromString('0xba7834bb3cd2DB888E6A06Fb45E82b4225Cd0C71'), // bb-rf-aUSDC
-    Address.fromString('0x6222ae1d2a9f6894dA50aA25Cb7b303497f9BEbd'), // bb-rf-aUSD
   ],
   fxAssets: [
   ],

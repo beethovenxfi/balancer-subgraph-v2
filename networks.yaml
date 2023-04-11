@@ -420,8 +420,8 @@ optimism:
 fantom:
   network: fantom
   graft:
-    block: 58624000
-    base: Qma7PREd5qc1Hfr3CHmMHUc2KwQ8UdwNWxs2z8UvRnYdxG
+    block: 51907710
+    base: QmY3tiF9vUis6gk4PWiEDdUB3UDtjW2MTP2pK73NRZDs8W
   Vault:
     address: "0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce"
     startBlock: 17433594
@@ -481,7 +481,7 @@ fantom:
     startBlock: 46579960
   YearnLinearPoolV3Factory:
     address: "0xe6332A48bE7496489561ab4CfAb71407B1Ac8cA4"
-    startBlock: 51907910
+    startBlock: 51907810
   BooLinearPoolFactory:
     address: "0xba306e3Cf84751d8Ef5e812C18cAa6C567c783E8"
     startBlock: 32452165

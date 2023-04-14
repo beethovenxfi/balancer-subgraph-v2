@@ -450,9 +450,9 @@ gnosis:
     startBlock: 26691522
 optimism:
   network: optimism
-  # graft:
-  #   block: 72832600
-  #   base: QmYvM6M4h9mdzdY4RYknCGjQabY9mudjbLBGU2kJkaamTc
+  graft:
+    block: 49164400
+    base: Qmc4Z52rAHkFdhAXLHQLL68zFVAPK86K85BSNzQkUQQK2m
   Vault:
     address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
     startBlock: 6000000
@@ -515,7 +515,7 @@ optimism:
     startBlock: 74613500
   BeefyLinearPoolV0FactoryV1:
     address: "0xE77f03F5007Df49005CAf2a2f1D872c51aE51fD1"
-    startBlock: 49164540
+    startBlock: 49164500
   ProtocolIdRegistry:
     address: "0x9805dcfD25e6De36bad8fe9D3Fe2c9b44B764102"
     startBlock: 77557576

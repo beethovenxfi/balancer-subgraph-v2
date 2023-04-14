@@ -346,8 +346,8 @@ gnosis:
 optimism:
   network: optimism
   graft:
-    block: 82737400
-    base: QmNZVnVAhjaPmCAxx6Vg4nR1siBTxwXArLTYk6UMg7gSpN
+    block: 49164400
+    base: QmasbPDF8i7FcPUHqQxz6s81uV1j8wzbSc5MmpMKjSUQL9
   Vault:
     address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
     startBlock: 6000000
@@ -416,7 +416,7 @@ optimism:
     startBlock: 45543831
   BeefyLinearPoolFactory:
     address: "0xE77f03F5007Df49005CAf2a2f1D872c51aE51fD1"
-    startBlock: 49164540
+    startBlock: 49164500
 fantom:
   network: fantom
   graft:

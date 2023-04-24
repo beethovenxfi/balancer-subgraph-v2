@@ -914,7 +914,7 @@ dataSources:
     network: {{network}}
     source:
       address: '{{ERC4626LinearPoolV4Factory.address}}'
-      abi: ERC4626LinearPoolV4Factory
+      abi: ERC4626LinearPoolV3Factory
       startBlock: {{ERC4626LinearPoolV4Factory.startBlock}}
     mapping:
       kind: ethereum/events

@@ -504,6 +504,9 @@ optimism:
   ERC4626LinearPoolV3Factory:
     address: "0xa3B9515A9c557455BC53F7a535A85219b59e8B2E"
     startBlock: 73010760
+  ERC4626LinearPoolV4Factory:
+    address: "0x7ADbdabaA80F654568421887c12F09E0C7BD9629"
+    startBlock: 90009000
   ReaperLinearPoolV0FactoryV1:
     address: "0x19968D4b7126904Fd665eD25417599Df9604Df83"
     startBlock: 22842161

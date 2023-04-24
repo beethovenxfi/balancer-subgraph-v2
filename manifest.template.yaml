@@ -955,6 +955,41 @@ dataSources:
         - event: Erc4626LinearPoolCreated(indexed address,indexed uint256)
           handler: handleLinearPoolProtocolId
   {{/if}}
+  {{#if ERC4626LinearPoolV4Factory}}
+  - kind: ethereum/contract
+    name: ERC4626LinearPoolV4Factory
+    network: {{network}}
+    source:
+      address: '{{ERC4626LinearPoolV4Factory.address}}'
+      abi: ERC4626LinearPoolV3Factory
+      startBlock: {{ERC4626LinearPoolV4Factory.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolFactory.ts
+      entities:
+        - Balancer
+        - Pool
+      abis:
+        - name: Vault
+          file: ./abis/Vault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: WeightedPool
+          file: ./abis/WeightedPool.json
+        - name: ERC4626LinearPoolV3Factory
+          file: ./abis/ERC4626LinearPoolV3Factory.json
+        - name: LinearPool
+          file: ./abis/LinearPool.json
+        - name: ERC4626LinearPoolV3
+          file: ./abis/ERC4626LinearPoolV3.json
+      eventHandlers:
+        - event: PoolCreated(indexed address)
+          handler: handleNewERC4626LinearPoolV4
+        - event: Erc4626LinearPoolCreated(indexed address,indexed uint256)
+          handler: handleLinearPoolProtocolId
+  {{/if}}
   {{#if GearboxLinearPoolFactory}}
   - kind: ethereum/contract
     name: GearboxLinearPoolFactory

@@ -290,6 +290,10 @@ export function handleNewERC4626LinearPoolV3(event: PoolCreated): void {
   handleNewLinearPool(event, PoolType.ERC4626Linear, 3);
 }
 
+export function handleNewERC4626LinearPoolV4(event: PoolCreated): void {
+  handleNewLinearPool(event, PoolType.ERC4626Linear, 4);
+}
+
 export function handleNewEulerLinearPool(event: PoolCreated): void {
   handleNewLinearPool(event, PoolType.EulerLinear, 1);
 }

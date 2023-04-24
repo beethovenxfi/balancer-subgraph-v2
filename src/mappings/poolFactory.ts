@@ -293,6 +293,10 @@ export function handleNewERC4626LinearPoolV3(event: Erc4626LinearPoolCreated): v
   handleNewLinearPool(poolCreatedEvent, PoolType.ERC4626Linear, 3, event.params.protocolId.toI32());
 }
 
+export function handleNewERC4626LinearPoolV4(event: PoolCreated): void {
+  handleNewLinearPool(event, PoolType.ERC4626Linear, 4);
+}
+
 export function handleNewEulerLinearPool(event: EulerLinearPoolCreated): void {
   const poolCreatedEvent = new PoolCreated(
     event.address,

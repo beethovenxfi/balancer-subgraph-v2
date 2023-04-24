@@ -618,7 +618,10 @@ export function handleSwapEvent(event: SwapEvent): void {
   // add the protocol swap fee portion to the accrued fees
   let protocolSwapFee = ZERO_BD;
   if (pool.poolType == PoolType.ComposableStable || (pool.poolType == PoolType.Weighted && pool.poolTypeVersion >= 2)) {
-    protocolSwapFee = swapFeesUSD.times(pool.protocolSwapFeeCache!);
+    // swap fee cache can be null if pool is not initialized
+    if (pool.protocolSwapFeeCache != null) {
+      protocolSwapFee = swapFeesUSD.times(pool.protocolSwapFeeCache);
+    }
   }
 
   pool.accumulatedProtocolSwapFeesSinceLastFeeCollection = pool.accumulatedProtocolSwapFeesSinceLastFeeCollection.plus(

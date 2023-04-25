@@ -303,7 +303,7 @@ export function handleNewGearboxLinearPool(event: PoolCreated): void {
 }
 
 export function handleNewMidasLinearPool(event: PoolCreated): void {
-  handleNewLinearPool(event, PoolType.EulerLinear, 1);
+  handleNewLinearPool(event, PoolType.MidasLinear, 1);
 }
 
 export function handleNewReaperLinearPool(event: PoolCreated): void {

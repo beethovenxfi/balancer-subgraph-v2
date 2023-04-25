@@ -1346,6 +1346,41 @@ dataSources:
         - event: ProtocolIdRenamed(indexed uint256,string)
           handler: handleProtocolIdRegistryOrRename
     {{/if}}
+  {{#if MidasLinearPoolFactory}}
+  - kind: ethereum/contract
+    name: MidasLinearPoolFactory
+    network: {{network}}
+    source:
+      address: '{{MidasLinearPoolFactory.address}}'
+      abi: LinearPoolFactory
+      startBlock: {{MidasLinearPoolFactory.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolFactory.ts
+      entities:
+        - Balancer
+        - Pool
+      abis:
+        - name: Vault
+          file: ./abis/Vault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: WeightedPool
+          file: ./abis/WeightedPool.json
+        - name: LinearPoolFactory
+          file: ./abis/LinearPoolFactory.json
+        - name: LinearPool
+          file: ./abis/LinearPool.json
+        - name: MidasLinearPoolFactory
+          file: ./abis/MidasLinearPoolFactory.json
+      eventHandlers:
+        - event: PoolCreated(indexed address)
+          handler: handleNewMidasLinearPool
+        - event: MidasLinearPoolCreated(indexed address,indexed uint256)
+          handler: handleLinearPoolProtocolId
+  {{/if}}
   #### BEETS VERSIONING ADJUSTED HANDLERS
   {{#if WeightedPoolV3FactoryV1}}
   - kind: ethereum/contract

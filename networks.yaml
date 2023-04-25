@@ -608,3 +608,6 @@ fantom:
   ERC4626LinearPoolV3Factory:
     address: "0x89857161e0ad36F8c5a537733c1FCf7145220AaE"
     startBlock: 55683200
+  MidasLinearPoolFactory:
+    address: "0x301F12ec02100e9c7DC1e2423C035590E9d54033"
+    startBlock: 60692200

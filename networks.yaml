@@ -423,8 +423,8 @@ optimism:
 fantom:
   network: fantom
   graft:
-    block: 51907710
-    base: QmY3tiF9vUis6gk4PWiEDdUB3UDtjW2MTP2pK73NRZDs8W
+    block: 60692100
+    base: QmYEPLJgKpDNPHvgkrSJbrYAs4S8Yhv4q1PEtXdscVtgso
   Vault:
     address: "0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce"
     startBlock: 17433594
@@ -515,3 +515,6 @@ fantom:
   ERC4626LinearPoolV3Factory:
     address: "0x89857161e0ad36F8c5a537733c1FCf7145220AaE"
     startBlock: 55683200
+  MidasLinearPoolFactory:
+    address: "0x301F12ec02100e9c7DC1e2423C035590E9d54033"
+    startBlock: 60692200

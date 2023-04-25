@@ -1282,6 +1282,37 @@ dataSources:
         - event: PoolCreated(indexed address)
           handler: handleNewGenericLinearPool
   {{/if}}
+  {{#if MidasLinearPoolFactory}}
+  - kind: ethereum/contract
+    name: MidasLinearPoolFactory
+    network: {{network}}
+    source:
+      address: '{{MidasLinearPoolFactory.address}}'
+      abi: LinearPoolFactory
+      startBlock: {{MidasLinearPoolFactory.startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolFactory.ts
+      entities:
+        - Balancer
+        - Pool
+      abis:
+        - name: Vault
+          file: ./abis/Vault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: WeightedPool
+          file: ./abis/WeightedPool.json
+        - name: LinearPoolFactory
+          file: ./abis/LinearPoolFactory.json
+        - name: LinearPool
+          file: ./abis/LinearPool.json
+      eventHandlers:
+        - event: PoolCreated(indexed address)
+          handler: handleNewGenericLinearPool
+  {{/if}}
 templates:
   - kind: ethereum/contract
     name: WeightedPool

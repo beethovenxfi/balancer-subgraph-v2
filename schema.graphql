@@ -28,11 +28,8 @@ type Pool @entity {
   totalWeight: BigDecimal
   totalSwapVolume: BigDecimal!
   totalSwapFee: BigDecimal!
-  totalYieldRevenue: BigDecimal!
   totalLiquidity: BigDecimal!
   totalShares: BigDecimal!
-
-  accumulatedProtocolSwapFeesSinceLastFeeCollection: BigDecimal!
 
   createTime: Int!
   swapsCount: BigInt!
@@ -293,7 +290,6 @@ type PoolSnapshot @entity {
   totalShares: BigDecimal!
   swapVolume: BigDecimal!
   swapFees: BigDecimal!
-  yieldRevenue: BigDecimal!
   liquidity: BigDecimal!
   swapsCount: BigInt!
   holdersCount: BigInt!

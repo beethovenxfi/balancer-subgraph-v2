@@ -98,9 +98,6 @@ export function newPoolEntity(poolId: string): Pool {
   pool.swapsCount = BigInt.fromI32(0);
   pool.holdersCount = BigInt.fromI32(0);
 
-  pool.totalYieldRevenue = ZERO_BD;
-  pool.accumulatedProtocolSwapFeesSinceLastFeeCollection = ZERO_BD;
-
   return pool;
 }
 
@@ -229,7 +226,6 @@ export function createPoolSnapshot(pool: Pool, timestamp: i32): void {
   snapshot.totalShares = pool.totalShares;
   snapshot.swapVolume = pool.totalSwapVolume;
   snapshot.swapFees = pool.totalSwapFee;
-  snapshot.yieldRevenue = pool.totalYieldRevenue;
   snapshot.liquidity = pool.totalLiquidity;
   snapshot.swapsCount = pool.swapsCount;
   snapshot.holdersCount = pool.holdersCount;

@@ -33,6 +33,18 @@
     {
       "address": "0x2Ff1552Dd09f87d6774229Ee5eca60CF570AE291",
       "symbol": "bb-yv-dai"
+    },
+    {
+      "address": "0x442988091CDC18aCb8912Cd3Fe062CDA9233F9Dc",
+      "symbol": "bb-rfFUSDT"
+    },    
+    {
+      "address": "0x685056d3A4E574b163d0fa05A78F1B0b3aa04a80",
+      "symbol": "bb-rfDAI"
+    },    
+    {
+      "address": "0xC385e76E575b2d71eB877c27DCc1608f77fadA99",
+      "symbol": "bb-rfUSDC"
     }
   ]
 }

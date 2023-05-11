@@ -4,14 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       network:
-        description: 'Network to build for'
+        description: "Network to build for"
         required: true
-        default: 'mainnet'
+        default: "mainnet"
         type: choice
         options:
-        - mainnet
-        - arbitrum
-        - polygon
+          - mainnet
+          - arbitrum
+          - polygon
+          - goerli
 
 jobs:
   deploy:
@@ -24,7 +25,7 @@ jobs:
       - name: Install node
         uses: actions/setup-node@v1
         with:
-          node-version: 14
+          node-version: 16
       - name: Install
         run: yarn --frozen-lockfile
       - name: Assets
@@ -33,7 +34,7 @@ jobs:
         run: yarn codegen
       - name: Build
         run: yarn build
-      - uses: gtaschuk/graph-deploy@v0.1.12
+      - uses: balancer-labs/graph-deploy@v0.0.1
         with:
           graph_access_token: ${{ secrets.GRAPH_ACCESS_TOKEN }}
           graph_subgraph_name: "balancer-${{ inputs.network }}-v2-full"

@@ -1,11 +1,11 @@
 mainnet:
   network: mainnet
   graft:
-    # Mar 15 - Block from ~00h UTC
-    # block: 16829700
+    # Mar 30
+    # block: 16938731
     # always make sure the base subgraph has not been pruned
     # it should be possible to run time travel queries on it going back to the vault's startBlock
-    # base: QmceY3gSVLLrLcSndFt8RcTDgozD2bKtkHSKQPpHFUiAMc
+    # base: QmQnxRrmWbFUTfLFeHv8qi6Tf7ZMfrUVqoK7tvbF1tapbM
   EventEmitter:
     address: "0x1ACfEEA57d2ac674d7E65964f155AB9348A6C290"
     startBlock: 16419620
@@ -191,11 +191,11 @@ goerli:
 polygon:
   network: matic
   graft:
-    # Mar 21 - Block from ~8 pm UTC
-    block: 40611103
+    # Apr 26 - block before the first relevant GyroEV2 pool was deployed
+    block: 41733857
     # always make sure the base subgraph has not been pruned
     # it should be possible to run time travel queries on it going back to the vault's startBlock
-    base: QmW2Q8vLCbVFJUjofrCJje9xeV8cRVmaqpLvuY1gFbKWTU
+    base: QmVeg4MUkXJv5FcpGTiFmhnxjjvdn6XDwWF9G7CxdUhiTx
   EventEmitter:
     address: "0xcdcECFa416EE3022030E707dC3EA13a8997D74c8"
     startBlock: 38152461
@@ -286,6 +286,9 @@ polygon:
   GyroEPoolFactory:
     address: "0xD4204551BC5397455f8897745d50Ac4F6beE0EF6"
     startBlock: 35414865
+  GyroEV2PoolFactory:
+    address: "0x1a79A24Db0F73e9087205287761fC9C5C305926b"
+    startBlock: 41209677
   FXPoolFactory:
     address: "0x627D759314D5c4007b461A74eBaFA7EBC5dFeD71"
     startBlock: 32054793
@@ -295,11 +298,11 @@ polygon:
 arbitrum:
   network: arbitrum-one
   graft:
-    # Mar 27 - Block of Weighted V4 factory
-    block: 72222060
+    # Apr 26
+    block: 84333335
     # always make sure the base subgraph has not been pruned
     # it should be possible to run time travel queries on it going back to the vault's startBlock
-    base: QmQrxaoANeUAqPTo3t9yHyZE5aucks8gP6wEqMrjQ8vuqA
+    base: QmWfJF9MiBLmonWYyYfUoEJYqT6B6vGY1UXQrifvK4HAdu
   EventEmitter:
     address: "0x8f32D631093B5418d0546f77442c5fa66187E59D"
     startBlock: 53475240
@@ -522,6 +525,34 @@ optimism:
   ProtocolIdRegistry:
     address: "0x9805dcfD25e6De36bad8fe9D3Fe2c9b44B764102"
     startBlock: 77557576
+avalanche:
+  network: avalanche
+  Vault:
+    address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+    startBlock: 26386141
+  ComposableStablePoolV4Factory:
+    address: "0x3B1eb8EB7b43882b385aB30533D9A2BeF9052a98"
+    startBlock: 29221425
+  WeightedPoolV3Factory:
+    address: "0x94f68b54191F62f781Fe8298A8A5Fa3ed772d227"
+    startBlock: 26389236
+  WeightedPoolV4Factory:
+    address: "0x230a59F4d9ADc147480f03B0D3fFfeCd56c3289a"
+    startBlock: 27739006
+  TempLiquidityBootstrappingPoolFactory:
+    address: "0x0F3e0c4218b7b0108a3643cFe9D3ec0d4F57c54e"
+    startBlock: 26386552
+basegoerli:
+  network: base-testnet
+  Vault:
+    address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+    startBlock: 2204979
+  WeightedPoolV3Factory:
+    address: "0x94f68b54191F62f781Fe8298A8A5Fa3ed772d227"
+    startBlock: 26389236
+  TempLiquidityBootstrappingPoolFactory:
+    address: "0xE8c7cE6Ee9Fc75196bC5317883bD73A0F4ac7Bc0"
+    startBlock: 2206960
 fantom:
   network: fantom
   # graft:

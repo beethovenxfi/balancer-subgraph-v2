@@ -453,9 +453,9 @@ gnosis:
     startBlock: 26691522
 optimism:
   network: optimism
-  graft:
-    block: 49164400
-    base: Qmc4Z52rAHkFdhAXLHQLL68zFVAPK86K85BSNzQkUQQK2m
+  # graft:
+  #   block: 49164400
+  #   base: Qmc4Z52rAHkFdhAXLHQLL68zFVAPK86K85BSNzQkUQQK2m
   Vault:
     address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
     startBlock: 6000000

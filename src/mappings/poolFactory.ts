@@ -271,7 +271,8 @@ export function handleNewAaveLinearPoolV3(event: AaveLinearPoolCreated): void {
     event.logType,
     event.block,
     event.transaction,
-    [event.parameters[0]]
+    [event.parameters[0]],
+    event.receipt
   );
   handleNewLinearPool(poolCreatedEvent, PoolType.AaveLinear, 3, event.params.protocolId.toI32());
 }
@@ -288,7 +289,8 @@ export function handleNewERC4626LinearPoolV3(event: Erc4626LinearPoolCreated): v
     event.logType,
     event.block,
     event.transaction,
-    [event.parameters[0]]
+    [event.parameters[0]],
+    event.receipt
   );
   handleNewLinearPool(poolCreatedEvent, PoolType.ERC4626Linear, 3, event.params.protocolId.toI32());
 }
@@ -305,7 +307,8 @@ export function handleNewEulerLinearPool(event: EulerLinearPoolCreated): void {
     event.logType,
     event.block,
     event.transaction,
-    [event.parameters[0]]
+    [event.parameters[0]],
+    event.receipt
   );
   handleNewLinearPool(poolCreatedEvent, PoolType.EulerLinear, 1, event.params.protocolId.toI32());
 }
@@ -480,7 +483,8 @@ export function handleNewFXPool(event: ethereum.Event): void {
     event.logType,
     event.block,
     event.transaction,
-    [event.parameters[2]] // PoolCreated expects parameters[0] to be the pool address
+    [event.parameters[2]], // PoolCreated expects parameters[0] to be the pool address
+    event.receipt
   );
 
   let pool = handleNewPool(poolCreatedEvent, poolId, swapFee);

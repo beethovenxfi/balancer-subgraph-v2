@@ -346,8 +346,8 @@ gnosis:
 optimism:
   network: optimism
   graft:
-    block: 90008000
-    base: QmcjrDQcr9Uqof5rZTnKGBqS2bHBQZ6b16SnRFZkSZFYs4
+    block: 100540000
+    base: QmRrZHaV3XsFfUNAf6NSXn5HB4wvcFMKMkP1YBDjdWfKCs
   Vault:
     address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
     startBlock: 6000000
@@ -420,6 +420,9 @@ optimism:
   BeefyLinearPoolFactory:
     address: "0xE77f03F5007Df49005CAf2a2f1D872c51aE51fD1"
     startBlock: 49164500
+  GyroEPoolFactory:
+    address: "0x9b683cA24B0e013512E2566b68704dBe9677413c"
+    startBlock: 100548000
 fantom:
   network: fantom
   graft:

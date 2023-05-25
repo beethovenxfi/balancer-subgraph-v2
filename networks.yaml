@@ -525,7 +525,7 @@ optimism:
   ProtocolIdRegistry:
     address: "0x9805dcfD25e6De36bad8fe9D3Fe2c9b44B764102"
     startBlock: 77557576
-  GyroEPoolFactory:
+  GyroEV2PoolFactory:
     address: "0x9b683cA24B0e013512E2566b68704dBe9677413c"
     startBlock: 97253000
 avalanche:

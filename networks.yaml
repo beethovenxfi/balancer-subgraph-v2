@@ -454,8 +454,8 @@ gnosis:
 optimism:
   network: optimism
   graft:
-    block: 97250000
-    base: QmP9pJDuad8AJp5YVGPqM2eF3QUktpqie5TTtByhsjyzFv
+    block: 106752500
+    base: QmTivwvGk413NAr3YvbvznwYCq3JEoH34cyNBe4M7QXCTV
   Vault:
     address: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
     startBlock: 6000000
@@ -486,9 +486,12 @@ optimism:
   ComposableStablePoolV3Factory: #griefing vuln fixed
     address: "0xe2E901AB09f37884BA31622dF3Ca7FC19AA443Be"
     startBlock: 72832800
-  ComposableStablePoolV4Factory: #pool id salt
+  ComposableStablePoolV4Factory: #pool id salt0x043A2daD730d585C44FB79D2614F295D2d625412
     address: "0x1802953277FD955f9a254B80Aa0582f193cF1d77"
     startBlock: 82748100
+  ComposableStablePoolV5Factory: #fix vuln
+    address: "0x043A2daD730d585C44FB79D2614F295D2d625412"
+    startBlock: 106752500
   MetaStablePoolFactory:
     address: "0xb08E16cFc07C684dAA2f93C70323BAdb2A6CBFd2"
     startBlock: 6000000
@@ -558,9 +561,9 @@ basegoerli:
     startBlock: 2206960
 fantom:
   network: fantom
-  # graft:
-  #   block: 58624000
-  #   base: Qma7PREd5qc1Hfr3CHmMHUc2KwQ8UdwNWxs2z8UvRnYdxG
+  graft:
+    block: 65629000
+    base: QmYsfRRojKnUBbF383mrXh3qE9zyjkwDQqZ4QtPfkijohT
   Vault:
     address: "0x20dd72Ed959b6147912C2e529F0a0C651c33c9ce"
     startBlock: 17433594
@@ -600,6 +603,9 @@ fantom:
   ComposableStablePoolV4Factory: #griefing vuln fixed, pool id salt, beets fee collector
     address: "0x5c3094982cF3c97A06b7d62A6f7669F14a199B19"
     startBlock: 58624600
+  ComposableStablePoolV5Factory: #vuln fix
+    address: "0x23F03a4fb344d8B98833d2ACe093cc305E03474f"
+    startBlock: 65629500
   MetaStablePoolFactory:
     address: "0x70b55Af71B29c5Ca7e67bD1995250364C4bE5554"
     startBlock: 16898079
